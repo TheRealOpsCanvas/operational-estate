@@ -5,9 +5,11 @@ tests it against estates other than the one it was first drawn from.
 
 ## Vocabulary and constraints
 
-- `estate.ttl`: every class and relation in OWL under the `estate:` prefix, each with its
-  definition, what it is not, its `skos:altLabel` aliases, its key, and its maturity. Relations that
-  carry data are relation classes (the n-ary pattern); every object property has an inverse.
+- Done: [`ontology/estate.ttl`](../ontology/estate.ttl), every class and relation in OWL under the
+  `estate:` prefix, each with its definition, what it is not, its aliases, its key rule, and its
+  maturity. Relations that carry data are relation classes; every relation between nodes has an
+  inverse. `tools/check.py` asserts its structural consistency and its agreement with the prose
+  specification.
 - PROV-O used directly for provenance: `prov:wasDerivedFrom` for a citation, `prov:Activity` for a
   scan, `prov:wasAttributedTo` a `prov:Agent` for a confirmation, `prov:generatedAtTime` for the
   as-of.
@@ -33,10 +35,9 @@ tests it against estates other than the one it was first drawn from.
 
 ## Tooling
 
-- A check that parses the vocabulary and shapes, runs a structural consistency check (declared
-  domains and ranges, symmetric inverses, two endpoints per relation class, no class in two
-  groupings), validates every example, confirms the wrong one fails, and runs every competency
-  question over every example.
+- Extend `tools/check.py`, which already parses the vocabulary, checks its structural consistency,
+  and checks it against the prose specification, to validate every example against the shapes,
+  confirm the wrong one fails, and run every competency question over every example.
 - A generated human rendering of the vocabulary, checked for staleness.
 
 ## Later

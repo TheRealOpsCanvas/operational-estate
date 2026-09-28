@@ -18,6 +18,10 @@ changing anything, and [docs/competency-questions.md](docs/competency-questions.
 - Commit messages say what changed and why. Do not include links to agent sessions, chat
   transcripts, or anything a reader of this public repository cannot open. A `Co-Authored-By`
   trailer naming the agent is welcome.
+- Pull request descriptions contain only the change: no generated-by footers and no merge
+  instructions, because the description becomes the squash commit's body.
+- Run `python tools/check.py` before opening a pull request that touches `ontology/` or the
+  specification. It runs on every pull request and keeps the two in step.
 - Do not add a `Signed-off-by` line on a person's behalf. The Developer Certificate of Origin is a
   person's certification: the maintainer who merges an agent's pull request signs off in the
   squash commit.

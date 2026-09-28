@@ -183,12 +183,14 @@ Team owns things and contains no one.
 
 A relation that carries nothing is an object property. A relation that carries data is a relation
 class (the n-ary pattern), with properties to its two endpoints and datatype properties for what it
-carries. Every object property declares its inverse. Provenance relations read from subject to
-context (`implementedIn`, `deployedFrom`, `provisionedBy`); causal relations read from cause to
+carries. Every relation between nodes declares its inverse. Provenance relations read from subject
+to context (`implementedIn`, `deployedFrom`, `provisionedBy`); causal relations read from cause to
 effect (`triggers`, `deploys`, `deliversTo`).
 
 | Relation | From | To | Carries |
 |---|---|---|---|
+| `declaredIn` | Service, Pipeline, Core Infrastructure, Cloud Resource | Repo | |
+| `inEnvironment` | Service Instance | Environment | |
 | `memberOf` | Service | Application | |
 | `implementedIn` | Software | Repo | |
 | `placedUnder` | Environment | Application | placement origin |
@@ -209,6 +211,14 @@ effect (`triggers`, `deploys`, `deliversTo`).
 | `runsAs` | Service Instance, Pipeline | Identity | |
 | `trusts` | Identity | Pipeline, Repo, Identity | |
 | `ownedBy` | Application, Service, Repo, Core Infrastructure, Cloud Account, Cloud Resource, Identity | Team | |
+
+### Containment
+
+`declaredIn` and `inEnvironment` are containment: the parent is part of the child's key, so each
+has exactly one. `declaredIn` is the Repo whose files declare a Service, Pipeline, Core
+Infrastructure, or Cloud Resource; it is not `implementedIn`, the Repo whose code implements
+software, and an upstream Service has the first and never the second. `inEnvironment` is the one
+Environment a Service Instance is deployed into.
 
 ### Placement
 

@@ -14,14 +14,15 @@ read and check.
 ## Status
 
 **Draft.** Every term is `draft` and may change until the first published version. The prose
-specification is the current source; the machine-readable vocabulary (OWL), constraints (SHACL),
-worked examples, and checks are on the [roadmap](docs/roadmap.md).
+specification and the OWL vocabulary are kept in step by a check; the constraints (SHACL), worked
+examples, and competency-question queries are on the [roadmap](docs/roadmap.md).
 
 | Document | What it holds |
 |---|---|
 | [docs/spec/operational-estate.md](docs/spec/operational-estate.md) | The model: principles, classes, relations, keys, constraints |
 | [docs/competency-questions.md](docs/competency-questions.md) | The questions the model must answer, and how each is answered |
-| [ROADMAP.md](docs/roadmap.md) | What comes next |
+| [ontology/estate.ttl](ontology/estate.ttl) | The vocabulary in OWL: every class and relation, with definitions and inverses |
+| [docs/roadmap.md](docs/roadmap.md) | What comes next |
 
 ## Identifiers
 
@@ -37,6 +38,16 @@ Operational Estate was started by [OpsCanvas](https://opscanvas.com), which main
 implementation. The specification names no product and depends on none, and it is written so that
 anyone can implement it. It is hosted here while it is young, and it will move to a neutral home as
 it gains contributors. The namespace does not depend on where this repository lives.
+
+## Checking
+
+```
+pip install -r tools/requirements.txt
+python tools/check.py
+```
+
+The check parses the vocabulary, asserts its structural consistency, and confirms it names the same
+classes, relations, and endpoints as the prose specification. It runs on every pull request.
 
 ## Contributing
 
