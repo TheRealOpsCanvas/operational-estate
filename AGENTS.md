@@ -6,15 +6,15 @@ Instructions for AI agents working in this repository. Humans: see
 ## What this repository is
 
 Operational Estate is an open, vendor-neutral specification: an ontology of a software estate. It
-is a standard, not a product. Read [spec/operational-estate.md](spec/operational-estate.md) before
-changing anything, and [competency-questions.md](competency-questions.md) before proposing a term.
+is a standard, not a product. Read [docs/spec/operational-estate.md](docs/spec/operational-estate.md) before
+changing anything, and [docs/competency-questions.md](docs/competency-questions.md) before proposing a term.
 
 ## How changes land
 
 - Never push to `main`. Work on a branch and open a pull request; a maintainer reviews it and
   squash-merges it on GitHub.
-- One concern per pull request. A change to the model and a change to tooling are two pull
-  requests.
+- Keep a pull request to one coherent change, so it can be reviewed as one.
+- Documentation lives under `docs/`; keep the repository root to the files that must be there.
 - Commit messages say what changed and why. Do not include links to agent sessions, chat
   transcripts, or anything a reader of this public repository cannot open. A `Co-Authored-By`
   trailer naming the agent is welcome.

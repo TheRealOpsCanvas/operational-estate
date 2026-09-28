@@ -3,7 +3,7 @@
 Operational Estate improves by being argued with. The most useful contributions are:
 
 - **A competency question it cannot answer.** Write it in the three parts
-  [competency-questions.md](competency-questions.md) uses: what the estate returns, the last mile,
+  [docs/competency-questions.md](docs/competency-questions.md) uses: what the estate returns, the last mile,
   and what makes the answer the same for everyone. A question that needs a term the model lacks is
   how a term gets proposed.
 - **A fact from a real estate that has no home**, or that has to be forced in. The sentence "a
