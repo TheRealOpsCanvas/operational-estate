@@ -2,7 +2,7 @@
 
 Parses ontology/estate.ttl and asserts what an OWL reasoner would catch structurally, without being
 one: every term is documented, every domain and range names a declared class, every relation
-between nodes has an inverse, every relation class has exactly one source and one target, and no
+between entities has an inverse, every relation class has exactly one source and one target, and no
 class sits in two groupings. It then checks that the vocabulary and the prose specification agree:
 the same classes, the same relations, and the same endpoints for each.
 
@@ -76,10 +76,10 @@ def main() -> int:
     datatype_properties = {p for p in graph.subjects(RDF.type, OWL.DatatypeProperty) if is_estate(p)}
     annotation_properties = {p for p in graph.subjects(RDF.type, OWL.AnnotationProperty) if is_estate(p)}
 
-    node = ESTATE.Node
+    entity = ESTATE.Entity
     relation = ESTATE.Relation
     groupings = {ESTATE.Software, ESTATE.Runtime}
-    node_classes = {c for c in classes if node in superclasses(graph, c) or c == node}
+    entity_classes = {c for c in classes if entity in superclasses(graph, c) or c == entity}
     relation_classes = {c for c in classes if relation in superclasses(graph, c)}
 
     # Every term is documented, and every term but an annotation carries a maturity.
@@ -109,7 +109,7 @@ def main() -> int:
                 for cls in named - classes:
                     finding(f"{local(prop)}: {axis.fragment} names undeclared class {cls}")
 
-    # Every relation between nodes has exactly one declared inverse, declared in one direction.
+    # Every relation between entities has exactly one declared inverse, declared in one direction.
     inverse_of = {p: graph.value(p, OWL.inverseOf) for p in object_properties}
     inverses = {q for q in inverse_of.values() if q is not None}
     for prop, inverse in inverse_of.items():
@@ -124,9 +124,9 @@ def main() -> int:
     for prop in object_properties - inverses:
         domain = graph.value(prop, RDFS.domain)
         named = members(graph, domain) if domain is not None else set()
-        between_nodes = bool(named) and named <= node_classes
-        if between_nodes and inverse_of[prop] is None:
-            finding(f"{local(prop)}: a relation between nodes needs an owl:inverseOf")
+        between_entities = bool(named) and named <= entity_classes
+        if between_entities and inverse_of[prop] is None:
+            finding(f"{local(prop)}: a relation between entities needs an owl:inverseOf")
 
     # Every relation class has one source, one target, a relation name, and an inverse name.
     endpoints: dict[URIRef, dict[URIRef, set[URIRef]]] = {}
@@ -154,7 +154,7 @@ def main() -> int:
         if len(both) > 1:
             finding(f"{local(cls)}: sits in {sorted(local(g) for g in both)}; a class has one grouping")
 
-    check_against_spec(graph, classes, node_classes, object_properties, inverses, relation_classes, endpoints)
+    check_against_spec(graph, classes, entity_classes, object_properties, inverses, relation_classes, endpoints)
 
     for message in findings:
         print(message)
@@ -165,7 +165,7 @@ def main() -> int:
 def check_against_spec(
     graph: Graph,
     classes: set[URIRef],
-    node_classes: set[URIRef],
+    entity_classes: set[URIRef],
     object_properties: set[URIRef],
     inverses: set[URIRef],
     relation_classes: set[URIRef],
@@ -176,11 +176,11 @@ def check_against_spec(
     label_of = {c: str(graph.value(c, RDFS.label)) for c in classes}
     class_by_label = {label: c for c, label in label_of.items()}
 
-    # Classes: every heading under "## 4. Classes" is a class, and every leaf node class has one.
+    # Classes: every heading under "## 4. Classes" is a class, and every leaf entity class has one.
     section = text.split("## 4. Classes", 1)[1].split("\n## ", 1)[0]
     headings = set(re.findall(r"^### (.+)$", section, flags=re.MULTILINE))
-    groupings = {ESTATE.Software, ESTATE.Runtime, ESTATE.Node}
-    leaves = {label_of[c] for c in node_classes - groupings}
+    groupings = {ESTATE.Software, ESTATE.Runtime, ESTATE.Entity}
+    leaves = {label_of[c] for c in entity_classes - groupings}
     for heading in sorted(headings - set(class_by_label)):
         finding(f"spec: class '{heading}' has no class in the vocabulary")
     for label in sorted(leaves - headings):
@@ -192,7 +192,7 @@ def check_against_spec(
     for prop in object_properties - inverses:
         domain, rng = graph.value(prop, RDFS.domain), graph.value(prop, RDFS.range)
         dom, ran = members(graph, domain) or set(), members(graph, rng) or set()
-        if dom and dom <= node_classes and ran <= node_classes:
+        if dom and dom <= entity_classes and ran <= entity_classes:
             by_name[local(prop)] = (dom, ran)
     for cls in relation_classes:
         name = graph.value(cls, ESTATE.relationName)

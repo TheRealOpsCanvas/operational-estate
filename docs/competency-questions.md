@@ -13,7 +13,7 @@ context from scratch. The test is therefore not "does a query return it" but "do
 return the same pointers to everyone, and is what remains one bounded step no model can get
 wrong". A question is written in three parts:
 
-- **Estate returns.** The pointers: nodes on stable keys, edges with their evidence, identifiers
+- **Estate returns.** The pointers: entities on stable keys, edges with their evidence, identifiers
   a tool knows a thing by, paths pinned to a commit.
 - **Last mile.** What the model does with them: nothing, one read of a cited file at a pinned
   commit, or one query to a tool by a pinned identifier.

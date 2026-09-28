@@ -50,15 +50,16 @@ estate:inverseName
 # Root and groupings
 #################################################################
 
-estate:Node
+estate:Entity
     a owl:Class ;
-    rdfs:label "Node"@en ;
-    skos:definition "Anything in an estate graph that has a key: every class of the estate other than a relation."@en ;
+    rdfs:label "Entity"@en ;
+    skos:definition "A thing in the estate that has a key and is looked up by it: an Application, a Service, a Repo, and every other class the specification defines as part of the estate."@en ;
+    skos:scopeNote "Not everything in an estate graph: a Relation, an Alias, and an Identifier describe entities and are never looked up on their own. Not the RDF sense of a node, which is anything in any graph."@en ;
     estate:maturity "draft" .
 
 estate:Software
     a owl:Class ;
-    rdfs:subClassOf estate:Node ;
+    rdfs:subClassOf estate:Entity ;
     rdfs:label "Software"@en ;
     skos:definition "What is built: an Application or a Service."@en ;
     skos:scopeNote "A grouping, not something with individuals of its own. It exists because implementedIn ranges over exactly its members."@en ;
@@ -66,7 +67,7 @@ estate:Software
 
 estate:Runtime
     a owl:Class ;
-    rdfs:subClassOf estate:Node ;
+    rdfs:subClassOf estate:Entity ;
     rdfs:label "Runtime"@en ;
     skos:definition "What exists in the cloud to run the software: a Service Instance or a Cloud Resource."@en ;
     skos:scopeNote "A grouping, not something with individuals of its own. It exists because dependsOn ranges over exactly its members. Environment is not Runtime: its Instances run, the Environment does not."@en ;
@@ -75,8 +76,8 @@ estate:Runtime
 estate:Relation
     a owl:Class ;
     rdfs:label "Relation"@en ;
-    skos:definition "A relation between two nodes that carries data of its own, such as the job a pipeline deploys with. It has exactly one source and one target."@en ;
-    skos:scopeNote "Not a node: a relation has no key and is never looked up on its own."@en ;
+    skos:definition "A relation between two entities that carries data of its own, such as the job a pipeline deploys with. It has exactly one source and one target."@en ;
+    skos:scopeNote "Not an entity: a relation has no key and is never looked up on its own."@en ;
     estate:maturity "draft" .
 
 #################################################################
@@ -104,7 +105,7 @@ estate:Service
 
 estate:Environment
     a owl:Class ;
-    rdfs:subClassOf estate:Node ;
+    rdfs:subClassOf estate:Entity ;
     rdfs:label "Environment"@en ;
     skos:altLabel "app-env"@en, "the environment"@en, "stage"@en ;
     skos:definition "A named set of runtime things belonging to one Application, as a practitioner means it, across whatever clouds, accounts, and clusters it spans. Each Application has its own. A Cloud Resource declared in its own code is provisionedBy it; a Service Instance deployed into it is inEnvironment it."@en ;
@@ -124,7 +125,7 @@ estate:ServiceInstance
 
 estate:CoreInfrastructure
     a owl:Class ;
-    rdfs:subClassOf estate:Node ;
+    rdfs:subClassOf estate:Entity ;
     rdfs:label "Core Infrastructure"@en ;
     skos:altLabel "platform"@en, "landing zone"@en ;
     skos:definition "Infrastructure declared outside any single Environment's declarations: a platform team's repository, stack, or module. It is an owner that provisions Cloud Resources. The test is where the declaration lives, not how many Environments use it today."@en ;
@@ -143,7 +144,7 @@ estate:CloudResource
 
 estate:Identity
     a owl:Class ;
-    rdfs:subClassOf estate:Node ;
+    rdfs:subClassOf estate:Entity ;
     rdfs:label "Identity"@en ;
     skos:definition "Something that acts: the role a deploy job assumes, the role a workload runs as, a service principal, a managed identity, a permission set people assume, a Kubernetes user. It may have no declaration and no owner in the estate, which is normal rather than a gap."@en ;
     skos:scopeNote "Not a Cloud Resource, and never a human principal: a user account named after a person stays out of the estate."@en ;
@@ -152,7 +153,7 @@ estate:Identity
 
 estate:CloudAccount
     a owl:Class ;
-    rdfs:subClassOf estate:Node ;
+    rdfs:subClassOf estate:Entity ;
     rdfs:label "Cloud Account"@en ;
     skos:altLabel "account"@en, "project"@en, "subscription"@en ;
     skos:definition "An AWS account, a GCP project, an Azure subscription: the provider-defined unit that Cloud Resources, Identities, and credentials sit within, and that charges belonging to no resource land on."@en ;
@@ -162,7 +163,7 @@ estate:CloudAccount
 
 estate:Repo
     a owl:Class ;
-    rdfs:subClassOf estate:Node ;
+    rdfs:subClassOf estate:Entity ;
     rdfs:label "Repo"@en ;
     skos:altLabel "repository"@en ;
     skos:definition "A version-controlled repository, whose role is app, iac, or mixed. Where things are declared."@en ;
@@ -172,16 +173,16 @@ estate:Repo
 
 estate:Pipeline
     a owl:Class ;
-    rdfs:subClassOf estate:Node ;
+    rdfs:subClassOf estate:Entity ;
     rdfs:label "Pipeline"@en ;
     skos:definition "A CI/CD definition file, such as a GitHub Actions workflow or a .gitlab-ci.yml, declared in its Repo, with the events it listens for. Every definition file is a Pipeline, whether or not any of its jobs relates it to anything else."@en ;
-    skos:scopeNote "A job is never a node: it is data on the relations out of a Pipeline."@en ;
+    skos:scopeNote "A job is never an entity: it is data on the relations out of a Pipeline."@en ;
     estate:keyRule "Its Repo and its definition path."@en ;
     estate:maturity "draft" .
 
 estate:ExternalSystem
     a owl:Class ;
-    rdfs:subClassOf estate:Node ;
+    rdfs:subClassOf estate:Entity ;
     rdfs:label "External System"@en ;
     skos:definition "Something the estate references and nothing in it provisions: a tool a thing is observed by, or a hosted destination a Pipeline delivers to."@en ;
     skos:scopeNote "Anything with a class of its own is not an External System: a role is an Identity; a cluster, registry repository, or bucket is a Cloud Resource; an account is a Cloud Account."@en ;
@@ -190,7 +191,7 @@ estate:ExternalSystem
 
 estate:Team
     a owl:Class ;
-    rdfs:subClassOf estate:Node ;
+    rdfs:subClassOf estate:Entity ;
     rdfs:label "Team"@en ;
     skos:altLabel "owner"@en ;
     skos:definition "A group of people who work on part of the estate, named as its sources name it, each name an alternate name of one Team. A Team owns things and contains no one."@en ;
@@ -201,8 +202,8 @@ estate:Team
 estate:Alias
     a owl:Class ;
     rdfs:label "Alias"@en ;
-    skos:definition "A live identifier bound to a declared node, such as an id or ARN, read from a source that holds both halves, with where and when it was read."@en ;
-    skos:scopeNote "Not a node and not a key: a node's key never changes when an alias does."@en ;
+    skos:definition "A live identifier bound to a declared entity, such as an id or ARN, read from a source that holds both halves, with where and when it was read."@en ;
+    skos:scopeNote "Not an entity and not a key: an entity's key never changes when an alias does."@en ;
     estate:maturity "draft" .
 
 estate:Identifier
@@ -217,7 +218,7 @@ estate:Identifier
                   estate:Repo estate:Pipeline estate:ExternalSystem estate:Team ) .
 
 [] a owl:AllDisjointClasses ;
-    owl:members ( estate:Node estate:Relation estate:Alias estate:Identifier ) .
+    owl:members ( estate:Entity estate:Relation estate:Alias estate:Identifier ) .
 
 #################################################################
 # Relations that carry nothing
@@ -261,14 +262,14 @@ estate:declaredIn
     rdfs:domain [ a owl:Class ; owl:unionOf ( estate:Service estate:Pipeline estate:CoreInfrastructure estate:CloudResource ) ] ;
     rdfs:range estate:Repo ;
     owl:inverseOf estate:declares ;
-    skos:definition "The Repo whose files declare a node, and whose identity is part of that node's key."@en ;
+    skos:definition "The Repo whose files declare an entity, and whose identity is part of that entity's key."@en ;
     skos:scopeNote "Containment in the key, not a relation resolved later."@en ;
     estate:maturity "draft" .
 
 estate:declares
     a owl:ObjectProperty ;
     rdfs:label "declares"@en ;
-    skos:definition "A node a Repo's files declare."@en ;
+    skos:definition "An entity a Repo's files declare."@en ;
     estate:maturity "draft" .
 
 estate:inEnvironment
@@ -434,16 +435,16 @@ estate:source
     a owl:ObjectProperty, owl:FunctionalProperty ;
     rdfs:label "source"@en ;
     rdfs:domain estate:Relation ;
-    rdfs:range estate:Node ;
-    skos:definition "The node a relation reads from."@en ;
+    rdfs:range estate:Entity ;
+    skos:definition "The entity a relation reads from."@en ;
     estate:maturity "draft" .
 
 estate:target
     a owl:ObjectProperty, owl:FunctionalProperty ;
     rdfs:label "target"@en ;
     rdfs:domain estate:Relation ;
-    rdfs:range estate:Node ;
-    skos:definition "The node a relation reads to."@en ;
+    rdfs:range estate:Entity ;
+    skos:definition "The entity a relation reads to."@en ;
     estate:maturity "draft" .
 
 estate:Placement
@@ -556,17 +557,17 @@ estate:Connection
 estate:key
     a owl:DatatypeProperty, owl:FunctionalProperty ;
     rdfs:label "key"@en ;
-    rdfs:domain estate:Node ;
+    rdfs:domain estate:Entity ;
     rdfs:range xsd:string ;
-    skos:definition "What identifies a node, derived by its class's key rule."@en ;
+    skos:definition "What identifies an entity, derived by its class's key rule."@en ;
     estate:maturity "draft" .
 
 estate:name
     a owl:DatatypeProperty ;
     rdfs:label "name"@en ;
-    rdfs:domain estate:Node ;
+    rdfs:domain estate:Entity ;
     rdfs:range xsd:string ;
-    skos:definition "A node's name as its practitioners use it."@en ;
+    skos:definition "An entity's name as its practitioners use it."@en ;
     estate:maturity "draft" .
 
 estate:alternateName
@@ -774,8 +775,8 @@ estate:aliasOf
     a owl:ObjectProperty, owl:FunctionalProperty ;
     rdfs:label "alias of"@en ;
     rdfs:domain estate:Alias ;
-    rdfs:range estate:Node ;
-    skos:definition "The declared node an Alias names."@en ;
+    rdfs:range estate:Entity ;
+    skos:definition "The declared entity an Alias names."@en ;
     estate:maturity "draft" .
 
 estate:aliasValue

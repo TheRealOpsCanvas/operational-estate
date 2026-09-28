@@ -7,7 +7,7 @@ tests it against estates other than the one it was first drawn from.
 
 - Done: [`ontology/estate.ttl`](../ontology/estate.ttl), every class and relation in OWL under the
   `estate:` prefix, each with its definition, what it is not, its aliases, its key rule, and its
-  maturity. Relations that carry data are relation classes; every relation between nodes has an
+  maturity. Relations that carry data are relation classes; every relation between entities has an
   inverse. `tools/check.py` asserts its structural consistency and its agreement with the prose
   specification.
 - PROV-O used directly for provenance: `prov:wasDerivedFrom` for a citation, `prov:Activity` for a

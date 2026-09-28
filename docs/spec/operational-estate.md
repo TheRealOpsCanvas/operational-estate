@@ -15,6 +15,8 @@ that one program reads two kinds of thing, does not make them one class. How an 
 stores, discovers, or serves an estate is outside this specification.
 
 An **estate graph** is a set of facts about one estate, each attributed to whoever asserted it.
+Its facts are about **entities**, the things section 4 defines, each identified by a key, and the
+relations between them.
 The graph describes what has been confirmed: candidates not yet confirmed are not in it.
 
 ## 2. Principles
@@ -60,10 +62,10 @@ A grouping is a class only where a relation needs exactly that set of classes.
 
 **Scope**, Environment and Core Infrastructure, the named units runtime things are placed in and
 owned by, is vocabulary for explaining the model and not a class, because no relation ranges over
-exactly those two. Every other class sits directly under `estate:Node`.
+exactly those two. Every other class sits directly under `estate:Entity`.
 
-**A role is not a class.** Where what a relation points at crosses classes, the relation carries
-the role. What a workload reads secrets from may be a Service Instance (a self-hosted Vault), a Cloud
+**A role is not a class.** Where what a relation points at crosses classes, the relation carries the
+role. What a workload reads secrets from may be a Service Instance (a self-hosted Vault), a Cloud
 Resource (a cloud secrets manager), or an External System (a hosted secrets service), so there is no
 Secret Store class: the secret stores in an estate are the targets of `readsSecretsFrom`. An
 observability tool is the same, through `observedBy`.
@@ -161,8 +163,8 @@ neither software nor runtime.
 
 A CI/CD definition file, such as a GitHub Actions workflow or a `.gitlab-ci.yml`, contained by its
 Repo, with the events it listens for. Every definition file is a Pipeline, whether or not any of its
-jobs relates it to anything else. A job is never a node: it is a discriminator on the relations out
-of a Pipeline.
+jobs relates it to anything else. A job is never an entity: it is a discriminator on the relations
+out of a Pipeline.
 
 ### External System
 
@@ -183,9 +185,9 @@ Team owns things and contains no one.
 
 A relation that carries nothing is an object property. A relation that carries data is a relation
 class (the n-ary pattern), with properties to its two endpoints and datatype properties for what it
-carries. Every relation between nodes declares its inverse. Provenance relations read from subject
-to context (`implementedIn`, `deployedFrom`, `provisionedBy`); causal relations read from cause to
-effect (`triggers`, `deploys`, `deliversTo`).
+carries. Every relation between entities declares its inverse. Provenance relations read from
+subject to context (`implementedIn`, `deployedFrom`, `provisionedBy`); causal relations read from
+cause to effect (`triggers`, `deploys`, `deliversTo`).
 
 | Relation | From | To | Carries |
 |---|---|---|---|
@@ -223,7 +225,7 @@ Environment a Service Instance is deployed into.
 ### Placement
 
 `placedUnder` and `instantiatedFrom` attach a parent the practitioner's picture has but the evidence
-that produced the node did not assert. Each is resolved by name when either side arrives, and
+that produced the entity did not assert. Each is resolved by name when either side arrives, and
 carries its placement origin: an automatic name match, or an operator's choice.
 
 ### Delivery
@@ -235,10 +237,10 @@ artifact itself is not modeled. `triggers` carries the variables one Pipeline se
 
 ### Where a Service Instance runs, and what it is
 
-`runsOn` is the Cloud Resource an Instance runs on: a cluster, a virtual machine, a function runtime.
-`providedAs` is the Cloud Resource an Instance is, such as a serverless function. A Kubernetes
-workload `runsOn` its cluster; a serverless deployment is `providedAs` its function. An Instance's
-Cloud Account is derived through them, never stored beside them.
+`runsOn` is the Cloud Resource an Instance runs on: a cluster, a virtual machine, a function
+runtime. `providedAs` is the Cloud Resource an Instance is, such as a serverless function. A
+Kubernetes workload `runsOn` its cluster; a serverless deployment is `providedAs` its function. An
+Instance's Cloud Account is derived through them, never stored beside them.
 
 ### Ownership
 
@@ -294,8 +296,8 @@ or a Buildkite pipeline has a name of its own.
 
 **A key is what independent readings agree on, and nothing another repository would have to say
 first.** A parent is in a key when two readings of different repositories must agree on it to
-produce the same node; otherwise it is a relation. Nothing infrastructural is in a key: a cluster or
-account name would put "cluster" in identifiers read by people who think "prod".
+produce the same entity; otherwise it is a relation. Nothing infrastructural is in a key: a cluster
+or account name would put "cluster" in identifiers read by people who think "prod".
 
 | Class | Key |
 |---|---|
@@ -398,8 +400,8 @@ carries a version; the namespace never carries one and never moves.
 subclass, inverses, and keys, and it is what the industry reads a model in. It cannot state "exactly
 one owner" or "no value on a secret reference"; SHACL can, and validating an estate graph against
 shapes makes the specification checkable by anyone. Rejected: a programming-language schema, which
-speaks to nobody outside one codebase; LinkML, which adds a generator between the model and OWL for a
-model this size; prose alone, because nothing checks a description.
+speaks to nobody outside one codebase; LinkML, which adds a generator between the model and OWL for
+a model this size; prose alone, because nothing checks a description.
 
 **Software, Scope, Runtime rather than Logical and Deployed.** Environment is not something that
 runs, and Core Infrastructure is not something deployed. A grouping named for meaning but populated
@@ -414,7 +416,8 @@ would move its existing Instance from Application to Service.
 rule and the undeclared-is-a-gap rule on the day it landed, and it could not hold identities that
 live in no cloud account.
 
-**Cloud Account is not a Cloud Resource.** Nothing runs in it; what makes it matter is what it holds.
+**Cloud Account is not a Cloud Resource.** Nothing runs in it; what makes it matter is what it
+holds.
 
 **Core Infrastructure is not an Application.** A tenant is not an Application's Environment, and
 Application should keep meaning something that delivers value.
