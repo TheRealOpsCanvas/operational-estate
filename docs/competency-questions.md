@@ -3,7 +3,7 @@
 The questions practitioners ask of a software estate, and for each one: what the estate hands a
 model, the last mile the model does, and what makes the answer the same for everyone who asks.
 Each question will gain a SPARQL query that runs over the worked estates (see the
-[roadmap](ROADMAP.md)).
+[roadmap](roadmap.md)).
 
 ## What a competency question is
 

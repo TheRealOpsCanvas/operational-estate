@@ -15,13 +15,13 @@ read and check.
 
 **Draft.** Every term is `draft` and may change until the first published version. The prose
 specification is the current source; the machine-readable vocabulary (OWL), constraints (SHACL),
-worked examples, and checks are on the [roadmap](ROADMAP.md).
+worked examples, and checks are on the [roadmap](docs/roadmap.md).
 
 | Document | What it holds |
 |---|---|
-| [spec/operational-estate.md](spec/operational-estate.md) | The model: principles, classes, relations, keys, constraints |
-| [competency-questions.md](competency-questions.md) | The questions the model must answer, and how each is answered |
-| [ROADMAP.md](ROADMAP.md) | What comes next |
+| [docs/spec/operational-estate.md](docs/spec/operational-estate.md) | The model: principles, classes, relations, keys, constraints |
+| [docs/competency-questions.md](docs/competency-questions.md) | The questions the model must answer, and how each is answered |
+| [ROADMAP.md](docs/roadmap.md) | What comes next |
 
 ## Identifiers
 
