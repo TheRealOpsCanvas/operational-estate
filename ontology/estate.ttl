@@ -54,7 +54,7 @@ estate:Entity
     a owl:Class ;
     rdfs:label "Entity"@en ;
     skos:definition "A thing in the estate that has a key and is looked up by it: an Application, a Service, a Repo, and every other class the specification defines as part of the estate."@en ;
-    skos:scopeNote "Not everything in an estate graph: a Relation, an Alias, and an Identifier describe entities and are never looked up on their own. Not the RDF sense of a node, which is anything in any graph."@en ;
+    skos:scopeNote "Not everything in an estate graph: the data a relation carries, an Alias, and an Identifier describe entities and are never looked up on their own. Not the RDF sense of a node, which is anything in any graph."@en ;
     estate:maturity "draft" .
 
 estate:Software
@@ -71,13 +71,6 @@ estate:Runtime
     rdfs:label "Runtime"@en ;
     skos:definition "What exists in the cloud to run the software: a Service Instance or a Cloud Resource."@en ;
     skos:scopeNote "A grouping, not something with individuals of its own. It exists because dependsOn ranges over exactly its members. Environment is not Runtime: its Instances run, the Environment does not."@en ;
-    estate:maturity "draft" .
-
-estate:Relation
-    a owl:Class ;
-    rdfs:label "Relation"@en ;
-    skos:definition "A relation between two entities that carries data of its own, such as the job a pipeline deploys with. It has exactly one source and one target."@en ;
-    skos:scopeNote "Not an entity: a relation has no key and is never looked up on its own."@en ;
     estate:maturity "draft" .
 
 #################################################################
@@ -218,7 +211,9 @@ estate:Identifier
                   estate:Repo estate:Pipeline estate:ExternalSystem estate:Team ) .
 
 [] a owl:AllDisjointClasses ;
-    owl:members ( estate:Entity estate:Relation estate:Alias estate:Identifier ) .
+    owl:members ( estate:Entity estate:Alias estate:Identifier
+                  estate:Placement estate:Instantiation estate:Trigger estate:Deployment estate:Build
+                  estate:Delivery estate:SecretRead estate:Observation estate:Connection ) .
 
 #################################################################
 # Relations that carry nothing
@@ -429,27 +424,29 @@ estate:owns
 
 #################################################################
 # Relations that carry data
+#
+# RDF cannot put data on a triple, so a relation that carries data is stated as a small resource
+# of its own, with one estate:source, one estate:target, and the data. These classes are how the
+# vocabulary stores a relation's data, not things in the estate.
 #################################################################
 
 estate:source
     a owl:ObjectProperty, owl:FunctionalProperty ;
     rdfs:label "source"@en ;
-    rdfs:domain estate:Relation ;
     rdfs:range estate:Entity ;
-    skos:definition "The entity a relation reads from."@en ;
+    skos:definition "The entity a relation that carries data reads from."@en ;
     estate:maturity "draft" .
 
 estate:target
     a owl:ObjectProperty, owl:FunctionalProperty ;
     rdfs:label "target"@en ;
-    rdfs:domain estate:Relation ;
     rdfs:range estate:Entity ;
-    skos:definition "The entity a relation reads to."@en ;
+    skos:definition "The entity a relation that carries data reads to."@en ;
     estate:maturity "draft" .
 
 estate:Placement
     a owl:Class ;
-    rdfs:subClassOf estate:Relation ,
+    rdfs:subClassOf
         [ a owl:Restriction ; owl:onProperty estate:source ; owl:allValuesFrom estate:Environment ] ,
         [ a owl:Restriction ; owl:onProperty estate:target ; owl:allValuesFrom estate:Application ] ;
     rdfs:label "Placement"@en ;
@@ -460,7 +457,7 @@ estate:Placement
 
 estate:Instantiation
     a owl:Class ;
-    rdfs:subClassOf estate:Relation ,
+    rdfs:subClassOf
         [ a owl:Restriction ; owl:onProperty estate:source ; owl:allValuesFrom estate:ServiceInstance ] ,
         [ a owl:Restriction ; owl:onProperty estate:target ; owl:allValuesFrom estate:Service ] ;
     rdfs:label "Instantiation"@en ;
@@ -471,7 +468,7 @@ estate:Instantiation
 
 estate:Trigger
     a owl:Class ;
-    rdfs:subClassOf estate:Relation ,
+    rdfs:subClassOf
         [ a owl:Restriction ; owl:onProperty estate:source ; owl:allValuesFrom estate:Pipeline ] ,
         [ a owl:Restriction ; owl:onProperty estate:target ; owl:allValuesFrom estate:Pipeline ] ;
     rdfs:label "Trigger"@en ;
@@ -482,7 +479,7 @@ estate:Trigger
 
 estate:Deployment
     a owl:Class ;
-    rdfs:subClassOf estate:Relation ,
+    rdfs:subClassOf
         [ a owl:Restriction ; owl:onProperty estate:source ; owl:allValuesFrom estate:Pipeline ] ,
         [ a owl:Restriction ; owl:onProperty estate:target ; owl:allValuesFrom [ a owl:Class ; owl:unionOf ( estate:Environment estate:ServiceInstance ) ] ] ;
     rdfs:label "Deployment"@en ;
@@ -493,7 +490,7 @@ estate:Deployment
 
 estate:Build
     a owl:Class ;
-    rdfs:subClassOf estate:Relation ,
+    rdfs:subClassOf
         [ a owl:Restriction ; owl:onProperty estate:source ; owl:allValuesFrom estate:Pipeline ] ,
         [ a owl:Restriction ; owl:onProperty estate:target ; owl:allValuesFrom estate:Service ] ;
     rdfs:label "Build"@en ;
@@ -505,7 +502,7 @@ estate:Build
 
 estate:Delivery
     a owl:Class ;
-    rdfs:subClassOf estate:Relation ,
+    rdfs:subClassOf
         [ a owl:Restriction ; owl:onProperty estate:source ; owl:allValuesFrom estate:Pipeline ] ,
         [ a owl:Restriction ; owl:onProperty estate:target ; owl:allValuesFrom [ a owl:Class ; owl:unionOf ( estate:CloudResource estate:ExternalSystem ) ] ] ;
     rdfs:label "Delivery"@en ;
@@ -516,7 +513,7 @@ estate:Delivery
 
 estate:SecretRead
     a owl:Class ;
-    rdfs:subClassOf estate:Relation ,
+    rdfs:subClassOf
         [ a owl:Restriction ; owl:onProperty estate:source ; owl:allValuesFrom [ a owl:Class ; owl:unionOf ( estate:ServiceInstance estate:Pipeline ) ] ] ,
         [ a owl:Restriction ; owl:onProperty estate:target ; owl:allValuesFrom [ a owl:Class ; owl:unionOf ( estate:ServiceInstance estate:CloudResource estate:ExternalSystem ) ] ] ;
     rdfs:label "Secret Read"@en ;
@@ -528,7 +525,7 @@ estate:SecretRead
 
 estate:Observation
     a owl:Class ;
-    rdfs:subClassOf estate:Relation ,
+    rdfs:subClassOf
         [ a owl:Restriction ; owl:onProperty estate:source ; owl:allValuesFrom [ a owl:Class ; owl:unionOf ( estate:ServiceInstance estate:Environment estate:Pipeline ) ] ] ,
         [ a owl:Restriction ; owl:onProperty estate:target ; owl:allValuesFrom [ a owl:Class ; owl:unionOf ( estate:ServiceInstance estate:CloudResource estate:ExternalSystem ) ] ] ;
     rdfs:label "Observation"@en ;
@@ -540,7 +537,7 @@ estate:Observation
 
 estate:Connection
     a owl:Class ;
-    rdfs:subClassOf estate:Relation ,
+    rdfs:subClassOf
         [ a owl:Restriction ; owl:onProperty estate:source ; owl:allValuesFrom estate:Environment ] ,
         [ a owl:Restriction ; owl:onProperty estate:target ; owl:allValuesFrom estate:Identity ] ;
     rdfs:label "Connection"@en ;

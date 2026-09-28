@@ -77,10 +77,14 @@ def main() -> int:
     annotation_properties = {p for p in graph.subjects(RDF.type, OWL.AnnotationProperty) if is_estate(p)}
 
     entity = ESTATE.Entity
-    relation = ESTATE.Relation
     groupings = {ESTATE.Software, ESTATE.Runtime}
     entity_classes = {c for c in classes if entity in superclasses(graph, c) or c == entity}
-    relation_classes = {c for c in classes if relation in superclasses(graph, c)}
+    # A class that stores a relation's data restricts estate:source; there is no shared parent.
+    relation_classes = {
+        c for c in classes
+        for r in graph.objects(c, RDFS.subClassOf)
+        if graph.value(r, OWL.onProperty) == ESTATE.source
+    }
 
     # Every term is documented, and every term but an annotation carries a maturity.
     for term in classes | object_properties | datatype_properties | annotation_properties:
