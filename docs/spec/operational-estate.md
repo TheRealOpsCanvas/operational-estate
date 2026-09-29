@@ -130,7 +130,7 @@ use it today, so a cluster a platform repository declares is Core Infrastructure
 uses it. It is an owner, not a place: it provisions Cloud Resources, and it is not the cluster it
 provisions.
 
-*Aliases:* "platform", "landing zone".
+*Aliases:* "landing zone".
 
 ### Cloud Resource
 

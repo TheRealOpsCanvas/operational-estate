@@ -110,7 +110,7 @@ estate:CoreInfrastructure
     a owl:Class ;
     rdfs:subClassOf estate:Entity ;
     rdfs:label "Core Infrastructure"@en ;
-    skos:altLabel "platform"@en, "landing zone"@en ;
+    skos:altLabel "landing zone"@en ;
     skos:definition "Infrastructure declared outside any single Environment's declarations: a platform team's repository, stack, or module. It is an owner that provisions Cloud Resources. The test is where the declaration lives, not how many Environments use it today."@en ;
     skos:scopeNote "Not a place and not the cluster it provisions, which is a Cloud Resource. Not an Application."@en ;
     estate:keyRule "The Repository and the stack, module, or root that declares it."@en ;
