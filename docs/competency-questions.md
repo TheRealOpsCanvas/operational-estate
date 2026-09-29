@@ -75,9 +75,9 @@ Terms: Pipeline, `triggers`, `deploys`; one file read (tool).
 
 ### What software owns this cloud resource?
 
-Terms: Cloud Resource, `provisionedBy`; `instantiatedFrom`.
+Terms: Cloud Resource, `provisionedFor`; `instantiatedFrom`.
 
-- **Estate returns.** The resource by declared address or alias; `provisionedBy` the Instance,
+- **Estate returns.** The resource by declared address or alias; `provisionedFor` the Instance,
   Environment, Application, Service, or Core Infrastructure whose declaration creates it; from an
   Instance, `instantiatedFrom` Service, and from a Service, `memberOf` Application.
 - **Last mile.** None. At most three hops.
@@ -190,11 +190,11 @@ system (tool).
 ### What changed in production since yesterday that explains the latency spike?
 
 Terms: `deploys` and its write location; Cloud Resource, `runsOn`, `dependsOn`,
-`provisionedBy`, `observedBy` identifiers; git diff and monitoring tool (tool).
+`provisionedFor`, `observedBy` identifiers; git diff and monitoring tool (tool).
 
 - **Estate returns.** Prod's Instances and their pinned write paths; the Cloud Resources they
   `runsOn` and `dependsOn`, with the declared addresses of each and of the Core Infrastructure
-  that provisions the shared ones; the monitoring identifiers.
+  that the shared ones are provisioned for; the monitoring identifiers.
 - **Last mile.** `git diff` at the pinned paths since yesterday; latency from the tool.
 - **Same for everyone.** The set of paths to diff is the estate's, so nobody diffs a different
   set.
@@ -214,7 +214,7 @@ Terms: `dependsOn`, `readsSecretsFrom`, `runsOn`; git diff and cluster events
 
 ### How much does prod cost per month, and what are the most expensive resources?
 
-Terms: Cloud Resource aliases, `provisionedBy`, Cloud Account; cost store (tool).
+Terms: Cloud Resource aliases, `provisionedFor`, Cloud Account; cost store (tool).
 
 - **Estate returns.** Prod's resources by owner, Instance-owned and Environment-owned; the
   shared resources of the Core Infrastructure prod's Instances run on; each resource's aliases;
@@ -227,11 +227,11 @@ Terms: Cloud Resource aliases, `provisionedBy`, Cloud Account; cost store (tool)
 
 ### What does a service cost across every environment?
 
-Terms: Cloud Resource, `provisionedBy`; `instantiatedFrom`; cost store
+Terms: Cloud Resource, `provisionedFor`; `instantiatedFrom`; cost store
 (tool).
 
-- **Estate returns.** The climb by software: resource, `provisionedBy` Instance,
-  `instantiatedFrom` Service, `memberOf` Application; a resource `provisionedBy` the Service
+- **Estate returns.** The climb by software: resource, `provisionedFor` Instance,
+  `instantiatedFrom` Service, `memberOf` Application; a resource `provisionedFor` the Service
   itself joins the climb at the Service.
 - **Last mile.** Sum along that climb.
 - **Same for everyone.** The question names which climb it takes, by place or by software.
@@ -253,8 +253,8 @@ Terms: Cloud Resource aliases; cost store (tool).
 Terms: Core Infrastructure, Cloud Resource declared address, `runsOn`; file reads (tool).
 
 - **Estate returns.** Each cluster, a Cloud Resource with its declared address and the Core
-  Infrastructure that provisions it; every Instance that `runsOn` it; each Instance's deploy evidence pointing at its
-  manifests.
+  Infrastructure it is provisioned for; every Instance that `runsOn` it; each Instance's deploy
+  evidence pointing at its manifests.
 - **Last mile.** Read the declared version at the commit; read each manifest for APIs removed
   by 1.32 against the model's own knowledge.
 - **Same for everyone.** The set of manifests is the estate's. The version is a pinned read at

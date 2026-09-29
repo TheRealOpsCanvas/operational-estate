@@ -58,7 +58,7 @@ A grouping is a class only where a relation needs exactly that set of classes.
 
 | Grouping | Members | Needed by |
 |---|---|---|
-| **Software** | Application, Service | domain of `implementedIn`, range of `provisionedBy` |
+| **Software** | Application, Service | domain of `implementedIn`, range of `provisionedFor` |
 | **Runtime** | Service Instance, Cloud Resource | range of `dependsOn` |
 
 **Scope**, Environment and Core Infrastructure, the named units runtime things are placed in and
@@ -106,10 +106,10 @@ Application has its own, so shop dev and checkout dev are two Environments. An E
 run; its Service Instances do.
 
 A runtime thing is in an Environment in one of two ways. A Cloud Resource declared in the
-Environment's own code, such as a database in `envs/dev/`, is `provisionedBy` it. A Service Instance
-deployed into it has the Environment in its key; a file name, a pipeline stage, a tag, or an account
-name is the evidence for which Environment that is, confirmed where that evidence is only a naming
-convention.
+Environment's own code, such as a database in `envs/dev/`, is `provisionedFor` it. A Service
+Instance deployed into it has the Environment in its key; a file name, a pipeline stage, a tag, or
+an account name is the evidence for which Environment that is, confirmed where that evidence is only
+a naming convention.
 
 *Aliases:* "app-env", "the environment", "stage".
 
@@ -129,8 +129,8 @@ is a live fact the estate never holds.
 Infrastructure declared outside the declarations of any single Environment, Application, or Service:
 a platform team's repository, stack, or module. The test is where the declaration lives, not how
 many Environments use it today, so a cluster a shared infrastructure repository declares is Core
-Infrastructure while only dev uses it. It is an owner, not a place: it provisions Cloud Resources,
-and it is not the cluster it provisions.
+Infrastructure while only dev uses it. It is an owner, not a place: Cloud Resources are provisioned
+for it, and it is not the cluster provisioned for it.
 
 *Aliases:* "landing zone".
 
@@ -191,7 +191,7 @@ Team owns things and contains no one.
 ## 5. Relations
 
 Every relation joins two entities and declares its inverse. Provenance relations read from subject
-to context (`implementedIn`, `deployedFrom`, `provisionedBy`); causal relations read from cause to
+to context (`implementedIn`, `deployedFrom`, `provisionedFor`); causal relations read from cause to
 effect (`triggers`, `deploys`, `deliversTo`).
 
 A relation that carries data of its own, a deployment's job and write location, is stated as the
@@ -220,10 +220,10 @@ asserted too; the annotation syntax does this, and section 7 requires it of ever
 | `instantiatedFrom` | Service Instance | Service | placement origin |
 | `deployedFrom` | Environment, Service Instance | Repository | |
 | `triggers` | Pipeline | Pipeline | job, variables sent |
-| `deploys` | Pipeline | Environment, Service Instance | job, pinned write location |
+| `deploys` | Pipeline | Environment, Core Infrastructure, Software, Service Instance | job, pinned write location |
 | `builds` | Pipeline | Service | job, tag scheme |
 | `deliversTo` | Pipeline | Cloud Resource, External System | job |
-| `provisionedBy` | Cloud Resource, Identity | Environment, Core Infrastructure, Software, Service Instance | |
+| `provisionedFor` | Cloud Resource, Identity | Environment, Core Infrastructure, Software, Service Instance | |
 | `runsOn` | Service Instance | Cloud Resource | |
 | `providedAs` | Service Instance | Cloud Resource | |
 | `within` | Cloud Resource, Identity, Cloud Account | Cloud Account, Cloud Resource | |
@@ -247,14 +247,19 @@ Environment a Service Instance is deployed into.
 
 `placedUnder` and `instantiatedFrom` attach a parent the practitioner's picture has but the evidence
 that produced the entity did not assert. Each is resolved by name when either side arrives, and
-carries its placement origin: an automatic name match, or an operator's choice.
+carries its placement origin: `name-match`, an automatic name match, or `operator`, an operator's
+choice.
 
 ### Delivery
 
-`deploys` carries the job and the pinned write location: the repository, path, and field a deploy
-writes, at the commit it was read at. `builds` carries the job and the tag scheme, `$CI_COMMIT_SHA`
-or a version scheme, which links what is declared in an Environment to the commit it came from; the
-artifact itself is not modeled. `triggers` carries the variables one Pipeline sends another.
+`deploys` runs from a Pipeline to any owner `provisionedFor` names: an Environment or Service
+Instance it deploys into, or the Core Infrastructure, Application, or Service whose declarations it
+applies. So the Pipeline and job that change a Cloud Resource are one join from it, through its
+owner. `deploys` carries the job and, where the deploy writes a version, the pinned write location:
+the repository, path, and field it writes, at the commit it was read at. `builds` carries the job
+and the tag scheme, `$CI_COMMIT_SHA` or a version scheme, which links what is declared in an
+Environment to the commit it came from; the artifact itself is not modeled. `triggers` carries the
+variables one Pipeline sends another.
 
 ### Where a Service Instance runs, and what it is
 
@@ -265,7 +270,7 @@ Instance's Cloud Account is derived through them, never stored beside them.
 
 ### Ownership
 
-`provisionedBy` is read from the module or chart boundary a declaration sits inside, a structural
+`provisionedFor` is read from the module or chart boundary a declaration sits inside, a structural
 fact rather than a path token. A module for one Application or one Service outside any Environment,
 such as a deploy repository's `app/` declaring the Application's DNS zone or its
 `services/user-svc/` declaring that Service's image registry, is the Application's or the Service's;
@@ -339,24 +344,26 @@ or account name would put "cluster" in identifiers read by people who think "pro
 | External System | its provider, kind, and name |
 | Team | its name |
 
-**A Cloud Resource is keyed by where it is declared.** The source kind names the address grammar: a
-Terraform resource address in its root module, a CloudFormation stack and logical id, a CDK
-construct path, a Pulumi URN, or a Kubernetes manifest path and object. The last is how
-controller-created resources are declared: a `Service` of type `LoadBalancer` declares a load
-balancer, a `PersistentVolumeClaim` a volume, an `Ingress` an application load balancer, a
-Karpenter `NodePool` a fleet, a Crossplane managed resource anything.
+**A Cloud Resource is keyed by where it is declared.** The source kind names the address grammar, as
+one of `terraform`, `cloudformation`, `cdk`, `pulumi`, or `kubernetes`: a Terraform resource address
+in its root module, a CloudFormation stack and logical id, a CDK construct path, a Pulumi URN, or a
+Kubernetes manifest path and object. The last is how controller-created resources are declared: a
+`Service` of type `LoadBalancer` declares a load balancer, a `PersistentVolumeClaim` a volume, an
+`Ingress` an application load balancer, a Karpenter `NodePool` a fleet, a Crossplane managed
+resource anything.
 
 **Identity and Cloud Account are keyed by their provider identifier**, because it is fixed before
 anything is applied: an account id is issued when the account exists, and a role ARN is derivable
 from its account and name. A declaration is cited when one exists.
 
-**A live identifier is an alias, and it says where it came from.** The binding of a declared
-address to its id or ARN is read from a source that holds both halves: Terraform state, a
-CloudFormation stack listing, a Pulumi checkpoint, a Kubernetes object's status, or a controller's
-tags on the cloud side, such as `kubernetes.io/cluster/<name>`, which the alias marks as weaker than
-a declaration. An alias carries its source, the source's serial or version, and its as-of. When a
-source moves on and an address maps to a new id, the former alias is kept as former, because older
-cost rows still carry it. Environment and Team also carry alternate names.
+**A live identifier is an alias, and it says where it came from.** The binding of a declared address
+to its id or ARN is read from a source that holds both halves: Terraform state, a CloudFormation
+stack listing, a Pulumi checkpoint, a Kubernetes object's status, or a controller's tags on the
+cloud side, such as `kubernetes.io/cluster/<name>`, which the alias marks as weaker than a
+declaration. An alias carries its source, the source's serial or version, and its as-of. When a
+source moves on and an address maps to a new id, the former alias is kept with status `former`
+rather than `current`, because older cost rows still carry it. Environment and Team also carry
+alternate names.
 
 **A detail is keyed by the relation it reifies**, meaning its source's key, the relation, and its
 target's key, and, where one relation can have several details, by what tells them apart: the job
@@ -373,11 +380,11 @@ rewritten, because keys are derived and the base is a prefix.
 ## 7. Constraints
 
 **Every runtime thing has exactly one owner, so Environments never overlap.** A Service Instance is
-in exactly one Environment, by its key. A Cloud Resource is `provisionedBy` exactly one of an
-Environment, a Core Infrastructure, an Application, a Service, or a Service Instance; one an
-Application or Service provisions is in no Environment. Use across Environments is `dependsOn`,
-never shared membership, and a `dependsOn` from one Environment into another is a gap worth
-surfacing. An Identity is `provisionedBy` its declaring owner when it has one.
+in exactly one Environment, by its key. A Cloud Resource is `provisionedFor` exactly one of an
+Environment, a Core Infrastructure, an Application, a Service, or a Service Instance; one
+provisioned for an Application or Service is in no Environment. Use across Environments is
+`dependsOn`, never shared membership, and a `dependsOn` from one Environment into another is a gap
+worth surfacing. An Identity is `provisionedFor` its declaring owner when it has one.
 
 Further constraints, each to be stated as a SHACL shape. The ones about details are checked today as
 SPARQL 1.2 queries, until SHACL 1.2 is published:
@@ -406,10 +413,10 @@ Cost adds no terms. Cost rows are not in the estate. A row lands on a Cloud Reso
 for a charge that belongs to no resource (a commitment, support, a credit, tax), on the Cloud
 Account billed for it, and climbs by ownership. It climbs two ways that answer different questions:
 by place, Instance to Environment to Application, "what does checkout's prod cost"; by software,
-Instance to Service to Application, "what does `auth-svc` cost everywhere". A resource an
-Application or Service provisions is in no Environment's cost: it joins the climb at the Application
-or the Service. They agree for a Service in one Application and differ, correctly, for a shared one.
-A tag, or a controller's tag, is evidence for a relation the model already has. How cost shared
+Instance to Service to Application, "what does `auth-svc` cost everywhere". A resource provisioned
+for an Application or Service is in no Environment's cost: it joins the climb at the Application or
+the Service. They agree for a Service in one Application and differ, correctly, for a shared one. A
+tag, or a controller's tag, is evidence for a relation the model already has. How cost shared
 through Core Infrastructure is split is decided downstream: the estate serves the ownership. A cost
 row that matches no declared resource is a gap, never "other".
 

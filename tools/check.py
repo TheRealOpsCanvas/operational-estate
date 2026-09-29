@@ -4,7 +4,8 @@ Parses ontology/estate.ttl and asserts what an OWL reasoner would catch structur
 one: every term is documented, every domain and range names a declared class, every relation
 between entities has an inverse, every detail class names the one relation it describes, and no
 class sits in two groupings. It then checks that the vocabulary and the prose specification agree:
-the same classes, the same relations, the same endpoints, and the same relations carrying data.
+the same classes, the same relations, the same endpoints, the same relations carrying data, and the
+same values for each property that allows only a listed set.
 Last, it parses every Turtle example in the specification as RDF 1.2 and checks the rules every
 detail keeps, after proving on a broken example that each rule still fires.
 
@@ -19,7 +20,7 @@ import sys
 from pathlib import Path
 
 import pyoxigraph as ox
-from rdflib import BNode, Graph, Namespace, URIRef
+from rdflib import BNode, Graph, Literal, Namespace, URIRef
 from rdflib.collection import Collection
 from rdflib.namespace import OWL, RDF, RDFS, SKOS, XSD
 
@@ -60,6 +61,16 @@ def between_entities(graph: Graph, prop: URIRef, entity_classes: set[URIRef]) ->
     domain = members(graph, graph.value(prop, RDFS.domain))
     rng = members(graph, graph.value(prop, RDFS.range))
     return bool(domain) and bool(rng) and domain <= entity_classes and rng <= entity_classes
+
+
+def value_set(graph: Graph, expression: object) -> list[Literal] | None:
+    """The values a closed datatype allows, when it is a datatype listing them with owl:oneOf."""
+    if not isinstance(expression, BNode):
+        return None
+    listed = graph.value(expression, OWL.oneOf)
+    if listed is None:
+        return None
+    return list(Collection(graph, listed))
 
 
 def superclasses(graph: Graph, cls: URIRef) -> set[URIRef]:
@@ -107,8 +118,10 @@ def main() -> int:
         for axis in (RDFS.domain, RDFS.range):
             for expression in graph.objects(prop, axis):
                 if prop in datatype_properties and axis == RDFS.range:
+                    if value_set(graph, expression) is not None:
+                        continue
                     if not str(expression).startswith(str(XSD)):
-                        finding(f"{local(prop)}: range {expression} is not an XSD datatype")
+                        finding(f"{local(prop)}: range {expression} is not an XSD datatype or a list of values")
                     continue
                 named = members(graph, expression)
                 if named is None:
@@ -196,6 +209,15 @@ def check_against_spec(
         finding(f"spec: class '{heading}' has no class in the vocabulary")
     for label in sorted(leaves - headings):
         finding(f"vocabulary: class '{label}' has no section under '4. Classes' in the spec")
+
+    # Value sets: every value a closed datatype lists is named in the specification.
+    for prop in sorted(graph.subjects(RDF.type, OWL.DatatypeProperty)):
+        values = value_set(graph, graph.value(prop, RDFS.range))
+        for value in values or []:
+            if not isinstance(value, Literal):
+                finding(f"{local(prop)}: its value set lists {value}, which is not a literal")
+            elif f"`{value}`" not in text:
+                finding(f"{local(prop)}: the value '{value}' is not named in the spec")
 
     # Relations: every row of the relation table exists, with the same endpoints.
     rows = re.findall(r"^\| `(\w+)` \| ([^|]+) \| ([^|]+) \|([^|]*)\|", text, flags=re.MULTILINE)

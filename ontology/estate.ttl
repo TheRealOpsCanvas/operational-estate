@@ -52,7 +52,7 @@ estate:Software
     rdfs:subClassOf estate:Entity ;
     rdfs:label "Software"@en ;
     skos:definition "What is built: an Application or a Service."@en ;
-    skos:scopeNote "A grouping, not something with individuals of its own. It exists because implementedIn and provisionedBy range over exactly its members."@en ;
+    skos:scopeNote "A grouping, not something with individuals of its own. It exists because implementedIn and provisionedFor range over exactly its members."@en ;
     estate:maturity "draft" .
 
 estate:Runtime
@@ -91,7 +91,7 @@ estate:Environment
     rdfs:subClassOf estate:Entity ;
     rdfs:label "Environment"@en ;
     skos:altLabel "app-env"@en, "the environment"@en, "stage"@en ;
-    skos:definition "A named set of runtime things belonging to one Application, as a practitioner means it, across whatever clouds, accounts, and clusters it spans. Each Application has its own. A Cloud Resource declared in its own code is provisionedBy it; a Service Instance deployed into it is inEnvironment it."@en ;
+    skos:definition "A named set of runtime things belonging to one Application, as a practitioner means it, across whatever clouds, accounts, and clusters it spans. Each Application has its own. A Cloud Resource declared in its own code is provisionedFor it; a Service Instance deployed into it is inEnvironment it."@en ;
     skos:scopeNote "Not the cluster or account it runs in, and not shared between Applications: what several Applications' Environments share is Core Infrastructure. It does not run; its Service Instances do."@en ;
     estate:keyRule "Its asserted Application name and its name."@en ;
     estate:maturity "draft" .
@@ -111,8 +111,8 @@ estate:CoreInfrastructure
     rdfs:subClassOf estate:Entity ;
     rdfs:label "Core Infrastructure"@en ;
     skos:altLabel "landing zone"@en ;
-    skos:definition "Infrastructure declared outside the declarations of any single Environment, Application, or Service: a platform team's repository, stack, or module. It is an owner that provisions Cloud Resources. The test is where the declaration lives, not how many Environments use it today."@en ;
-    skos:scopeNote "Not a place and not the cluster it provisions, which is a Cloud Resource. Not an Application."@en ;
+    skos:definition "Infrastructure declared outside the declarations of any single Environment, Application, or Service: a platform team's repository, stack, or module. It is an owner Cloud Resources are provisioned for. The test is where the declaration lives, not how many Environments use it today."@en ;
+    skos:scopeNote "Not a place and not the cluster provisioned for it, which is a Cloud Resource. Not an Application."@en ;
     estate:keyRule "The Repository and the stack, module, or root that declares it."@en ;
     estate:maturity "draft" .
 
@@ -290,18 +290,19 @@ estate:deploymentSourceOf
     skos:definition "An Environment or Service Instance a Repository deploys."@en ;
     estate:maturity "draft" .
 
-estate:provisionedBy
+estate:provisionedFor
     a owl:ObjectProperty ;
-    rdfs:label "provisioned by"@en ;
+    rdfs:label "provisioned for"@en ;
     rdfs:domain [ a owl:Class ; owl:unionOf ( estate:CloudResource estate:Identity ) ] ;
     rdfs:range [ a owl:Class ; owl:unionOf ( estate:Environment estate:CoreInfrastructure estate:Software estate:ServiceInstance ) ] ;
-    owl:inverseOf estate:provisions ;
-    skos:definition "Whose declaration creates a Cloud Resource or Identity, read from the module or chart boundary the declaration sits inside: an Environment's, a Core Infrastructure's, an Application's or a Service's outside any one Environment, or one Service Instance's. A Cloud Resource has exactly one."@en ;
+    owl:inverseOf estate:hasProvisioned ;
+    skos:definition "The owner a Cloud Resource or Identity is provisioned for, read from the module or chart boundary its declaration sits inside: an Environment's, a Core Infrastructure's, an Application's or a Service's outside any one Environment, or one Service Instance's. A Cloud Resource has exactly one."@en ;
+    skos:scopeNote "Not who or what applied the declaration; a Pipeline that applies it deploys its owner."@en ;
     estate:maturity "draft" .
 
-estate:provisions
+estate:hasProvisioned
     a owl:ObjectProperty ;
-    rdfs:label "provisions"@en ;
+    rdfs:label "has provisioned"@en ;
     skos:definition "A Cloud Resource or Identity whose declaration an owner holds."@en ;
     estate:maturity "draft" .
 
@@ -516,9 +517,9 @@ estate:deploys
     a owl:ObjectProperty ;
     rdfs:label "deploys"@en ;
     rdfs:domain estate:Pipeline ;
-    rdfs:range [ a owl:Class ; owl:unionOf ( estate:Environment estate:ServiceInstance ) ] ;
+    rdfs:range [ a owl:Class ; owl:unionOf ( estate:Environment estate:CoreInfrastructure estate:Software estate:ServiceInstance ) ] ;
     owl:inverseOf estate:deployedBy ;
-    skos:definition "An Environment or Service Instance a Pipeline deploys."@en ;
+    skos:definition "An owner whose declarations a Pipeline applies: an Environment or Service Instance it deploys into, or the Core Infrastructure, Application, or Service whose infrastructure it applies. Its targets are the owners provisionedFor names, so the Pipeline that changes a Cloud Resource is one join away."@en ;
     estate:maturity "draft" .
 
 estate:deployedBy
@@ -716,7 +717,7 @@ estate:repositoryRole
     a owl:DatatypeProperty, owl:FunctionalProperty ;
     rdfs:label "repository role"@en ;
     rdfs:domain estate:Repository ;
-    rdfs:range xsd:string ;
+    rdfs:range [ a rdfs:Datatype ; owl:oneOf ( "app" "iac" "mixed" ) ] ;
     skos:definition "What a Repository holds: \"app\", \"iac\", or \"mixed\"."@en ;
     estate:maturity "draft" .
 
@@ -740,8 +741,8 @@ estate:sourceKind
     a owl:DatatypeProperty, owl:FunctionalProperty ;
     rdfs:label "source kind"@en ;
     rdfs:domain estate:CloudResource ;
-    rdfs:range xsd:string ;
-    skos:definition "The address grammar of a Cloud Resource's declaration: a Terraform address, a CloudFormation logical id, a CDK construct path, a Pulumi URN, or a Kubernetes manifest object."@en ;
+    rdfs:range [ a rdfs:Datatype ; owl:oneOf ( "terraform" "cloudformation" "cdk" "pulumi" "kubernetes" ) ] ;
+    skos:definition "The address grammar of a Cloud Resource's declaration: \"terraform\", a resource address in its root module; \"cloudformation\", a stack and logical id; \"cdk\", a construct path; \"pulumi\", a URN; or \"kubernetes\", a manifest path and object."@en ;
     estate:maturity "draft" .
 
 estate:declaredAddress
@@ -780,7 +781,7 @@ estate:placementOrigin
     a owl:DatatypeProperty, owl:FunctionalProperty ;
     rdfs:label "placement origin"@en ;
     rdfs:domain [ a owl:Class ; owl:unionOf ( estate:Placement estate:Instantiation ) ] ;
-    rdfs:range xsd:string ;
+    rdfs:range [ a rdfs:Datatype ; owl:oneOf ( "name-match" "operator" ) ] ;
     skos:definition "How a placement was resolved: \"name-match\" or \"operator\"."@en ;
     estate:maturity "draft" .
 
@@ -917,6 +918,6 @@ estate:aliasStatus
     a owl:DatatypeProperty, owl:FunctionalProperty ;
     rdfs:label "alias status"@en ;
     rdfs:domain estate:Alias ;
-    rdfs:range xsd:string ;
+    rdfs:range [ a rdfs:Datatype ; owl:oneOf ( "current" "former" ) ] ;
     skos:definition "\"current\", or \"former\" once the source maps the address to a new id. A former Alias is kept, because older cost rows carry it."@en ;
     estate:maturity "draft" .
