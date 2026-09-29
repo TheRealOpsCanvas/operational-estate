@@ -126,8 +126,8 @@ is a live fact the estate never holds.
 
 Infrastructure declared outside any single Environment's declarations: a platform team's
 repository, stack, or module. The test is where the declaration lives, not how many Environments
-use it today, so a cluster a platform repository declares is Core Infrastructure while only dev
-uses it. It is an owner, not a place: it provisions Cloud Resources, and it is not the cluster it
+use it today, so a cluster a shared infrastructure repository declares is Core Infrastructure
+while only dev uses it. It is an owner, not a place: it provisions Cloud Resources, and it is not the cluster it
 provisions.
 
 *Aliases:* "landing zone".
