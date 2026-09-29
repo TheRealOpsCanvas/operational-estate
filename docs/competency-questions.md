@@ -78,9 +78,9 @@ Terms: Pipeline, `triggers`, `deploys`; one file read (tool).
 Terms: Cloud Resource, `provisionedBy`; `instantiatedFrom`.
 
 - **Estate returns.** The resource by declared address or alias; `provisionedBy` the Instance,
-  Environment, or Core Infrastructure whose declaration creates it; from an Instance,
-  `instantiatedFrom` Service and `memberOf` Application.
-- **Last mile.** None. Three hops.
+  Environment, Service, or Core Infrastructure whose declaration creates it; from an Instance,
+  `instantiatedFrom` Service, and from a Service, `memberOf` Application.
+- **Last mile.** None. At most three hops.
 - **Same for everyone.** Ownership is read from the module or chart boundary the declaration
   sits inside, never a name match.
 
@@ -231,7 +231,8 @@ Terms: Cloud Resource, `provisionedBy`; `instantiatedFrom`; cost store
 (tool).
 
 - **Estate returns.** The climb by software: resource, `provisionedBy` Instance,
-  `instantiatedFrom` Service, `memberOf` Application.
+  `instantiatedFrom` Service, `memberOf` Application; a resource `provisionedBy` the Service
+  itself joins the climb at the Service.
 - **Last mile.** Sum along that climb.
 - **Same for everyone.** The question names which climb it takes, by place or by software.
   They agree for a service in one Application and disagree, correctly, for a shared one.

@@ -72,7 +72,7 @@ estate:Application
     rdfs:subClassOf estate:Software ;
     rdfs:label "Application"@en ;
     skos:definition "A product or capability that delivers value to its users: a set of Services and the Environments they are deployed into. It needs no repository of its own; in an estate of services it is named where it is composed and deployed."@en ;
-    skos:scopeNote "Not a single deployable, which is a Service, and not what it runs on: its Service Instances run on Cloud Resources, provisioned by its own Environments, by Core Infrastructure, or by one Service Instance, when the deployment code declares a resource for that Service alone, such as its queue, or its chart creates one, such as a load balancer."@en ;
+    skos:scopeNote "Not a single deployable, which is a Service, and not what it runs on: its Service Instances run on Cloud Resources, provisioned by its own Environments, by Core Infrastructure, by one of its Services across every Environment, such as the Service's image registry, or by one Service Instance, when the deployment code declares a resource for that Instance alone, such as its queue, or its chart creates one, such as a load balancer."@en ;
     estate:keyRule "Its name."@en ;
     estate:maturity "draft" .
 
@@ -111,7 +111,7 @@ estate:CoreInfrastructure
     rdfs:subClassOf estate:Entity ;
     rdfs:label "Core Infrastructure"@en ;
     skos:altLabel "landing zone"@en ;
-    skos:definition "Infrastructure declared outside any single Environment's declarations: a platform team's repository, stack, or module. It is an owner that provisions Cloud Resources. The test is where the declaration lives, not how many Environments use it today."@en ;
+    skos:definition "Infrastructure declared outside any single Environment's or Service's declarations: a platform team's repository, stack, or module. It is an owner that provisions Cloud Resources. The test is where the declaration lives, not how many Environments use it today."@en ;
     skos:scopeNote "Not a place and not the cluster it provisions, which is a Cloud Resource. Not an Application."@en ;
     estate:keyRule "The Repository and the stack, module, or root that declares it."@en ;
     estate:maturity "draft" .
@@ -294,9 +294,9 @@ estate:provisionedBy
     a owl:ObjectProperty ;
     rdfs:label "provisioned by"@en ;
     rdfs:domain [ a owl:Class ; owl:unionOf ( estate:CloudResource estate:Identity ) ] ;
-    rdfs:range [ a owl:Class ; owl:unionOf ( estate:Environment estate:CoreInfrastructure estate:ServiceInstance ) ] ;
+    rdfs:range [ a owl:Class ; owl:unionOf ( estate:Environment estate:CoreInfrastructure estate:Service estate:ServiceInstance ) ] ;
     owl:inverseOf estate:provisions ;
-    skos:definition "Whose declaration creates a Cloud Resource or Identity, read from the module or chart boundary the declaration sits inside. A Cloud Resource has exactly one."@en ;
+    skos:definition "Whose declaration creates a Cloud Resource or Identity, read from the module or chart boundary the declaration sits inside: an Environment's, a Core Infrastructure's, a Service's outside any one Environment, or one Service Instance's. A Cloud Resource has exactly one."@en ;
     estate:maturity "draft" .
 
 estate:provisions

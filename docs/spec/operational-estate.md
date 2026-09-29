@@ -77,10 +77,11 @@ observability tool is the same, through `observedBy`.
 
 A product or capability that delivers value to its users: a set of Services and the Environments
 they are deployed into. Not a single deployable (a Service), and not what it runs on: its Service
-Instances run on Cloud Resources, provisioned by its own Environments, by Core Infrastructure, or
-by one Service Instance, when the deployment code declares a resource for that Service alone, such
-as its queue, or its chart creates one, such as a load balancer. An Application needs no repository of its own: in an estate of services, it is
-named where it is composed and deployed.
+Instances run on Cloud Resources, provisioned by its own Environments, by Core Infrastructure, by
+one of its Services across every Environment, such as the Service's image registry, or by one
+Service Instance, when the deployment code declares a resource for that Instance alone, such as its
+queue, or its chart creates one, such as a load balancer. An Application needs no repository of its
+own: in an estate of services, it is named where it is composed and deployed.
 
 ### Service
 
@@ -124,11 +125,11 @@ is a live fact the estate never holds.
 
 ### Core Infrastructure
 
-Infrastructure declared outside any single Environment's declarations: a platform team's
-repository, stack, or module. The test is where the declaration lives, not how many Environments
-use it today, so a cluster a shared infrastructure repository declares is Core Infrastructure
-while only dev uses it. It is an owner, not a place: it provisions Cloud Resources, and it is not the cluster it
-provisions.
+Infrastructure declared outside any single Environment's or Service's declarations: a platform
+team's repository, stack, or module. The test is where the declaration lives, not how many
+Environments use it today, so a cluster a shared infrastructure repository declares is Core
+Infrastructure while only dev uses it. It is an owner, not a place: it provisions Cloud Resources,
+and it is not the cluster it provisions.
 
 *Aliases:* "landing zone".
 
@@ -221,7 +222,7 @@ asserted too; the annotation syntax does this, and section 7 requires it of ever
 | `deploys` | Pipeline | Environment, Service Instance | job, pinned write location |
 | `builds` | Pipeline | Service | job, tag scheme |
 | `deliversTo` | Pipeline | Cloud Resource, External System | job |
-| `provisionedBy` | Cloud Resource, Identity | Environment, Core Infrastructure, Service Instance | |
+| `provisionedBy` | Cloud Resource, Identity | Environment, Core Infrastructure, Service, Service Instance | |
 | `runsOn` | Service Instance | Cloud Resource | |
 | `providedAs` | Service Instance | Cloud Resource | |
 | `within` | Cloud Resource, Identity, Cloud Account | Cloud Account, Cloud Resource | |
@@ -264,10 +265,12 @@ Instance's Cloud Account is derived through them, never stored beside them.
 ### Ownership
 
 `provisionedBy` is read from the module or chart boundary a declaration sits inside, a structural
-fact rather than a path token. `ownedBy` names a Team and only a Team. An Environment's owner and a
-Pipeline's are derived from their Application and Repository. Evidence that names only individuals,
-`@jane` in `CODEOWNERS`, establishes no owner. Membership is not ownership: `memberOf` says which
-Application a Service is part of, `ownedBy` says whose it is.
+fact rather than a path token. A module for one Service outside any Environment, such as a deploy
+repository's `services/user-svc/` declaring its image registry, is the Service's; the same Service's
+module inside an Environment's declarations is its Instance's there. `ownedBy` names a Team and only
+a Team. An Environment's owner and a Pipeline's are derived from their Application and Repository.
+Evidence that names only individuals, `@jane` in `CODEOWNERS`, establishes no owner. Membership is
+not ownership: `memberOf` says which Application a Service is part of, `ownedBy` says whose it is.
 
 ### Access
 
@@ -368,9 +371,10 @@ rewritten, because keys are derived and the base is a prefix.
 
 **Every runtime thing has exactly one owner, so Environments never overlap.** A Service Instance is
 in exactly one Environment, by its key. A Cloud Resource is `provisionedBy` exactly one of an
-Environment, a Core Infrastructure, or a Service Instance. Use across Environments is `dependsOn`,
-never shared membership, and a `dependsOn` from one Environment into another is a gap worth
-surfacing. An Identity is `provisionedBy` its declaring owner when it has one.
+Environment, a Core Infrastructure, a Service, or a Service Instance; one a Service provisions is in
+no Environment. Use across Environments is `dependsOn`, never shared membership, and a `dependsOn`
+from one Environment into another is a gap worth surfacing. An Identity is `provisionedBy` its
+declaring owner when it has one.
 
 Further constraints, each to be stated as a SHACL shape. The ones about details are checked today as
 SPARQL 1.2 queries, until SHACL 1.2 is published:
@@ -399,8 +403,9 @@ Cost adds no terms. Cost rows are not in the estate. A row lands on a Cloud Reso
 for a charge that belongs to no resource (a commitment, support, a credit, tax), on the Cloud
 Account billed for it, and climbs by ownership. It climbs two ways that answer different questions:
 by place, Instance to Environment to Application, "what does checkout's prod cost"; by software,
-Instance to Service to Application, "what does `auth-svc` cost everywhere". They agree for a Service
-in one Application and differ, correctly, for a shared one. A tag, or a controller's tag, is
+Instance to Service to Application, "what does `auth-svc` cost everywhere". A resource a Service
+provisions climbs by software from the Service and is in no Environment's cost. They agree for a
+Service in one Application and differ, correctly, for a shared one. A tag, or a controller's tag, is
 evidence for a relation the model already has. How cost shared through Core Infrastructure is split
 is decided downstream: the estate serves the ownership. A cost row that matches no declared resource
 is a gap, never "other".
