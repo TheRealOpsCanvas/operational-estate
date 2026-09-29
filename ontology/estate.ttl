@@ -205,8 +205,7 @@ estate:Identifier
                   estate:Detail ) .
 
 [] a owl:AllDisjointClasses ;
-    owl:members ( estate:Placement estate:Instantiation estate:Trigger estate:Deployment estate:Build
-                  estate:Delivery estate:SecretRead estate:Observation estate:Connection ) .
+    owl:members ( estate:Trigger estate:Deployment estate:Build estate:Delivery estate:SecretRead estate:Observation estate:Connection ) .
 
 #################################################################
 # Relations that carry nothing
@@ -416,6 +415,36 @@ estate:owns
     skos:definition "A thing a Team owns."@en ;
     estate:maturity "draft" .
 
+estate:placedUnder
+    a owl:ObjectProperty ;
+    rdfs:label "placed under"@en ;
+    rdfs:domain estate:Environment ;
+    rdfs:range estate:Application ;
+    owl:inverseOf estate:places ;
+    skos:definition "The Application an Environment belongs to, resolved by name from the Application its key asserted."@en ;
+    estate:maturity "draft" .
+
+estate:places
+    a owl:ObjectProperty ;
+    rdfs:label "places"@en ;
+    skos:definition "The inverse of placedUnder."@en ;
+    estate:maturity "draft" .
+
+estate:instantiatedFrom
+    a owl:ObjectProperty ;
+    rdfs:label "instantiated from"@en ;
+    rdfs:domain estate:ServiceInstance ;
+    rdfs:range estate:Service ;
+    owl:inverseOf estate:instantiatedAs ;
+    skos:definition "The one Service a Service Instance is a deployment of, resolved by name when either side arrives."@en ;
+    estate:maturity "draft" .
+
+estate:instantiatedAs
+    a owl:ObjectProperty ;
+    rdfs:label "instantiated as"@en ;
+    skos:definition "The inverse of instantiatedFrom."@en ;
+    estate:maturity "draft" .
+
 #################################################################
 # Relations that carry data
 #
@@ -439,54 +468,6 @@ estate:Detail
     rdfs:label "Detail"@en ;
     skos:definition "An RDF 1.2 reifier of one relation between two entities, carrying that relation's data. Its class names the relation, with estate:detailOf."@en ;
     skos:scopeNote "Not an entity: it is identified by the relation it reifies, not looked up on its own. Not a statement that the relation holds; the relation is asserted separately."@en ;
-    estate:maturity "draft" .
-
-estate:placedUnder
-    a owl:ObjectProperty ;
-    rdfs:label "placed under"@en ;
-    rdfs:domain estate:Environment ;
-    rdfs:range estate:Application ;
-    owl:inverseOf estate:places ;
-    skos:definition "The Application an Environment belongs to, resolved by name from the Application its key asserted."@en ;
-    estate:maturity "draft" .
-
-estate:places
-    a owl:ObjectProperty ;
-    rdfs:label "places"@en ;
-    skos:definition "The inverse of placedUnder."@en ;
-    estate:maturity "draft" .
-
-estate:Placement
-    a owl:Class ;
-    rdfs:subClassOf estate:Detail ;
-    rdfs:label "Placement"@en ;
-    estate:detailOf estate:placedUnder ;
-    skos:definition "The details of a placedUnder: how the placement was resolved."@en ;
-    estate:keyRule "The relation it reifies."@en ;
-    estate:maturity "draft" .
-
-estate:instantiatedFrom
-    a owl:ObjectProperty ;
-    rdfs:label "instantiated from"@en ;
-    rdfs:domain estate:ServiceInstance ;
-    rdfs:range estate:Service ;
-    owl:inverseOf estate:instantiatedAs ;
-    skos:definition "The one Service a Service Instance is a deployment of, resolved by name when either side arrives."@en ;
-    estate:maturity "draft" .
-
-estate:instantiatedAs
-    a owl:ObjectProperty ;
-    rdfs:label "instantiated as"@en ;
-    skos:definition "The inverse of instantiatedFrom."@en ;
-    estate:maturity "draft" .
-
-estate:Instantiation
-    a owl:Class ;
-    rdfs:subClassOf estate:Detail ;
-    rdfs:label "Instantiation"@en ;
-    estate:detailOf estate:instantiatedFrom ;
-    skos:definition "The details of an instantiatedFrom: how the Service was resolved."@en ;
-    estate:keyRule "The relation it reifies."@en ;
     estate:maturity "draft" .
 
 estate:triggers
@@ -694,7 +675,7 @@ estate:applicationName
     rdfs:label "application name"@en ;
     rdfs:domain estate:Environment ;
     rdfs:range xsd:string ;
-    skos:definition "The Application name the evidence for an Environment asserted, which is part of its key before any Placement resolves it."@en ;
+    skos:definition "The Application name the evidence for an Environment asserted, which is part of its key before placedUnder resolves it."@en ;
     estate:maturity "draft" .
 
 estate:deployedName
@@ -775,14 +756,6 @@ estate:systemKind
     rdfs:domain estate:ExternalSystem ;
     rdfs:range xsd:string ;
     skos:definition "What kind of External System it is, such as monitoring or package registry."@en ;
-    estate:maturity "draft" .
-
-estate:placementOrigin
-    a owl:DatatypeProperty, owl:FunctionalProperty ;
-    rdfs:label "placement origin"@en ;
-    rdfs:domain [ a owl:Class ; owl:unionOf ( estate:Placement estate:Instantiation ) ] ;
-    rdfs:range [ a rdfs:Datatype ; owl:oneOf ( "name-match" "operator" ) ] ;
-    skos:definition "How a placement was resolved: \"name-match\" or \"operator\"."@en ;
     estate:maturity "draft" .
 
 estate:job
