@@ -45,8 +45,8 @@ live half that belongs to a tool or git.
 
 Terms: `deployedFrom`; Pipeline, `deploys`.
 
-- **Estate returns.** Every Environment's `deployedFrom` Repo; with pipelines, the Pipeline in
-  that Repo and its `deploys` edge per job.
+- **Estate returns.** Every Environment's `deployedFrom` Repository; with pipelines, the Pipeline in
+  that Repository and its `deploys` edge per job.
 - **Last mile.** None.
 - **Same for everyone.** Committed facts on stable keys with the citation that established each.
 
@@ -64,7 +64,7 @@ Terms: Pipeline, `deploys` and its write location.
 
 Terms: Pipeline, `triggers`, `deploys`; one file read (tool).
 
-- **Estate returns.** From the Repo: its Pipeline, each `triggers` edge with the variables it
+- **Estate returns.** From the Repository: its Pipeline, each `triggers` edge with the variables it
   sends and the target Pipeline's key. From the target Pipeline: its `deploys` edges per job and
   their targets.
 - **Last mile.** Two steps on stable keys, then one read of the cited rule where the question
@@ -132,9 +132,9 @@ logs (tool).
 Terms: `implementedIn`; Pipeline; `observedBy` a CI system; git
 and CI system (tool).
 
-- **Estate returns.** Application to Services to the Repos that implement them; each Repo's
-  Pipelines with their CI identifiers.
-- **Last mile.** `git log` per repo since yesterday; run links from the CI system by
+- **Estate returns.** Application to Services to the Repositories that implement them; each
+  Repository's Pipelines with their CI identifiers.
+- **Last mile.** `git log` per repository since yesterday; run links from the CI system by
   identifier.
 - **Same for everyone.** The set of repositories is the estate's; the links are the CI
   system's URLs for pinned identifiers.
@@ -145,7 +145,7 @@ Terms: `deploys` and its write location; Cloud Resource declared address; git
 diff (tool).
 
 - **Estate returns.** Recent `deploys` edges and the paths they write; every Cloud Resource's
-  declared address in the same Repo.
+  declared address in the same Repository.
 - **Last mile.** For each run's commit, diff it: did it touch a resource declaration and
   application code?
 - **Same for everyone.** Declared addresses are what classify a diff as infrastructure; without

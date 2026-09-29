@@ -157,16 +157,18 @@ they bill to.
 
 *Aliases:* "account", "project", "subscription".
 
-### Repo
+### Repository
 
-A version-controlled repository, whose role is `app`, `iac`, or `mixed`. Where things are declared;
-neither software nor runtime.
+A version-controlled store of files, such as a Git repository, whose role is `app`, `iac`, or
+`mixed`. Where things are declared; neither software nor runtime.
+
+*Aliases:* "repo".
 
 ### Pipeline
 
 A CI/CD definition file, such as a GitHub Actions workflow or a `.gitlab-ci.yml`, contained by its
-Repo, with the events it listens for. Every definition file is a Pipeline, whether or not any of its
-jobs relates it to anything else. A job is never an entity: it is a discriminator on the relations
+Repository, with the events it listens for. Every definition file is a Pipeline, whether or not any
+of its jobs relates it to anything else. A job is never an entity: it is a discriminator on the relations
 out of a Pipeline.
 
 ### External System
@@ -208,13 +210,13 @@ asserted too; the annotation syntax does this, and section 7 requires it of ever
 
 | Relation | From | To | Carries |
 |---|---|---|---|
-| `declaredIn` | Service, Pipeline, Core Infrastructure, Cloud Resource | Repo | |
+| `declaredIn` | Service, Pipeline, Core Infrastructure, Cloud Resource | Repository | |
 | `inEnvironment` | Service Instance | Environment | |
 | `memberOf` | Service | Application | |
-| `implementedIn` | Software | Repo | |
+| `implementedIn` | Software | Repository | |
 | `placedUnder` | Environment | Application | placement origin |
 | `instantiatedFrom` | Service Instance | Service | placement origin |
-| `deployedFrom` | Environment, Service Instance | Repo | |
+| `deployedFrom` | Environment, Service Instance | Repository | |
 | `triggers` | Pipeline | Pipeline | job, variables sent |
 | `deploys` | Pipeline | Environment, Service Instance | job, pinned write location |
 | `builds` | Pipeline | Service | job, tag scheme |
@@ -228,14 +230,14 @@ asserted too; the annotation syntax does this, and section 7 requires it of ever
 | `observedBy` | Service Instance, Environment, Pipeline | Service Instance, Cloud Resource, External System | the tool's identifiers |
 | `connectedVia` | Environment | Identity | declared credential name |
 | `runsAs` | Service Instance, Pipeline | Identity | |
-| `trusts` | Identity | Pipeline, Repo, Identity | |
-| `ownedBy` | Application, Service, Repo, Core Infrastructure, Cloud Account, Cloud Resource, Identity | Team | |
+| `trusts` | Identity | Pipeline, Repository, Identity | |
+| `ownedBy` | Application, Service, Repository, Core Infrastructure, Cloud Account, Cloud Resource, Identity | Team | |
 
 ### Containment
 
 `declaredIn` and `inEnvironment` are containment: the parent is part of the child's key, so each
-has exactly one. `declaredIn` is the Repo whose files declare a Service, Pipeline, Core
-Infrastructure, or Cloud Resource; it is not `implementedIn`, the Repo whose code implements
+has exactly one. `declaredIn` is the Repository whose files declare a Service, Pipeline, Core
+Infrastructure, or Cloud Resource; it is not `implementedIn`, the Repository whose code implements
 software, and an upstream Service has the first and never the second. `inEnvironment` is the one
 Environment a Service Instance is deployed into.
 
@@ -263,7 +265,7 @@ Instance's Cloud Account is derived through them, never stored beside them.
 
 `provisionedBy` is read from the module or chart boundary a declaration sits inside, a structural
 fact rather than a path token. `ownedBy` names a Team and only a Team. An Environment's owner and a
-Pipeline's are derived from their Application and Repo. Evidence that names only individuals,
+Pipeline's are derived from their Application and Repository. Evidence that names only individuals,
 `@jane` in `CODEOWNERS`, establishes no owner. Membership is not ownership: `memberOf` says which
 Application a Service is part of, `ownedBy` says whose it is.
 
@@ -278,8 +280,8 @@ relation so that whoever holds a local credential by that name can match it to t
 
 `runsAs` is the Identity a workload or a pipeline acts as.
 
-`trusts` runs from an Identity to the Pipeline, Repo, or Identity its trust policy allows to assume
-it, read from the declaration. A question that starts from a role needs no relation, because the
+`trusts` runs from an Identity to the Pipeline, Repository, or Identity its trust policy allows to
+assume it, read from the declaration. A question that starts from a role needs no relation, because the
 policy is in the file the Identity cites; a question that starts from a repository, what it can
 reach if compromised, would otherwise be a search across every repository that declares roles.
 Chained assumption is a multi-hop walk. The walk ends at roles and the accounts they are within:
@@ -320,12 +322,12 @@ or account name would put "cluster" in identifiers read by people who think "pro
 |---|---|
 | Application | its name |
 | Environment | its asserted Application name and its name |
-| Service | the Repo that declares it and its name |
+| Service | the Repository that declares it and its name |
 | Service Instance | its Environment's key and its deployed name |
-| Repo | its canonical remote |
-| Pipeline | its Repo and its definition path |
-| Core Infrastructure | the Repo and the stack, module, or root that declares it |
-| Cloud Resource | the Repo that declares it, a source kind, and the declared address |
+| Repository | its canonical remote |
+| Pipeline | its Repository and its definition path |
+| Core Infrastructure | the Repository and the stack, module, or root that declares it |
+| Cloud Resource | the Repository that declares it, a source kind, and the declared address |
 | Identity | its provider and the provider's identifier for it |
 | Cloud Account | its provider and the provider's id |
 | External System | its provider, kind, and name |
@@ -379,7 +381,7 @@ SPARQL 1.2 queries, until SHACL 1.2 is published:
   `builds`, or `deliversTo`, never on a `readsSecretsFrom`.
 - A Service Instance has at most one `instantiatedFrom`, and its target is a Service.
 - An Environment has exactly one asserted Application.
-- A Pipeline that `deploys` an Environment or Instance is in the Repo it is `deployedFrom`.
+- A Pipeline that `deploys` an Environment or Instance is in the Repository it is `deployedFrom`.
 - `ownedBy` targets only a Team.
 - A `readsSecretsFrom` carries no secret value.
 - Every alias carries its source.

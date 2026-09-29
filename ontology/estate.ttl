@@ -43,7 +43,7 @@ estate:keyRule
 estate:Entity
     a owl:Class ;
     rdfs:label "Entity"@en ;
-    skos:definition "A thing in the estate that has a key and is looked up by it: an Application, a Service, a Repo, and every other class the specification defines as part of the estate."@en ;
+    skos:definition "A thing in the estate that has a key and is looked up by it: an Application, a Service, a Repository, and every other class the specification defines as part of the estate."@en ;
     skos:scopeNote "Not everything in an estate graph: a Detail, an Alias, and an Identifier describe entities or their relations and are never looked up on their own."@en ;
     estate:maturity "draft" .
 
@@ -83,7 +83,7 @@ estate:Service
     skos:altLabel "the service"@en ;
     skos:definition "A deployable unit of software that implements all or part of an Application: the unit itself, the same Service in every Environment. A monolith is an Application with one Service. A Service may be upstream, deployed from a chart or image nobody in the estate builds; it then has no implementedIn and no Build, and is not incomplete for lacking them."@en ;
     skos:scopeNote "Never a running copy, which is a Service Instance."@en ;
-    estate:keyRule "The Repo that declares it and its name."@en ;
+    estate:keyRule "The Repository that declares it and its name."@en ;
     estate:maturity "draft" .
 
 estate:Environment
@@ -113,7 +113,7 @@ estate:CoreInfrastructure
     skos:altLabel "platform"@en, "landing zone"@en ;
     skos:definition "Infrastructure declared outside any single Environment's declarations: a platform team's repository, stack, or module. It is an owner that provisions Cloud Resources. The test is where the declaration lives, not how many Environments use it today."@en ;
     skos:scopeNote "Not a place and not the cluster it provisions, which is a Cloud Resource. Not an Application."@en ;
-    estate:keyRule "The Repo and the stack, module, or root that declares it."@en ;
+    estate:keyRule "The Repository and the stack, module, or root that declares it."@en ;
     estate:maturity "draft" .
 
 estate:CloudResource
@@ -122,7 +122,7 @@ estate:CloudResource
     rdfs:label "Cloud Resource"@en ;
     skos:definition "A provisioned thing in a cloud or cluster: a database, a bucket, a load balancer, a cluster, a function, a registry repository, a declared secret. It has exactly one owner. One with no declaration is a gap."@en ;
     skos:scopeNote "Not an Identity and not a Cloud Account."@en ;
-    estate:keyRule "The Repo that declares it, a source kind, and the declared address."@en ;
+    estate:keyRule "The Repository that declares it, a source kind, and the declared address."@en ;
     estate:maturity "draft" .
 
 estate:Identity
@@ -144,12 +144,12 @@ estate:CloudAccount
     estate:keyRule "Its provider and the provider's id."@en ;
     estate:maturity "draft" .
 
-estate:Repo
+estate:Repository
     a owl:Class ;
     rdfs:subClassOf estate:Entity ;
-    rdfs:label "Repo"@en ;
-    skos:altLabel "repository"@en ;
-    skos:definition "A version-controlled repository, whose role is app, iac, or mixed. Where things are declared."@en ;
+    rdfs:label "Repository"@en ;
+    skos:altLabel "repo"@en ;
+    skos:definition "A version-controlled store of files, such as a Git repository, whose role is app, iac, or mixed. Where things are declared."@en ;
     skos:scopeNote "Neither software nor runtime."@en ;
     estate:keyRule "Its canonical remote."@en ;
     estate:maturity "draft" .
@@ -158,9 +158,9 @@ estate:Pipeline
     a owl:Class ;
     rdfs:subClassOf estate:Entity ;
     rdfs:label "Pipeline"@en ;
-    skos:definition "A CI/CD definition file, such as a GitHub Actions workflow or a .gitlab-ci.yml, declared in its Repo, with the events it listens for. Every definition file is a Pipeline, whether or not any of its jobs relates it to anything else."@en ;
+    skos:definition "A CI/CD definition file, such as a GitHub Actions workflow or a .gitlab-ci.yml, declared in its Repository, with the events it listens for. Every definition file is a Pipeline, whether or not any of its jobs relates it to anything else."@en ;
     skos:scopeNote "A job is never an entity: it is data on the relations out of a Pipeline."@en ;
-    estate:keyRule "Its Repo and its definition path."@en ;
+    estate:keyRule "Its Repository and its definition path."@en ;
     estate:maturity "draft" .
 
 estate:ExternalSystem
@@ -198,7 +198,7 @@ estate:Identifier
 [] a owl:AllDisjointClasses ;
     owl:members ( estate:Application estate:Service estate:Environment estate:ServiceInstance
                   estate:CoreInfrastructure estate:CloudResource estate:Identity estate:CloudAccount
-                  estate:Repo estate:Pipeline estate:ExternalSystem estate:Team ) .
+                  estate:Repository estate:Pipeline estate:ExternalSystem estate:Team ) .
 
 [] a owl:AllDisjointClasses ;
     owl:members ( estate:Entity estate:Alias estate:Identifier
@@ -232,32 +232,32 @@ estate:implementedIn
     a owl:ObjectProperty ;
     rdfs:label "implemented in"@en ;
     rdfs:domain estate:Software ;
-    rdfs:range estate:Repo ;
+    rdfs:range estate:Repository ;
     owl:inverseOf estate:implements ;
-    skos:definition "The Repo whose code implements an Application or Service."@en ;
+    skos:definition "The Repository whose code implements an Application or Service."@en ;
     skos:scopeNote "Not where it is declared for deployment, which is declaredIn, and absent for an upstream Service."@en ;
     estate:maturity "draft" .
 
 estate:implements
     a owl:ObjectProperty ;
     rdfs:label "implements"@en ;
-    skos:definition "Software whose code a Repo holds."@en ;
+    skos:definition "Software whose code a Repository holds."@en ;
     estate:maturity "draft" .
 
 estate:declaredIn
     a owl:ObjectProperty, owl:FunctionalProperty ;
     rdfs:label "declared in"@en ;
     rdfs:domain [ a owl:Class ; owl:unionOf ( estate:Service estate:Pipeline estate:CoreInfrastructure estate:CloudResource ) ] ;
-    rdfs:range estate:Repo ;
+    rdfs:range estate:Repository ;
     owl:inverseOf estate:declares ;
-    skos:definition "The Repo whose files declare an entity, and whose identity is part of that entity's key."@en ;
+    skos:definition "The Repository whose files declare an entity, and whose identity is part of that entity's key."@en ;
     skos:scopeNote "Containment in the key, not a relation resolved later."@en ;
     estate:maturity "draft" .
 
 estate:declares
     a owl:ObjectProperty ;
     rdfs:label "declares"@en ;
-    skos:definition "An entity a Repo's files declare."@en ;
+    skos:definition "An entity a Repository's files declare."@en ;
     estate:maturity "draft" .
 
 estate:inEnvironment
@@ -279,15 +279,15 @@ estate:deployedFrom
     a owl:ObjectProperty ;
     rdfs:label "deployed from"@en ;
     rdfs:domain [ a owl:Class ; owl:unionOf ( estate:Environment estate:ServiceInstance ) ] ;
-    rdfs:range estate:Repo ;
+    rdfs:range estate:Repository ;
     owl:inverseOf estate:deploymentSourceOf ;
-    skos:definition "The Repo an Environment or Service Instance is deployed from."@en ;
+    skos:definition "The Repository an Environment or Service Instance is deployed from."@en ;
     estate:maturity "draft" .
 
 estate:deploymentSourceOf
     a owl:ObjectProperty ;
     rdfs:label "deployment source of"@en ;
-    skos:definition "An Environment or Service Instance a Repo deploys."@en ;
+    skos:definition "An Environment or Service Instance a Repository deploys."@en ;
     estate:maturity "draft" .
 
 estate:provisionedBy
@@ -387,7 +387,7 @@ estate:trusts
     a owl:ObjectProperty ;
     rdfs:label "trusts"@en ;
     rdfs:domain estate:Identity ;
-    rdfs:range [ a owl:Class ; owl:unionOf ( estate:Pipeline estate:Repo estate:Identity ) ] ;
+    rdfs:range [ a owl:Class ; owl:unionOf ( estate:Pipeline estate:Repository estate:Identity ) ] ;
     owl:inverseOf estate:trustedBy ;
     skos:definition "What an Identity's trust policy allows to assume it, read from the declaration."@en ;
     skos:scopeNote "Not what the Identity is permitted to do, which is a reading of its cited policy, never an effective permission."@en ;
@@ -402,7 +402,7 @@ estate:trustedBy
 estate:ownedBy
     a owl:ObjectProperty ;
     rdfs:label "owned by"@en ;
-    rdfs:domain [ a owl:Class ; owl:unionOf ( estate:Application estate:Service estate:Repo estate:CoreInfrastructure estate:CloudAccount estate:CloudResource estate:Identity ) ] ;
+    rdfs:domain [ a owl:Class ; owl:unionOf ( estate:Application estate:Service estate:Repository estate:CoreInfrastructure estate:CloudAccount estate:CloudResource estate:Identity ) ] ;
     rdfs:range estate:Team ;
     owl:inverseOf estate:owns ;
     skos:definition "The Team whose thing it is. Evidence that names only individuals establishes no owner."@en ;
@@ -712,12 +712,12 @@ estate:upstreamPackage
     skos:definition "The chart or image an upstream Service is deployed from, such as apache/superset."@en ;
     estate:maturity "draft" .
 
-estate:repoRole
+estate:repositoryRole
     a owl:DatatypeProperty, owl:FunctionalProperty ;
-    rdfs:label "repo role"@en ;
-    rdfs:domain estate:Repo ;
+    rdfs:label "repository role"@en ;
+    rdfs:domain estate:Repository ;
     rdfs:range xsd:string ;
-    skos:definition "What a Repo holds: \"app\", \"iac\", or \"mixed\"."@en ;
+    skos:definition "What a Repository holds: \"app\", \"iac\", or \"mixed\"."@en ;
     estate:maturity "draft" .
 
 estate:definitionPath
@@ -725,7 +725,7 @@ estate:definitionPath
     rdfs:label "definition path"@en ;
     rdfs:domain estate:Pipeline ;
     rdfs:range xsd:string ;
-    skos:definition "The path of a Pipeline's definition file in its Repo, which is part of its key."@en ;
+    skos:definition "The path of a Pipeline's definition file in its Repository, which is part of its key."@en ;
     estate:maturity "draft" .
 
 estate:listensFor
@@ -749,7 +749,7 @@ estate:declaredAddress
     rdfs:label "declared address"@en ;
     rdfs:domain estate:CloudResource ;
     rdfs:range xsd:string ;
-    skos:definition "Where a Cloud Resource is declared in its Repo, in its source kind's grammar."@en ;
+    skos:definition "Where a Cloud Resource is declared in its Repository, in its source kind's grammar."@en ;
     estate:maturity "draft" .
 
 estate:provider
@@ -805,8 +805,8 @@ estate:writesRepository
     a owl:ObjectProperty, owl:FunctionalProperty ;
     rdfs:label "writes repository"@en ;
     rdfs:domain estate:Deployment ;
-    rdfs:range estate:Repo ;
-    skos:definition "The Repo a Deployment writes the deployed version to."@en ;
+    rdfs:range estate:Repository ;
+    skos:definition "The Repository a Deployment writes the deployed version to."@en ;
     estate:maturity "draft" .
 
 estate:writesPath
