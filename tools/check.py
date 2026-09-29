@@ -2,9 +2,9 @@
 
 Parses ontology/estate.ttl and asserts what an OWL reasoner would catch structurally, without being
 one: every term is documented, every domain and range names a declared class, every relation
-between entities has an inverse, every relation class has exactly one source and one target, and no
-class sits in two groupings. It then checks that the vocabulary and the prose specification agree:
-the same classes, the same relations, and the same endpoints for each.
+between entities has an inverse, every qualified detail agrees with the relation it qualifies, and
+no class sits in two groupings. It then checks that the vocabulary and the prose specification
+agree: the same classes, the same relations, and the same endpoints for each.
 
 Run from the repository root:  python tools/check.py
 Exits non-zero, listing every finding, if anything fails.
@@ -52,6 +52,13 @@ def members(graph: Graph, expression: object) -> set[URIRef] | None:
     return None
 
 
+def between_entities(graph: Graph, prop: URIRef, entity_classes: set[URIRef]) -> bool:
+    """Whether a property's declared domain and range are both entity classes."""
+    domain = members(graph, graph.value(prop, RDFS.domain))
+    rng = members(graph, graph.value(prop, RDFS.range))
+    return bool(domain) and bool(rng) and domain <= entity_classes and rng <= entity_classes
+
+
 def superclasses(graph: Graph, cls: URIRef) -> set[URIRef]:
     seen: set[URIRef] = set()
     stack = [cls]
@@ -79,12 +86,9 @@ def main() -> int:
     entity = ESTATE.Entity
     groupings = {ESTATE.Software, ESTATE.Runtime}
     entity_classes = {c for c in classes if entity in superclasses(graph, c) or c == entity}
-    # A class that stores a relation's data restricts estate:source; there is no shared parent.
-    relation_classes = {
-        c for c in classes
-        for r in graph.objects(c, RDFS.subClassOf)
-        if graph.value(r, OWL.onProperty) == ESTATE.source
-    }
+    # A qualified... property names the plain relation it qualifies; its range is the detail class.
+    qualified = {p: graph.value(p, ESTATE.qualifies) for p in object_properties}
+    qualified = {q: r for q, r in qualified.items() if r is not None}
 
     # Every term is documented, and every term but an annotation carries a maturity.
     for term in classes | object_properties | datatype_properties | annotation_properties:
@@ -126,31 +130,43 @@ def main() -> int:
         elif any(graph.value(inverse, axis) is not None for axis in (RDFS.domain, RDFS.range)):
             finding(f"{local(inverse)}: an inverse takes its domain and range from {local(prop)}")
     for prop in object_properties - inverses:
-        domain = graph.value(prop, RDFS.domain)
-        named = members(graph, domain) if domain is not None else set()
-        between_entities = bool(named) and named <= entity_classes
-        if between_entities and inverse_of[prop] is None:
+        if between_entities(graph, prop, entity_classes) and inverse_of[prop] is None:
             finding(f"{local(prop)}: a relation between entities needs an owl:inverseOf")
 
-    # Every relation class has one source, one target, a relation name, and an inverse name.
-    endpoints: dict[URIRef, dict[URIRef, set[URIRef]]] = {}
-    for cls in relation_classes:
-        found: dict[URIRef, list[set[URIRef] | None]] = {ESTATE.source: [], ESTATE.target: []}
-        for restriction in graph.objects(cls, RDFS.subClassOf):
-            on = graph.value(restriction, OWL.onProperty)
-            if on in found:
-                found[on].append(members(graph, graph.value(restriction, OWL.allValuesFrom)))
-        endpoints[cls] = {}
-        for end, sets in found.items():
-            if len(sets) != 1 or sets[0] is None:
-                finding(f"{local(cls)}: needs exactly one owl:allValuesFrom on {local(end)}")
-                continue
-            endpoints[cls][end] = sets[0]
-            for missing in sets[0] - classes:
-                finding(f"{local(cls)}: {local(end)} names undeclared class {missing}")
-        for annotation in (ESTATE.relationName, ESTATE.inverseName):
-            if graph.value(cls, annotation) is None:
-                finding(f"{local(cls)}: no estate:{local(annotation)}")
+    # A qualified detail agrees with its plain relation: the same source, a target the relation
+    # allows, and a property chain that derives the relation from the detail.
+    for q, relation in qualified.items():
+        if relation not in object_properties:
+            finding(f"{local(q)}: qualifies {relation}, which is not a declared object property")
+            continue
+        if not between_entities(graph, relation, entity_classes):
+            finding(f"{local(q)}: qualifies {local(relation)}, not a relation between entities")
+        q_domain = members(graph, graph.value(q, RDFS.domain))
+        if q_domain != members(graph, graph.value(relation, RDFS.domain)):
+            finding(f"{local(q)}: its domain differs from {local(relation)}'s")
+        detail = graph.value(q, RDFS.range)
+        if detail not in classes:
+            finding(f"{local(q)}: its range is not a declared detail class")
+            continue
+        targets = [
+            members(graph, graph.value(r, OWL.allValuesFrom))
+            for r in graph.objects(detail, RDFS.subClassOf)
+            if graph.value(r, OWL.onProperty) == ESTATE.target
+        ]
+        if len(targets) != 1 or targets[0] is None:
+            finding(f"{local(detail)}: needs exactly one owl:allValuesFrom on target")
+        elif targets[0] != members(graph, graph.value(relation, RDFS.range)):
+            finding(f"{local(detail)}: its target differs from {local(relation)}'s range")
+        chain = graph.value(relation, OWL.propertyChainAxiom)
+        if chain is None or list(Collection(graph, chain)) != [q, ESTATE.target]:
+            finding(f"{local(relation)}: needs owl:propertyChainAxiom ( {local(q)} target )")
+    for relation in object_properties:
+        chain = graph.value(relation, OWL.propertyChainAxiom)
+        if chain is None:
+            continue
+        steps = list(Collection(graph, chain))
+        if not steps or qualified.get(steps[0]) != relation:
+            finding(f"{local(relation)}: its property chain does not start from its qualifier")
 
     # No class sits in two groupings.
     for cls in classes:
@@ -158,7 +174,7 @@ def main() -> int:
         if len(both) > 1:
             finding(f"{local(cls)}: sits in {sorted(local(g) for g in both)}; a class has one grouping")
 
-    check_against_spec(graph, classes, entity_classes, object_properties, inverses, relation_classes, endpoints)
+    check_against_spec(graph, classes, entity_classes, object_properties, inverses)
 
     for message in findings:
         print(message)
@@ -172,8 +188,6 @@ def check_against_spec(
     entity_classes: set[URIRef],
     object_properties: set[URIRef],
     inverses: set[URIRef],
-    relation_classes: set[URIRef],
-    endpoints: dict[URIRef, dict[URIRef, set[URIRef]]],
 ) -> None:
     """The vocabulary and the prose specification name the same classes, relations, and endpoints."""
     text = SPEC.read_text(encoding="utf-8")
@@ -194,14 +208,11 @@ def check_against_spec(
     rows = re.findall(r"^\| `(\w+)` \| ([^|]+) \| ([^|]+) \|", text, flags=re.MULTILINE)
     by_name: dict[str, tuple[set[URIRef], set[URIRef]]] = {}
     for prop in object_properties - inverses:
-        domain, rng = graph.value(prop, RDFS.domain), graph.value(prop, RDFS.range)
-        dom, ran = members(graph, domain) or set(), members(graph, rng) or set()
-        if dom and dom <= entity_classes and ran <= entity_classes:
-            by_name[local(prop)] = (dom, ran)
-    for cls in relation_classes:
-        name = graph.value(cls, ESTATE.relationName)
-        if name is not None and cls in endpoints and len(endpoints[cls]) == 2:
-            by_name[str(name)] = (endpoints[cls][ESTATE.source], endpoints[cls][ESTATE.target])
+        if between_entities(graph, prop, entity_classes):
+            by_name[local(prop)] = (
+                members(graph, graph.value(prop, RDFS.domain)) or set(),
+                members(graph, graph.value(prop, RDFS.range)) or set(),
+            )
 
     def classes_named(cell: str, where: str) -> set[URIRef]:
         named = set()

@@ -15,8 +15,9 @@ tests it against estates other than the one it was first drawn from.
   as-of.
 - `estate-shapes.ttl`: SHACL for what OWL cannot state. Key derivation; exactly one owner per
   runtime thing; at most one `instantiatedFrom` per Service Instance, targeting a Service; relation
-  endpoint classes; no individual `prov:Person` and no relation touching one; no value on a
-  `readsSecretsFrom`; every alias carrying its source; `ownedBy` targeting only a Team.
+  endpoint classes; every qualified detail agreeing with its plain relation; no individual
+  `prov:Person` and no relation touching one; no value on a `readsSecretsFrom`; every alias carrying
+  its source; `ownedBy` targeting only a Team.
 
 ## Competency questions and worked estates
 
@@ -42,6 +43,9 @@ tests it against estates other than the one it was first drawn from.
 
 ## Later
 
+- Qualified details as RDF 1.2 reifiers, once RDF 1.2 and SHACL 1.2 are W3C Recommendations and the
+  common tools read them: `pipeline deploys instance {| job "deploy-prod" |}` states the plain
+  relation and its details together, and maps one to one from the qualified details used now.
 - A JSON-LD context, so JSON that implementations already produce can be read as the vocabulary.
 - Alignments to OpenTelemetry semantic conventions and FOCUS, the two standards an estate's
   telemetry and cost rows already use, with a note on each lossy mapping.

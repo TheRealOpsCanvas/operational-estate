@@ -183,11 +183,19 @@ Team owns things and contains no one.
 
 ## 5. Relations
 
-A relation that carries nothing is an object property. A relation that carries data is a relation
-class (the n-ary pattern), with properties to its two endpoints and datatype properties for what it
-carries. Every relation between entities declares its inverse. Provenance relations read from
-subject to context (`implementedIn`, `deployedFrom`, `provisionedBy`); causal relations read from
-cause to effect (`triggers`, `deploys`, `deliversTo`).
+Every relation joins two entities and declares its inverse. Provenance relations read from subject
+to context (`implementedIn`, `deployedFrom`, `provisionedBy`); causal relations read from cause to
+effect (`triggers`, `deploys`, `deliversTo`).
+
+A triple joins exactly two things, so a relation that carries data of its own, a deployment's job
+and write location, is stated twice. The **plain relation** joins the two entities and is the fact:
+`pipeline deploys instance`. Its **qualified detail** is optional: a small resource the source
+points to with the relation's `qualified...` property (`qualifiedDeployment` for `deploys`), which
+names the same `target` and carries the data. The detail is how the vocabulary stores a relation's
+data; it is not an entity. The two must agree: wherever a qualified detail exists, its plain
+relation holds between the same source and target. The vocabulary states this as a property chain,
+so a reasoner derives the plain relation from the detail, and the constraints in section 7 require
+it of every estate graph. The same pattern is PROV-O's qualification pattern.
 
 | Relation | From | To | Carries |
 |---|---|---|---|
@@ -348,6 +356,8 @@ surfacing. An Identity is `provisionedBy` its declaring owner when it has one.
 
 Further constraints, each to be stated as a SHACL shape:
 
+- A qualified detail agrees with its plain relation: if an entity has a `qualified...` detail whose
+  `target` is another entity, the plain relation it qualifies holds between the same two entities.
 - A Service Instance has at most one `instantiatedFrom`, and its target is a Service.
 - An Environment has exactly one asserted Application.
 - A Pipeline that `deploys` an Environment or Instance is in the Repo it is `deployedFrom`.
