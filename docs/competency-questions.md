@@ -78,8 +78,8 @@ Terms: Pipeline, `triggers`, `deploys`; one file read (tool).
 Terms: Cloud Resource, `provisionedBy`; `instantiatedFrom`.
 
 - **Estate returns.** The resource by declared address or alias; `provisionedBy` the Instance,
-  Environment, Service, or Core Infrastructure whose declaration creates it; from an Instance,
-  `instantiatedFrom` Service, and from a Service, `memberOf` Application.
+  Environment, Application, Service, or Core Infrastructure whose declaration creates it; from an
+  Instance, `instantiatedFrom` Service, and from a Service, `memberOf` Application.
 - **Last mile.** None. At most three hops.
 - **Same for everyone.** Ownership is read from the module or chart boundary the declaration
   sits inside, never a name match.
