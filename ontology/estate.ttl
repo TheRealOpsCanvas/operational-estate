@@ -72,7 +72,7 @@ estate:Application
     rdfs:subClassOf estate:Software ;
     rdfs:label "Application"@en ;
     skos:definition "A product or capability that delivers value to its users: a set of Services and the Environments they are deployed into. It needs no repository of its own; in an estate of services it is named where it is composed and deployed."@en ;
-    skos:scopeNote "Not a single deployable, which is a Service, and not the platform it runs on, which is Core Infrastructure."@en ;
+    skos:scopeNote "Not a single deployable, which is a Service, and not what it runs on: its Service Instances run on Cloud Resources, whether its own Environments or Core Infrastructure provision them."@en ;
     estate:keyRule "Its name."@en ;
     estate:maturity "draft" .
 

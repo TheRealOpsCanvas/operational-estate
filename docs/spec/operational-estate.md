@@ -76,8 +76,9 @@ observability tool is the same, through `observedBy`.
 ### Application
 
 A product or capability that delivers value to its users: a set of Services and the Environments
-they are deployed into. Not a single deployable (a Service), and not the platform it runs on (Core
-Infrastructure). An Application needs no repository of its own: in an estate of services, it is
+they are deployed into. Not a single deployable (a Service), and not what it runs on: its Service
+Instances run on Cloud Resources, whether its own Environments or Core Infrastructure provision
+them. An Application needs no repository of its own: in an estate of services, it is
 named where it is composed and deployed.
 
 ### Service
