@@ -186,7 +186,7 @@ estate:Alias
     a owl:Class ;
     rdfs:label "Alias"@en ;
     skos:definition "A live identifier bound to a declared entity, such as an id or ARN, read from a source that holds both halves, with where and when it was read."@en ;
-    skos:scopeNote "Not an entity and not a key: an entity's key never changes when an alias does."@en ;
+    skos:scopeNote "Not an entity and not a key: an entity's key never changes when an alias does. Not deleted when its source moves on: it is marked prov:invalidatedAtTime and kept, because older cost rows carry it."@en ;
     estate:maturity "draft" .
 
 estate:Identifier
@@ -885,12 +885,4 @@ estate:sourceVersion
     rdfs:domain estate:Alias ;
     rdfs:range xsd:string ;
     skos:definition "The serial or version of the source the Alias was read from."@en ;
-    estate:maturity "draft" .
-
-estate:aliasStatus
-    a owl:DatatypeProperty, owl:FunctionalProperty ;
-    rdfs:label "alias status"@en ;
-    rdfs:domain estate:Alias ;
-    rdfs:range [ a rdfs:Datatype ; owl:oneOf ( "current" "former" ) ] ;
-    skos:definition "\"current\", or \"former\" once the source maps the address to a new id. A former Alias is kept, because older cost rows carry it."@en ;
     estate:maturity "draft" .

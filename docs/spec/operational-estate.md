@@ -362,8 +362,9 @@ to its id or ARN is read from a source that holds both halves: Terraform state, 
 stack listing, a Pulumi checkpoint, a Kubernetes object's status, or a controller's tags on the
 cloud side, such as `kubernetes.io/cluster/<name>`, which the alias marks as weaker than a
 declaration. An alias carries its source, the source's serial or version, and its as-of. When a
-source moves on and an address maps to a new id, the former alias is kept with status `former`
-rather than `current`, because older cost rows still carry it. Environment and Team also carry
+source moves on and an address maps to a new id, the former alias is kept and marked
+`prov:invalidatedAtTime`, the time it stopped holding, because older cost rows still carry it; an
+alias with no invalidation time is current. Environment and Team also carry
 alternate names.
 
 **A detail is keyed by the relation it reifies**, meaning its source's key, the relation, and its
@@ -400,13 +401,16 @@ SPARQL 1.2 queries, until SHACL 1.2 is published:
 - `ownedBy` targets only a Team.
 - A `readsSecretsFrom` carries no secret value.
 - Every alias carries its source.
+- At most one alias per declared address and source has no `prov:invalidatedAtTime`.
 - No individual `prov:Person` appears in an estate graph.
 
 ## 8. Provenance
 
 Provenance uses PROV-O directly, under the `prov:` prefix. A fact `prov:wasDerivedFrom` each
 citation; a scan is a `prov:Activity` that generated it; a confirmation `prov:wasAttributedTo` the
-`prov:Agent` that made it; `prov:generatedAtTime` is its as-of.
+`prov:Agent` that made it; `prov:generatedAtTime` is its as-of; `prov:invalidatedAtTime` is when a
+fact that was true stopped being so, such as an alias its source has moved past. A fact is never
+rewritten to say it no longer holds.
 
 ## 9. Cost
 
@@ -463,6 +467,11 @@ Interoperability note gives a lossless translation to RDF 1.1 for any tool that 
 and `instantiatedFrom` a placement origin, a name match or an operator's choice. It was rejected:
 how a fact came to be is what PROV-O states for every fact, a private two-value copy of it on two
 relations would say it for those alone, and the graph holds only what has been confirmed.
+
+**When an alias stopped holding is provenance, not a status.** An earlier draft gave an alias a
+status, `current` or `former`. It was rejected: a status goes stale when the source moves on and has
+to be rewritten, while `prov:invalidatedAtTime` is written once and says when, which is what
+attributing an older cost row needs.
 
 **Software, Scope, Runtime rather than Logical and Deployed.** Environment is not something that
 runs, and Core Infrastructure is not something deployed. A grouping named for meaning but populated

@@ -17,9 +17,9 @@ tests it against estates other than the one it was first drawn from.
 - `estate-shapes.ttl`: SHACL for what OWL cannot state. Key derivation; exactly one owner per
   runtime thing; at most one `instantiatedFrom` per Service Instance, targeting a Service; relation
   endpoint classes; the rules every detail keeps, moved from SPARQL once SHACL 1.2 is published and
-  a validator reads RDF 1.2; no individual
-  `prov:Person` and no relation touching one; no value on a `readsSecretsFrom`; every alias carrying
-  its source; `ownedBy` targeting only a Team.
+  a validator reads RDF 1.2; no individual `prov:Person` and no relation touching one; no value on
+  a `readsSecretsFrom`; every alias carrying its source, and at most one current alias per address
+  and source; values only from a property's listed set; `ownedBy` targeting only a Team.
 
 ## Competency questions and worked estates
 
