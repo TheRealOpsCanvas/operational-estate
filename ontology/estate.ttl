@@ -44,7 +44,7 @@ estate:Entity
     a owl:Class ;
     rdfs:label "Entity"@en ;
     skos:definition "A thing in the estate that has a key and is looked up by it: an Application, a Service, a Repo, and every other class the specification defines as part of the estate."@en ;
-    skos:scopeNote "Not everything in an estate graph: the data a relation carries, an Alias, and an Identifier describe entities and are never looked up on their own. Not the RDF sense of a node, which is anything in any graph."@en ;
+    skos:scopeNote "Not everything in an estate graph: a Detail, an Alias, and an Identifier describe entities or their relations and are never looked up on their own."@en ;
     estate:maturity "draft" .
 
 estate:Software
