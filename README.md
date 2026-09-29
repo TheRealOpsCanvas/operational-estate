@@ -47,7 +47,8 @@ python tools/check.py
 ```
 
 The check parses the vocabulary, asserts its structural consistency, and confirms it names the same
-classes, relations, and endpoints as the prose specification. It runs on every pull request.
+classes, relations, and endpoints as the prose specification. It then parses the specification's
+Turtle examples as RDF 1.2 and checks the rules every detail keeps. It runs on every pull request.
 
 ## Contributing
 

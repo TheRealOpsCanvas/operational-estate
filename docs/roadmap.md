@@ -7,15 +7,17 @@ tests it against estates other than the one it was first drawn from.
 
 - Done: [`ontology/estate.ttl`](../ontology/estate.ttl), every class and relation in OWL under the
   `estate:` prefix, each with its definition, what it is not, its aliases, its key rule, and its
-  maturity. Relations that carry data are relation classes; every relation between entities has an
-  inverse. `tools/check.py` asserts its structural consistency and its agreement with the prose
-  specification.
+  maturity. Every relation between entities has an inverse, and a relation that carries data puts
+  it on an RDF 1.2 reifier of a detail class. `tools/check.py` asserts its structural consistency
+  and its agreement with the prose specification, and checks the specification's Turtle examples
+  against the rules every detail keeps, as SPARQL 1.2 queries run with pyoxigraph.
 - PROV-O used directly for provenance: `prov:wasDerivedFrom` for a citation, `prov:Activity` for a
   scan, `prov:wasAttributedTo` a `prov:Agent` for a confirmation, `prov:generatedAtTime` for the
   as-of.
 - `estate-shapes.ttl`: SHACL for what OWL cannot state. Key derivation; exactly one owner per
   runtime thing; at most one `instantiatedFrom` per Service Instance, targeting a Service; relation
-  endpoint classes; every qualified detail agreeing with its plain relation; no individual
+  endpoint classes; the rules every detail keeps, moved from SPARQL once SHACL 1.2 is published and
+  a validator reads RDF 1.2; no individual
   `prov:Person` and no relation touching one; no value on a `readsSecretsFrom`; every alias carrying
   its source; `ownedBy` targeting only a Team.
 
@@ -43,9 +45,7 @@ tests it against estates other than the one it was first drawn from.
 
 ## Later
 
-- Qualified details as RDF 1.2 reifiers, once RDF 1.2 and SHACL 1.2 are W3C Recommendations and the
-  common tools read them: `pipeline deploys instance {| job "deploy-prod" |}` states the plain
-  relation and its details together, and maps one to one from the qualified details used now.
+- The first published version, once RDF 1.2 is a W3C Recommendation.
 - A JSON-LD context, so JSON that implementations already produce can be read as the vocabulary.
 - Alignments to OpenTelemetry semantic conventions and FOCUS, the two standards an estate's
   telemetry and cost rows already use, with a note on each lossy mapping.

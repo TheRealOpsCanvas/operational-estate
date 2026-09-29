@@ -2,6 +2,7 @@
 
 **Status:** draft. Every term in this document is `draft`.
 **Prefix:** `estate:` **Namespace:** `https://w3id.org/operational-estate#` (reserved)
+**Built on:** RDF 1.2, full conformance, whose concrete syntaxes are not yet W3C Recommendations
 
 ## 1. Scope
 
@@ -187,15 +188,21 @@ Every relation joins two entities and declares its inverse. Provenance relations
 to context (`implementedIn`, `deployedFrom`, `provisionedBy`); causal relations read from cause to
 effect (`triggers`, `deploys`, `deliversTo`).
 
-A triple joins exactly two things, so a relation that carries data of its own, a deployment's job
-and write location, is stated twice. The **plain relation** joins the two entities and is the fact:
-`pipeline deploys instance`. Its **qualified detail** is optional: a small resource the source
-points to with the relation's `qualified...` property (`qualifiedDeployment` for `deploys`), which
-names the same `target` and carries the data. The detail is how the vocabulary stores a relation's
-data; it is not an entity. The two must agree: wherever a qualified detail exists, its plain
-relation holds between the same source and target. The vocabulary states this as a property chain,
-so a reasoner derives the plain relation from the detail, and the constraints in section 7 require
-it of every estate graph. The same pattern is PROV-O's qualification pattern.
+A relation that carries data of its own, a deployment's job and write location, is stated as the
+relation, and the data is put on a **detail**: an RDF 1.2 reifier of that relation's triple. The
+relation is the fact: `pipeline deploys instance`. A detail is optional, and one relation may have
+several, told apart by their key (section 6). The detail's class names the relation it describes
+(`Deployment` for `deploys`); it is how the vocabulary stores a relation's data, and it is not an
+entity. In Turtle the annotation syntax states both at once:
+
+```turtle
+:deploy-yml estate:deploys :user-svc-prod
+    ~ :deploy-yml.deploys.user-svc-prod.deploy-prod
+    {| estate:job "deploy-prod" ; estate:writesPath "values-prod.yaml" ; estate:writesField "image.tag" |} .
+```
+
+A reifier describes a triple without asserting it, so the relation a detail reifies must be
+asserted too; the annotation syntax does this, and section 7 requires it of every estate graph.
 
 | Relation | From | To | Carries |
 |---|---|---|---|
@@ -341,6 +348,13 @@ a declaration. An alias carries its source, the source's serial or version, and 
 source moves on and an address maps to a new id, the former alias is kept as former, because older
 cost rows still carry it. Environment and Team also carry alternate names.
 
+**A detail is keyed by the relation it reifies**, meaning its source's key, the relation, and its
+target's key, and, where one relation can have several details, by what tells them apart: the job
+for a `triggers`, `deploys`, `builds`, or `deliversTo`, the secret path for a `readsSecretsFrom`. A
+`placedUnder`, `instantiatedFrom`, `observedBy`, or `connectedVia` has at most one detail. A detail
+is named by an identifier derived from its key, never a blank node, so two graphs that say the same
+thing about one relation merge into one detail.
+
 **An individual's identifier is relative: its kind and key, resolved under a base.** For example
 `service_instance/shop/prod/user-svc`. A serialization sets `@base`, and how an implementation
 chooses its base is its own. Two graphs of one estate merge by kind and key with no identifier
@@ -354,10 +368,13 @@ Environment, a Core Infrastructure, or a Service Instance. Use across Environmen
 never shared membership, and a `dependsOn` from one Environment into another is a gap worth
 surfacing. An Identity is `provisionedBy` its declaring owner when it has one.
 
-Further constraints, each to be stated as a SHACL shape:
+Further constraints, each to be stated as a SHACL shape. The ones about details are checked today as
+SPARQL 1.2 queries, until SHACL 1.2 is published:
 
-- A qualified detail agrees with its plain relation: if an entity has a `qualified...` detail whose
-  `target` is another entity, the plain relation it qualifies holds between the same two entities.
+- A detail is named by an identifier derived from its key, never a blank node.
+- A detail reifies exactly one relation, that relation carries data, and it is asserted.
+- A relation's data is on a detail of that relation: a `job` is on a `triggers`, `deploys`,
+  `builds`, or `deliversTo`, never on a `readsSecretsFrom`.
 - A Service Instance has at most one `instantiatedFrom`, and its target is a Service.
 - An Environment has exactly one asserted Application.
 - A Pipeline that `deploys` an Environment or Instance is in the Repo it is `deployedFrom`.
@@ -402,7 +419,9 @@ is said, the model is wrong there.
 Every term is `draft` until the first published version, and a draft term may be renamed or
 removed. After publication a term is `stable`: it is added and never removed or repurposed, and one
 that turns out wrong is marked `owl:deprecated` with a pointer to its replacement. `owl:versionInfo`
-carries a version; the namespace never carries one and never moves.
+carries a version; the namespace never carries one and never moves. The first published version
+waits for RDF 1.2 to become a W3C Recommendation, so that nothing this specification depends on
+changes after its terms are stable.
 
 ## Appendix: rationale
 
@@ -412,6 +431,13 @@ one owner" or "no value on a secret reference"; SHACL can, and validating an est
 shapes makes the specification checkable by anyone. Rejected: a programming-language schema, which
 speaks to nobody outside one codebase; LinkML, which adds a generator between the model and OWL for
 a model this size; prose alone, because nothing checks a description.
+
+**RDF 1.2 reifiers for a relation's data, rather than qualified details.** RDF 1.1 can put data on a
+relation only through a separate resource that repeats the relation's target, PROV-O's
+qualification pattern, which then needs a rule that the two agree. A reifier is bound to the triple
+it describes, so the target cannot disagree, and several reifiers of one triple are part of the
+model. The cost is that RDF 1.2 is newer than the tools most estates already use; the W3C's RDF 1.2
+Interoperability note gives a lossless translation to RDF 1.1 for any tool that needs one.
 
 **Software, Scope, Runtime rather than Logical and Deployed.** Environment is not something that
 runs, and Core Infrastructure is not something deployed. A grouping named for meaning but populated

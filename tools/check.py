@@ -2,9 +2,11 @@
 
 Parses ontology/estate.ttl and asserts what an OWL reasoner would catch structurally, without being
 one: every term is documented, every domain and range names a declared class, every relation
-between entities has an inverse, every qualified detail agrees with the relation it qualifies, and
-no class sits in two groupings. It then checks that the vocabulary and the prose specification
-agree: the same classes, the same relations, and the same endpoints for each.
+between entities has an inverse, every detail class names the one relation it describes, and no
+class sits in two groupings. It then checks that the vocabulary and the prose specification agree:
+the same classes, the same relations, the same endpoints, and the same relations carrying data.
+Last, it parses every Turtle example in the specification as RDF 1.2 and checks the rules every
+detail keeps, after proving on a broken example that each rule still fires.
 
 Run from the repository root:  python tools/check.py
 Exits non-zero, listing every finding, if anything fails.
@@ -16,7 +18,8 @@ import re
 import sys
 from pathlib import Path
 
-from rdflib import BNode, Graph, Literal, Namespace, URIRef
+import pyoxigraph as ox
+from rdflib import BNode, Graph, Namespace, URIRef
 from rdflib.collection import Collection
 from rdflib.namespace import OWL, RDF, RDFS, SKOS, XSD
 
@@ -86,9 +89,6 @@ def main() -> int:
     entity = ESTATE.Entity
     groupings = {ESTATE.Software, ESTATE.Runtime}
     entity_classes = {c for c in classes if entity in superclasses(graph, c) or c == entity}
-    # A qualified... property names the plain relation it qualifies; its range is the detail class.
-    qualified = {p: graph.value(p, ESTATE.qualifies) for p in object_properties}
-    qualified = {q: r for q, r in qualified.items() if r is not None}
 
     # Every term is documented, and every term but an annotation carries a maturity.
     for term in classes | object_properties | datatype_properties | annotation_properties:
@@ -133,40 +133,31 @@ def main() -> int:
         if between_entities(graph, prop, entity_classes) and inverse_of[prop] is None:
             finding(f"{local(prop)}: a relation between entities needs an owl:inverseOf")
 
-    # A qualified detail agrees with its plain relation: the same source, a target the relation
-    # allows, and a property chain that derives the relation from the detail.
-    for q, relation in qualified.items():
+    # A detail class names one relation between entities, sits under Detail, and is the only
+    # detail class of that relation; every class under Detail names one.
+    detail_root = ESTATE.Detail
+    detail_classes = {c for c in classes if detail_root in superclasses(graph, c)}
+    detail_of = {c: graph.value(c, ESTATE.detailOf) for c in classes}
+    detail_of = {c: r for c, r in detail_of.items() if r is not None}
+    for cls, relation in detail_of.items():
+        if cls not in detail_classes:
+            finding(f"{local(cls)}: names a relation with estate:detailOf but is not a subclass of Detail")
         if relation not in object_properties:
-            finding(f"{local(q)}: qualifies {relation}, which is not a declared object property")
-            continue
-        if not between_entities(graph, relation, entity_classes):
-            finding(f"{local(q)}: qualifies {local(relation)}, not a relation between entities")
-        q_domain = members(graph, graph.value(q, RDFS.domain))
-        if q_domain != members(graph, graph.value(relation, RDFS.domain)):
-            finding(f"{local(q)}: its domain differs from {local(relation)}'s")
-        detail = graph.value(q, RDFS.range)
-        if detail not in classes:
-            finding(f"{local(q)}: its range is not a declared detail class")
-            continue
-        targets = [
-            members(graph, graph.value(r, OWL.allValuesFrom))
-            for r in graph.objects(detail, RDFS.subClassOf)
-            if graph.value(r, OWL.onProperty) == ESTATE.target
-        ]
-        if len(targets) != 1 or targets[0] is None:
-            finding(f"{local(detail)}: needs exactly one owl:allValuesFrom on target")
-        elif targets[0] != members(graph, graph.value(relation, RDFS.range)):
-            finding(f"{local(detail)}: its target differs from {local(relation)}'s range")
-        chain = graph.value(relation, OWL.propertyChainAxiom)
-        if chain is None or list(Collection(graph, chain)) != [q, ESTATE.target]:
-            finding(f"{local(relation)}: needs owl:propertyChainAxiom ( {local(q)} target )")
-    for relation in object_properties:
-        chain = graph.value(relation, OWL.propertyChainAxiom)
-        if chain is None:
-            continue
-        steps = list(Collection(graph, chain))
-        if not steps or qualified.get(steps[0]) != relation:
-            finding(f"{local(relation)}: its property chain does not start from its qualifier")
+            finding(f"{local(cls)}: is a detail of {relation}, which is not a declared object property")
+        elif not between_entities(graph, relation, entity_classes):
+            finding(f"{local(cls)}: is a detail of {local(relation)}, not a relation between entities")
+    for cls in sorted(detail_classes - set(detail_of)):
+        finding(f"{local(cls)}: a subclass of Detail needs estate:detailOf")
+    for relation in set(detail_of.values()):
+        named = sorted(local(c) for c, r in detail_of.items() if r == relation)
+        if len(named) > 1:
+            finding(f"{local(relation)}: has several detail classes {named}; a relation has one")
+
+    # A property's domain holds details or entities, never both.
+    for prop in object_properties | datatype_properties:
+        domain = members(graph, graph.value(prop, RDFS.domain)) or set()
+        if domain & detail_classes and domain - detail_classes:
+            finding(f"{local(prop)}: its domain mixes detail classes with other classes")
 
     # No class sits in two groupings.
     for cls in classes:
@@ -174,7 +165,8 @@ def main() -> int:
         if len(both) > 1:
             finding(f"{local(cls)}: sits in {sorted(local(g) for g in both)}; a class has one grouping")
 
-    check_against_spec(graph, classes, entity_classes, object_properties, inverses)
+    check_against_spec(graph, classes, entity_classes, object_properties, inverses, set(detail_of.values()))
+    check_examples()
 
     for message in findings:
         print(message)
@@ -188,6 +180,7 @@ def check_against_spec(
     entity_classes: set[URIRef],
     object_properties: set[URIRef],
     inverses: set[URIRef],
+    carrying: set[URIRef],
 ) -> None:
     """The vocabulary and the prose specification name the same classes, relations, and endpoints."""
     text = SPEC.read_text(encoding="utf-8")
@@ -205,7 +198,7 @@ def check_against_spec(
         finding(f"vocabulary: class '{label}' has no section under '4. Classes' in the spec")
 
     # Relations: every row of the relation table exists, with the same endpoints.
-    rows = re.findall(r"^\| `(\w+)` \| ([^|]+) \| ([^|]+) \|", text, flags=re.MULTILINE)
+    rows = re.findall(r"^\| `(\w+)` \| ([^|]+) \| ([^|]+) \|([^|]*)\|", text, flags=re.MULTILINE)
     by_name: dict[str, tuple[set[URIRef], set[URIRef]]] = {}
     for prop in object_properties - inverses:
         if between_entities(graph, prop, entity_classes):
@@ -224,7 +217,7 @@ def check_against_spec(
         return named
 
     table_names = set()
-    for name, source, target in rows:
+    for name, source, target, carries in rows:
         table_names.add(name)
         if name not in by_name:
             finding(f"spec: relation '{name}' is not in the vocabulary")
@@ -234,8 +227,87 @@ def check_against_spec(
             finding(f"'{name}': the spec's From column and the vocabulary's source differ")
         if classes_named(target, f"'{name}' To") != ran:
             finding(f"'{name}': the spec's To column and the vocabulary's target differ")
+        if bool(carries.strip()) != (ESTATE[name] in carrying):
+            finding(f"'{name}': the spec's Carries column and the vocabulary's detail class disagree")
     for name in sorted(set(by_name) - table_names):
         finding(f"vocabulary: relation '{name}' is not in the spec's relation table")
+
+
+# What every estate graph satisfies about details, as SPARQL 1.2 over the graph and the vocabulary.
+# Each query returns the reifiers that break its rule.
+DETAIL_RULES = {
+    "a detail is named by an IRI, never a blank node": """
+        SELECT ?r WHERE { ?r rdf:reifies ?t FILTER isBlank(?r) }""",
+    "the relation a detail reifies is asserted": """
+        SELECT ?r WHERE { ?r rdf:reifies <<( ?s ?p ?o )>> FILTER NOT EXISTS { ?s ?p ?o } }""",
+    "a detail reifies one relation": """
+        SELECT ?r WHERE { ?r rdf:reifies ?a, ?b FILTER (?a != ?b) }""",
+    "a detail reifies a relation that carries data": """
+        SELECT ?r WHERE { ?r rdf:reifies <<( ?s ?p ?o )>> FILTER NOT EXISTS { ?d estate:detailOf ?p } }""",
+    "a relation's data is on a detail of that relation": """
+        SELECT ?r WHERE {
+            ?r ?data ?v .
+            ?data rdfs:domain/(owl:unionOf/rdf:rest*/rdf:first)? ?c . ?c rdfs:subClassOf estate:Detail .
+            FILTER NOT EXISTS {
+                ?r rdf:reifies <<( ?s ?p ?o )>> .
+                ?data rdfs:domain/(owl:unionOf/rdf:rest*/rdf:first)? ?d . ?d estate:detailOf ?p .
+            }
+        }""",
+}
+PREFIXES = """PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX owl: <http://www.w3.org/2002/07/owl#>
+PREFIX estate: <https://w3id.org/operational-estate#>
+PREFIX : <https://example.org/estate/>
+"""
+# Breaks every rule above once, so the check proves each rule still fires.
+BROKEN = """
+:p1 estate:deploys :i1 ~ :ok {| estate:job "deploy-prod" |} .
+:p1 estate:deploys :i1 {| estate:job "unnamed" |} .
+:unasserted rdf:reifies <<( :p1 estate:deploys :i2 )>> ; estate:job "deploy-dev" .
+:two rdf:reifies <<( :p1 estate:deploys :i1 )>>, <<( :p1 estate:builds :s1 )>> .
+:plain rdf:reifies <<( :i1 estate:inEnvironment :e1 )>> .
+:wrong rdf:reifies <<( :i1 estate:readsSecretsFrom :v1 )>> ; estate:job "deploy-prod" .
+:i1 estate:readsSecretsFrom :v1 .
+:p1 estate:builds :s1 .
+:i1 estate:inEnvironment :e1 .
+"""
+BROKEN_EXPECTED = {
+    "a detail is named by an IRI, never a blank node": 1,
+    "the relation a detail reifies is asserted": 1,
+    "a detail reifies one relation": 1,
+    "a detail reifies a relation that carries data": 1,
+    "a relation's data is on a detail of that relation": 1,
+}
+
+
+def detail_violations(turtle: str) -> dict[str, int]:
+    """How many reifiers in the Turtle 1.2 text break each detail rule."""
+    store = ox.Store()
+    store.load(VOCABULARY.read_bytes(), format=ox.RdfFormat.TURTLE)
+    store.load((PREFIXES + turtle).encode(), format=ox.RdfFormat.TURTLE, to_graph=ox.DefaultGraph())
+    return {
+        rule: len({row["r"] for row in store.query(PREFIXES + query, use_default_graph_as_union=True)})
+        for rule, query in DETAIL_RULES.items()
+    }
+
+
+def check_examples() -> None:
+    """Every Turtle example in the specification parses as RDF 1.2 and keeps the detail rules."""
+    got = detail_violations(BROKEN)
+    for rule, count in got.items():
+        if count != BROKEN_EXPECTED[rule]:
+            finding(f"detail rule '{rule}' caught {count} of {BROKEN_EXPECTED[rule]} in the broken example")
+    blocks = re.findall(r"^```turtle\n(.*?)^```", SPEC.read_text(encoding="utf-8"), flags=re.MULTILINE | re.DOTALL)
+    for number, block in enumerate(blocks, 1):
+        try:
+            got = detail_violations(block)
+        except (SyntaxError, ValueError) as error:
+            finding(f"spec: Turtle example {number} does not parse: {error}")
+            continue
+        for rule, count in got.items():
+            if count:
+                finding(f"spec: Turtle example {number} breaks '{rule}'")
 
 
 if __name__ == "__main__":

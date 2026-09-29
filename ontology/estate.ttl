@@ -12,7 +12,7 @@
 #
 # Every term carries rdfs:label, skos:definition, and estate:maturity. skos:scopeNote says what
 # the term is not. Every relation between two entities is an object property with an inverse; one
-# that carries data also has a qualified detail, described where those relations are declared.
+# that carries data puts it on an RDF 1.2 reifier, described where those relations are declared.
 
 estate:
     a owl:Ontology ;
@@ -202,7 +202,10 @@ estate:Identifier
 
 [] a owl:AllDisjointClasses ;
     owl:members ( estate:Entity estate:Alias estate:Identifier
-                  estate:Placement estate:Instantiation estate:Trigger estate:Deployment estate:Build
+                  estate:Detail ) .
+
+[] a owl:AllDisjointClasses ;
+    owl:members ( estate:Placement estate:Instantiation estate:Trigger estate:Deployment estate:Build
                   estate:Delivery estate:SecretRead estate:Observation estate:Connection ) .
 
 #################################################################
@@ -415,25 +418,27 @@ estate:owns
 #################################################################
 # Relations that carry data
 #
-# A triple joins two things, so a relation that carries data of its own, such as the job a
-# pipeline deploys with, is stated twice: as a plain relation between the two entities, and as a
-# qualified detail, a small resource the source points to with qualified..., carrying the target
-# and the data. The plain relation is the fact; the detail is optional. Where a detail exists, its
-# plain relation holds too: the property chain states it, and the shapes require it. The detail
+# A relation that carries data of its own, such as the job a pipeline deploys with, is stated as
+# the relation, and the data is put on a detail: an RDF 1.2 reifier of that triple, whose class
+# names the relation it describes with estate:detailOf. The relation is the fact; a detail is
+# optional, and one relation may have several, told apart by their key. A detail is named by an
+# IRI derived from its key, never a blank node, and the triple it reifies is asserted. The detail
 # classes store a relation's data; they are not things in the estate.
+#
+#     :deploy-yml estate:deploys :user-svc-prod ~ :d {| estate:job "deploy-prod" |} .
 #################################################################
 
-estate:target
-    a owl:ObjectProperty, owl:FunctionalProperty ;
-    rdfs:label "target"@en ;
-    rdfs:range estate:Entity ;
-    skos:definition "The entity a qualified detail's relation reads to. Its source is whatever points to the detail."@en ;
-    estate:maturity "draft" .
-
-estate:qualifies
+estate:detailOf
     a owl:AnnotationProperty ;
-    rdfs:label "qualifies"@en ;
-    skos:definition "The plain relation whose details a qualified... property's detail carries."@en .
+    rdfs:label "detail of"@en ;
+    skos:definition "The relation whose triples a detail class's individuals reify, with rdf:reifies."@en .
+
+estate:Detail
+    a owl:Class ;
+    rdfs:label "Detail"@en ;
+    skos:definition "An RDF 1.2 reifier of one relation between two entities, carrying that relation's data. Its class names the relation, with estate:detailOf."@en ;
+    skos:scopeNote "Not an entity: it is identified by the relation it reifies, not looked up on its own. Not a statement that the relation holds; the relation is asserted separately."@en ;
+    estate:maturity "draft" .
 
 estate:placedUnder
     a owl:ObjectProperty ;
@@ -441,7 +446,6 @@ estate:placedUnder
     rdfs:domain estate:Environment ;
     rdfs:range estate:Application ;
     owl:inverseOf estate:places ;
-    owl:propertyChainAxiom ( estate:qualifiedPlacement estate:target ) ;
     skos:definition "The Application an Environment belongs to, resolved by name from the Application its key asserted."@en ;
     estate:maturity "draft" .
 
@@ -451,20 +455,13 @@ estate:places
     skos:definition "The inverse of placedUnder."@en ;
     estate:maturity "draft" .
 
-estate:qualifiedPlacement
-    a owl:ObjectProperty ;
-    rdfs:label "qualified placement"@en ;
-    rdfs:domain estate:Environment ;
-    rdfs:range estate:Placement ;
-    estate:qualifies estate:placedUnder ;
-    skos:definition "A Placement detail of one of this entity's placedUnder relations."@en ;
-    estate:maturity "draft" .
-
 estate:Placement
     a owl:Class ;
-    rdfs:subClassOf [ a owl:Restriction ; owl:onProperty estate:target ; owl:allValuesFrom estate:Application ] ;
+    rdfs:subClassOf estate:Detail ;
     rdfs:label "Placement"@en ;
+    estate:detailOf estate:placedUnder ;
     skos:definition "The details of a placedUnder: how the placement was resolved."@en ;
+    estate:keyRule "The relation it reifies."@en ;
     estate:maturity "draft" .
 
 estate:instantiatedFrom
@@ -473,7 +470,6 @@ estate:instantiatedFrom
     rdfs:domain estate:ServiceInstance ;
     rdfs:range estate:Service ;
     owl:inverseOf estate:instantiatedAs ;
-    owl:propertyChainAxiom ( estate:qualifiedInstantiation estate:target ) ;
     skos:definition "The one Service a Service Instance is a deployment of, resolved by name when either side arrives."@en ;
     estate:maturity "draft" .
 
@@ -483,20 +479,13 @@ estate:instantiatedAs
     skos:definition "The inverse of instantiatedFrom."@en ;
     estate:maturity "draft" .
 
-estate:qualifiedInstantiation
-    a owl:ObjectProperty ;
-    rdfs:label "qualified instantiation"@en ;
-    rdfs:domain estate:ServiceInstance ;
-    rdfs:range estate:Instantiation ;
-    estate:qualifies estate:instantiatedFrom ;
-    skos:definition "An Instantiation detail of one of this entity's instantiatedFrom relations."@en ;
-    estate:maturity "draft" .
-
 estate:Instantiation
     a owl:Class ;
-    rdfs:subClassOf [ a owl:Restriction ; owl:onProperty estate:target ; owl:allValuesFrom estate:Service ] ;
+    rdfs:subClassOf estate:Detail ;
     rdfs:label "Instantiation"@en ;
+    estate:detailOf estate:instantiatedFrom ;
     skos:definition "The details of an instantiatedFrom: how the Service was resolved."@en ;
+    estate:keyRule "The relation it reifies."@en ;
     estate:maturity "draft" .
 
 estate:triggers
@@ -505,7 +494,6 @@ estate:triggers
     rdfs:domain estate:Pipeline ;
     rdfs:range estate:Pipeline ;
     owl:inverseOf estate:triggeredBy ;
-    owl:propertyChainAxiom ( estate:qualifiedTrigger estate:target ) ;
     skos:definition "A Pipeline another Pipeline starts from one of its jobs."@en ;
     estate:maturity "draft" .
 
@@ -515,20 +503,13 @@ estate:triggeredBy
     skos:definition "The inverse of triggers."@en ;
     estate:maturity "draft" .
 
-estate:qualifiedTrigger
-    a owl:ObjectProperty ;
-    rdfs:label "qualified trigger"@en ;
-    rdfs:domain estate:Pipeline ;
-    rdfs:range estate:Trigger ;
-    estate:qualifies estate:triggers ;
-    skos:definition "A Trigger detail of one of this entity's triggers relations."@en ;
-    estate:maturity "draft" .
-
 estate:Trigger
     a owl:Class ;
-    rdfs:subClassOf [ a owl:Restriction ; owl:onProperty estate:target ; owl:allValuesFrom estate:Pipeline ] ;
+    rdfs:subClassOf estate:Detail ;
     rdfs:label "Trigger"@en ;
+    estate:detailOf estate:triggers ;
     skos:definition "The details of a triggers: the job, and the variables it sends."@en ;
+    estate:keyRule "The relation it reifies, and its job."@en ;
     estate:maturity "draft" .
 
 estate:deploys
@@ -537,7 +518,6 @@ estate:deploys
     rdfs:domain estate:Pipeline ;
     rdfs:range [ a owl:Class ; owl:unionOf ( estate:Environment estate:ServiceInstance ) ] ;
     owl:inverseOf estate:deployedBy ;
-    owl:propertyChainAxiom ( estate:qualifiedDeployment estate:target ) ;
     skos:definition "An Environment or Service Instance a Pipeline deploys."@en ;
     estate:maturity "draft" .
 
@@ -547,20 +527,13 @@ estate:deployedBy
     skos:definition "The inverse of deploys."@en ;
     estate:maturity "draft" .
 
-estate:qualifiedDeployment
-    a owl:ObjectProperty ;
-    rdfs:label "qualified deployment"@en ;
-    rdfs:domain estate:Pipeline ;
-    rdfs:range estate:Deployment ;
-    estate:qualifies estate:deploys ;
-    skos:definition "A Deployment detail of one of this entity's deploys relations."@en ;
-    estate:maturity "draft" .
-
 estate:Deployment
     a owl:Class ;
-    rdfs:subClassOf [ a owl:Restriction ; owl:onProperty estate:target ; owl:allValuesFrom [ a owl:Class ; owl:unionOf ( estate:Environment estate:ServiceInstance ) ] ] ;
+    rdfs:subClassOf estate:Detail ;
     rdfs:label "Deployment"@en ;
+    estate:detailOf estate:deploys ;
     skos:definition "The details of a deploys: the job, and the pinned location it writes: repository, path, field, and commit."@en ;
+    estate:keyRule "The relation it reifies, and its job."@en ;
     estate:maturity "draft" .
 
 estate:builds
@@ -569,7 +542,6 @@ estate:builds
     rdfs:domain estate:Pipeline ;
     rdfs:range estate:Service ;
     owl:inverseOf estate:builtBy ;
-    owl:propertyChainAxiom ( estate:qualifiedBuild estate:target ) ;
     skos:definition "A Service whose artifact a Pipeline builds."@en ;
     estate:maturity "draft" .
 
@@ -579,21 +551,14 @@ estate:builtBy
     skos:definition "The inverse of builds."@en ;
     estate:maturity "draft" .
 
-estate:qualifiedBuild
-    a owl:ObjectProperty ;
-    rdfs:label "qualified build"@en ;
-    rdfs:domain estate:Pipeline ;
-    rdfs:range estate:Build ;
-    estate:qualifies estate:builds ;
-    skos:definition "A Build detail of one of this entity's builds relations."@en ;
-    estate:maturity "draft" .
-
 estate:Build
     a owl:Class ;
-    rdfs:subClassOf [ a owl:Restriction ; owl:onProperty estate:target ; owl:allValuesFrom estate:Service ] ;
+    rdfs:subClassOf estate:Detail ;
     rdfs:label "Build"@en ;
+    estate:detailOf estate:builds ;
     skos:definition "The details of a builds: the job, and the tag scheme that links a tag to the commit it came from."@en ;
     skos:scopeNote "The artifact itself is not modeled."@en ;
+    estate:keyRule "The relation it reifies, and its job."@en ;
     estate:maturity "draft" .
 
 estate:deliversTo
@@ -602,7 +567,6 @@ estate:deliversTo
     rdfs:domain estate:Pipeline ;
     rdfs:range [ a owl:Class ; owl:unionOf ( estate:CloudResource estate:ExternalSystem ) ] ;
     owl:inverseOf estate:deliveredToBy ;
-    owl:propertyChainAxiom ( estate:qualifiedDelivery estate:target ) ;
     skos:definition "A registry, bucket, or hosted destination a Pipeline delivers an artifact to."@en ;
     estate:maturity "draft" .
 
@@ -612,20 +576,13 @@ estate:deliveredToBy
     skos:definition "The inverse of deliversTo."@en ;
     estate:maturity "draft" .
 
-estate:qualifiedDelivery
-    a owl:ObjectProperty ;
-    rdfs:label "qualified delivery"@en ;
-    rdfs:domain estate:Pipeline ;
-    rdfs:range estate:Delivery ;
-    estate:qualifies estate:deliversTo ;
-    skos:definition "A Delivery detail of one of this entity's deliversTo relations."@en ;
-    estate:maturity "draft" .
-
 estate:Delivery
     a owl:Class ;
-    rdfs:subClassOf [ a owl:Restriction ; owl:onProperty estate:target ; owl:allValuesFrom [ a owl:Class ; owl:unionOf ( estate:CloudResource estate:ExternalSystem ) ] ] ;
+    rdfs:subClassOf estate:Detail ;
     rdfs:label "Delivery"@en ;
+    estate:detailOf estate:deliversTo ;
     skos:definition "The details of a deliversTo: the job."@en ;
+    estate:keyRule "The relation it reifies, and its job."@en ;
     estate:maturity "draft" .
 
 estate:readsSecretsFrom
@@ -634,7 +591,6 @@ estate:readsSecretsFrom
     rdfs:domain [ a owl:Class ; owl:unionOf ( estate:ServiceInstance estate:Pipeline ) ] ;
     rdfs:range [ a owl:Class ; owl:unionOf ( estate:ServiceInstance estate:CloudResource estate:ExternalSystem ) ] ;
     owl:inverseOf estate:secretsReadBy ;
-    owl:propertyChainAxiom ( estate:qualifiedSecretRead estate:target ) ;
     skos:definition "A store a workload or pipeline reads secrets from. The secret stores in an estate are the targets of this relation."@en ;
     estate:maturity "draft" .
 
@@ -644,21 +600,14 @@ estate:secretsReadBy
     skos:definition "The inverse of readsSecretsFrom."@en ;
     estate:maturity "draft" .
 
-estate:qualifiedSecretRead
-    a owl:ObjectProperty ;
-    rdfs:label "qualified secret read"@en ;
-    rdfs:domain [ a owl:Class ; owl:unionOf ( estate:ServiceInstance estate:Pipeline ) ] ;
-    rdfs:range estate:SecretRead ;
-    estate:qualifies estate:readsSecretsFrom ;
-    skos:definition "A Secret Read detail of one of this entity's readsSecretsFrom relations."@en ;
-    estate:maturity "draft" .
-
 estate:SecretRead
     a owl:Class ;
-    rdfs:subClassOf [ a owl:Restriction ; owl:onProperty estate:target ; owl:allValuesFrom [ a owl:Class ; owl:unionOf ( estate:ServiceInstance estate:CloudResource estate:ExternalSystem ) ] ] ;
+    rdfs:subClassOf estate:Detail ;
     rdfs:label "Secret Read"@en ;
+    estate:detailOf estate:readsSecretsFrom ;
     skos:definition "The details of a readsSecretsFrom: the path or name of the secret read."@en ;
     skos:scopeNote "Never carries the secret's value."@en ;
+    estate:keyRule "The relation it reifies, and its secret path."@en ;
     estate:maturity "draft" .
 
 estate:observedBy
@@ -667,7 +616,6 @@ estate:observedBy
     rdfs:domain [ a owl:Class ; owl:unionOf ( estate:ServiceInstance estate:Environment estate:Pipeline ) ] ;
     rdfs:range [ a owl:Class ; owl:unionOf ( estate:ServiceInstance estate:CloudResource estate:ExternalSystem ) ] ;
     owl:inverseOf estate:observes ;
-    owl:propertyChainAxiom ( estate:qualifiedObservation estate:target ) ;
     skos:definition "A tool that observes a thing."@en ;
     estate:maturity "draft" .
 
@@ -677,21 +625,14 @@ estate:observes
     skos:definition "The inverse of observedBy."@en ;
     estate:maturity "draft" .
 
-estate:qualifiedObservation
-    a owl:ObjectProperty ;
-    rdfs:label "qualified observation"@en ;
-    rdfs:domain [ a owl:Class ; owl:unionOf ( estate:ServiceInstance estate:Environment estate:Pipeline ) ] ;
-    rdfs:range estate:Observation ;
-    estate:qualifies estate:observedBy ;
-    skos:definition "An Observation detail of one of this entity's observedBy relations."@en ;
-    estate:maturity "draft" .
-
 estate:Observation
     a owl:Class ;
-    rdfs:subClassOf [ a owl:Restriction ; owl:onProperty estate:target ; owl:allValuesFrom [ a owl:Class ; owl:unionOf ( estate:ServiceInstance estate:CloudResource estate:ExternalSystem ) ] ] ;
+    rdfs:subClassOf estate:Detail ;
     rdfs:label "Observation"@en ;
+    estate:detailOf estate:observedBy ;
     skos:definition "The details of an observedBy: the identifiers the tool knows the thing by, recorded where their evidence is."@en ;
     skos:scopeNote "Identifiers are never normalized across tools."@en ;
+    estate:keyRule "The relation it reifies."@en ;
     estate:maturity "draft" .
 
 estate:connectedVia
@@ -700,7 +641,6 @@ estate:connectedVia
     rdfs:domain estate:Environment ;
     rdfs:range estate:Identity ;
     owl:inverseOf estate:connects ;
-    owl:propertyChainAxiom ( estate:qualifiedConnection estate:target ) ;
     skos:definition "The credential a repository declares for deploying or operating an Environment."@en ;
     estate:maturity "draft" .
 
@@ -710,21 +650,14 @@ estate:connects
     skos:definition "The inverse of connectedVia."@en ;
     estate:maturity "draft" .
 
-estate:qualifiedConnection
-    a owl:ObjectProperty ;
-    rdfs:label "qualified connection"@en ;
-    rdfs:domain estate:Environment ;
-    rdfs:range estate:Connection ;
-    estate:qualifies estate:connectedVia ;
-    skos:definition "A Connection detail of one of this entity's connectedVia relations."@en ;
-    estate:maturity "draft" .
-
 estate:Connection
     a owl:Class ;
-    rdfs:subClassOf [ a owl:Restriction ; owl:onProperty estate:target ; owl:allValuesFrom estate:Identity ] ;
+    rdfs:subClassOf estate:Detail ;
     rdfs:label "Connection"@en ;
+    estate:detailOf estate:connectedVia ;
     skos:definition "The details of a connectedVia: the profile name the repository's scripts pass, if any."@en ;
     skos:scopeNote "Not where the Environment runs."@en ;
+    estate:keyRule "The relation it reifies."@en ;
     estate:maturity "draft" .
 
 #################################################################
