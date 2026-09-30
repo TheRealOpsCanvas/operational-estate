@@ -60,7 +60,7 @@ estate:Runtime
     rdfs:subClassOf estate:Entity ;
     rdfs:label "Runtime"@en ;
     skos:definition "What exists in the cloud to run the software: a Service Instance or a Cloud Resource."@en ;
-    skos:scopeNote "A grouping, not something with individuals of its own. It exists because dependsOn ranges over exactly its members. Environment is not Runtime: its Instances run, the Environment does not."@en ;
+    skos:scopeNote "A grouping, not something with individuals of its own. It exists because connectsTo ranges over exactly its members. Environment is not Runtime: its Instances run, the Environment does not."@en ;
     estate:maturity "draft" .
 
 #################################################################
@@ -205,7 +205,7 @@ estate:Identifier
                   estate:Detail ) .
 
 [] a owl:AllDisjointClasses ;
-    owl:members ( estate:Trigger estate:Deployment estate:Build estate:Delivery estate:SecretRead estate:Observation estate:Connection ) .
+    owl:members ( estate:Trigger estate:Deployment estate:Build estate:Delivery estate:SecretRead estate:Observation estate:Access ) .
 
 #################################################################
 # Relations that carry nothing
@@ -352,19 +352,20 @@ estate:contains
     skos:definition "A thing that sits within a Cloud Account or Cloud Resource."@en ;
     estate:maturity "draft" .
 
-estate:dependsOn
+estate:connectsTo
     a owl:ObjectProperty ;
-    rdfs:label "depends on"@en ;
+    rdfs:label "connects to"@en ;
+    skos:altLabel "depends on"@en ;
     rdfs:domain estate:ServiceInstance ;
     rdfs:range estate:Runtime ;
-    owl:inverseOf estate:dependedOnBy ;
+    owl:inverseOf estate:connectedFrom ;
     skos:definition "What a Service Instance reaches, read from the connection strings, hostnames, environment variables, and service references in its configuration."@en ;
-    skos:scopeNote "Never inferred from a name. What the dependency means at runtime is a reading of the manifest it cites."@en ;
+    skos:scopeNote "Never inferred from a name. Not a claim that the connection is critical: what it means at runtime is a reading of the manifest it cites. Not apply or startup order, which Terraform and Compose call depends_on."@en ;
     estate:maturity "draft" .
 
-estate:dependedOnBy
+estate:connectedFrom
     a owl:ObjectProperty ;
-    rdfs:label "depended on by"@en ;
+    rdfs:label "connected from"@en ;
     skos:definition "A Service Instance that reaches a runtime thing."@en ;
     estate:maturity "draft" .
 
@@ -617,27 +618,27 @@ estate:Observation
     estate:keyRule "The relation it reifies."@en ;
     estate:maturity "draft" .
 
-estate:connectedVia
+estate:accessedAs
     a owl:ObjectProperty ;
-    rdfs:label "connected via"@en ;
+    rdfs:label "accessed as"@en ;
     rdfs:domain estate:Environment ;
     rdfs:range estate:Identity ;
-    owl:inverseOf estate:connects ;
+    owl:inverseOf estate:accesses ;
     skos:definition "The credential a repository declares for deploying or operating an Environment."@en ;
     estate:maturity "draft" .
 
-estate:connects
+estate:accesses
     a owl:ObjectProperty ;
-    rdfs:label "connects"@en ;
-    skos:definition "The inverse of connectedVia."@en ;
+    rdfs:label "accesses"@en ;
+    skos:definition "The inverse of accessedAs."@en ;
     estate:maturity "draft" .
 
-estate:Connection
+estate:Access
     a owl:Class ;
     rdfs:subClassOf estate:Detail ;
-    rdfs:label "Connection"@en ;
-    estate:detailOf estate:connectedVia ;
-    skos:definition "The details of a connectedVia: the profile name the repository's scripts pass, if any."@en ;
+    rdfs:label "Access"@en ;
+    estate:detailOf estate:accessedAs ;
+    skos:definition "The details of an accessedAs: the profile name the repository's scripts pass, if any."@en ;
     skos:scopeNote "Not where the Environment runs."@en ;
     estate:keyRule "The relation it reifies."@en ;
     estate:maturity "draft" .
@@ -826,9 +827,9 @@ estate:secretPath
 estate:credentialName
     a owl:DatatypeProperty ;
     rdfs:label "credential name"@en ;
-    rdfs:domain estate:Connection ;
+    rdfs:domain estate:Access ;
     rdfs:range xsd:string ;
-    skos:definition "The profile name a repository's scripts pass for a Connection: the team's agreed name for a credential, matched to local credentials by whoever holds them."@en ;
+    skos:definition "The profile name a repository's scripts pass for an Access: the team's agreed name for a credential, matched to local credentials by whoever holds them."@en ;
     estate:maturity "draft" .
 
 estate:identifier

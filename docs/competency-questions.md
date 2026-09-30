@@ -189,11 +189,11 @@ system (tool).
 
 ### What changed in production since yesterday that explains the latency spike?
 
-Terms: `deploys` and its write location; Cloud Resource, `runsOn`, `dependsOn`,
+Terms: `deploys` and its write location; Cloud Resource, `runsOn`, `connectsTo`,
 `provisionedFor`, `observedBy` identifiers; git diff and monitoring tool (tool).
 
 - **Estate returns.** Prod's Instances and their pinned write paths; the Cloud Resources they
-  `runsOn` and `dependsOn`, with the declared addresses of each and of the Core Infrastructure
+  `runsOn` and `connectsTo`, with the declared addresses of each and of the Core Infrastructure
   that the shared ones are provisioned for; the monitoring identifiers.
 - **Last mile.** `git diff` at the pinned paths since yesterday; latency from the tool.
 - **Same for everyone.** The set of paths to diff is the estate's, so nobody diffs a different
@@ -201,11 +201,11 @@ Terms: `deploys` and its write location; Cloud Resource, `runsOn`, `dependsOn`,
 
 ### Were there config changes in critical components of an app that explain pod thrashing in a cluster?
 
-Terms: `dependsOn`, `readsSecretsFrom`, `runsOn`; git diff and cluster events
+Terms: `connectsTo`, `readsSecretsFrom`, `runsOn`; git diff and cluster events
 (tool).
 
 - **Estate returns.** The Application's Instances that `runsOn` that cluster; what each
-  `dependsOn` and `readsSecretsFrom`, with paths; their deploy write paths.
+  `connectsTo` and `readsSecretsFrom`, with paths; their deploy write paths.
 - **Last mile.** Diff those paths; read cluster events from the tool.
 - **Same for everyone.** "Critical" is the practitioner's word: the estate lists, it does not
   rank. Dependencies, what a workload reaches, are what blast radius is made of.
@@ -262,10 +262,10 @@ Terms: Core Infrastructure, Cloud Resource declared address, `runsOn`; file read
 
 ### Can I scale a service from one pod to two without issues?
 
-Terms: `dependsOn`; `deploys`; manifest reads (tool).
+Terms: `connectsTo`; `deploys`; manifest reads (tool).
 
-- **Estate returns.** The Instance, its manifest path, what it `dependsOn`, and what depends
-  on it.
+- **Estate returns.** The Instance, its manifest path, what it `connectsTo`, and what connects
+  to it.
 - **Last mile.** Read the manifest for state, sessions, leader election; check dependencies
   for connection limits.
 - **Same for everyone.** What a dependency means at runtime is the model's reading of the
@@ -273,9 +273,9 @@ Terms: `dependsOn`; `deploys`; manifest reads (tool).
 
 ### Which workloads depend on the Redis cluster, and what happens if it is restarted?
 
-Terms: `dependsOn`, Cloud Resource; manifest reads (tool).
+Terms: `connectsTo`, Cloud Resource; manifest reads (tool).
 
-- **Estate returns.** The Redis Cloud Resource; everything that `dependsOn` it; their
+- **Estate returns.** The Redis Cloud Resource; everything that `connectsTo` it; their
   Instances and Environments.
 - **Last mile.** One walk for "which". The model reasons about restart behavior from the
   manifests.
@@ -284,11 +284,11 @@ Terms: `dependsOn`, Cloud Resource; manifest reads (tool).
 
 ### How do I reach prod's state, or prod's cluster, from this workstation?
 
-Terms: Cloud Account, Identity, `within`, `connectedVia`; a local credential
+Terms: Cloud Account, Identity, `within`, `accessedAs`; a local credential
 (outside the estate).
 
 - **Estate returns.** The Cloud Account holding the state bucket, or the cluster; the Identities
-  `within` it; and the credential name prod's repositories declare on `connectedVia`.
+  `within` it; and the credential name prod's repositories declare on `accessedAs`.
 - **Last mile.** Use the local profile or kube context that maps to one of those Identities.
 - **Same for everyone.** Every workstation maps its own credentials to the same Identities; the
   estate never holds a credential or a person.

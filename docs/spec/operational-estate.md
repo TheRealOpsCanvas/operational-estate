@@ -59,7 +59,7 @@ A grouping is a class only where a relation needs exactly that set of classes.
 | Grouping | Members | Needed by |
 |---|---|---|
 | **Software** | Application, Service | domain of `implementedIn`, range of `provisionedFor` |
-| **Runtime** | Service Instance, Cloud Resource | range of `dependsOn` |
+| **Runtime** | Service Instance, Cloud Resource | range of `connectsTo` |
 
 **Scope**, Environment and Core Infrastructure, the named units runtime things are placed in and
 owned by, is vocabulary for explaining the model and not a class, because no relation ranges over
@@ -227,10 +227,10 @@ asserted too; the annotation syntax does this, and section 7 requires it of ever
 | `runsOn` | Service Instance | Cloud Resource | |
 | `providedAs` | Service Instance | Cloud Resource | |
 | `within` | Cloud Resource, Identity, Cloud Account | Cloud Account, Cloud Resource | |
-| `dependsOn` | Service Instance | Runtime | |
+| `connectsTo` | Service Instance | Runtime | |
 | `readsSecretsFrom` | Service Instance, Pipeline | Service Instance, Cloud Resource, External System | path or name |
 | `observedBy` | Service Instance, Environment, Pipeline | Service Instance, Cloud Resource, External System | the tool's identifiers |
-| `connectedVia` | Environment | Identity | declared credential name |
+| `accessedAs` | Environment | Identity | declared credential name |
 | `runsAs` | Service Instance, Pipeline | Identity | |
 | `trusts` | Identity | Pipeline, Repository, Identity | |
 | `ownedBy` | Application, Service, Repository, Core Infrastructure, Cloud Account, Cloud Resource, Identity | Team | |
@@ -283,7 +283,7 @@ part of, `ownedBy` says whose it is.
 
 ### Access
 
-`connectedVia` is the credential a repository declares for deploying or operating an Environment: a
+`accessedAs` is the credential a repository declares for deploying or operating an Environment: a
 role the deploy job assumes, or the profile name its scripts pass. It is not where the Environment
 runs, and it is not derivable, because it is read from the repository's own deploy configuration. An
 Environment spanning accounts has one per credential. A declared role is an Identity; a declared
@@ -301,10 +301,12 @@ what a role permits is a read of its cited policy, never an effective permission
 
 ### Reach
 
-`dependsOn` is what an Instance reaches, read from the connection strings, hostnames, environment
+`connectsTo` is what an Instance reaches, read from the connection strings, hostnames, environment
 variables, and service references in its configuration: a Cloud Resource such as a Redis cluster,
-or another Instance it calls. It is cited, never inferred from a name. What a dependency means at
+or another Instance it calls. It is cited, never inferred from a name. What a connection means at
 runtime, sessions, retries, leader election, is a reading of the manifest the relation cites.
+
+*Aliases:* "depends on".
 
 `readsSecretsFrom` carries the path or name read, never the value. Where the secret is itself
 declared, the relation targets that Cloud Resource; otherwise it targets the store, with the path on
@@ -370,7 +372,7 @@ alternate names.
 **A detail is keyed by the relation it reifies**, meaning its source's key, the relation, and its
 target's key, and, where one relation can have several details, by what tells them apart: the job
 for a `triggers`, `deploys`, `builds`, or `deliversTo`, the secret path for a `readsSecretsFrom`. An
-`observedBy` or `connectedVia` has at most one detail. A detail
+`observedBy` or `accessedAs` has at most one detail. A detail
 is named by an identifier derived from its key, never a blank node, so two graphs that say the same
 thing about one relation merge into one detail.
 
@@ -385,7 +387,7 @@ rewritten, because keys are derived and the base is a prefix.
 in exactly one Environment, by its key. A Cloud Resource is `provisionedFor` exactly one of an
 Environment, a Core Infrastructure, an Application, a Service, or a Service Instance; one
 provisioned for an Application or Service is in no Environment. Use across Environments is
-`dependsOn`, never shared membership, and a `dependsOn` from one Environment into another is a gap
+`connectsTo`, never shared membership, and a `connectsTo` from one Environment into another is a gap
 worth surfacing. An Identity is `provisionedFor` its declaring owner when it has one.
 
 Further constraints, each to be stated as a SHACL shape. The ones about details are checked today as
@@ -472,6 +474,12 @@ relations would say it for those alone, and the graph holds only what has been c
 status, `current` or `former`. It was rejected: a status goes stale when the source moves on and has
 to be rewritten, while `prov:invalidatedAtTime` is written once and says when, which is what
 attributing an older cost row needs.
+
+**`connectsTo` rather than `dependsOn`.** The relation is read from connection strings and
+references, and "connects to" says exactly that. "Depends on" claims the connection is critical,
+which the estate does not know, invites dependencies no configuration shows, and in Terraform and
+Compose means apply or startup order. It is kept as an alias. The credential relation, once
+`connectedVia`, is `accessedAs`, beside `runsAs`, so the two names do not collide.
 
 **Software, Scope, Runtime rather than Logical and Deployed.** Environment is not something that
 runs, and Core Infrastructure is not something deployed. A grouping named for meaning but populated
