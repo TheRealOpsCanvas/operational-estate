@@ -13,7 +13,7 @@ context from scratch. The test is therefore not "does a query return it" but "do
 return the same pointers to everyone, and is what remains one bounded step no model can get
 wrong". A question is written in three parts:
 
-- **Estate returns.** The pointers: nodes on stable keys, edges with their evidence, identifiers
+- **Estate returns.** The pointers: entities on stable keys, edges with their evidence, identifiers
   a tool knows a thing by, paths pinned to a commit.
 - **Last mile.** What the model does with them: nothing, one read of a cited file at a pinned
   commit, or one query to a tool by a pinned identifier.
@@ -45,8 +45,8 @@ live half that belongs to a tool or git.
 
 Terms: `deployedFrom`; Pipeline, `deploys`.
 
-- **Estate returns.** Every Environment's `deployedFrom` Repo; with pipelines, the Pipeline in
-  that Repo and its `deploys` edge per job.
+- **Estate returns.** Every Environment's `deployedFrom` Repository; with pipelines, the Pipeline in
+  that Repository and its `deploys` edge per job.
 - **Last mile.** None.
 - **Same for everyone.** Committed facts on stable keys with the citation that established each.
 
@@ -64,7 +64,7 @@ Terms: Pipeline, `deploys` and its write location.
 
 Terms: Pipeline, `triggers`, `deploys`; one file read (tool).
 
-- **Estate returns.** From the Repo: its Pipeline, each `triggers` edge with the variables it
+- **Estate returns.** From the Repository: its Pipeline, each `triggers` edge with the variables it
   sends and the target Pipeline's key. From the target Pipeline: its `deploys` edges per job and
   their targets.
 - **Last mile.** Two steps on stable keys, then one read of the cited rule where the question
@@ -75,12 +75,12 @@ Terms: Pipeline, `triggers`, `deploys`; one file read (tool).
 
 ### What software owns this cloud resource?
 
-Terms: Cloud Resource, `provisionedBy`; `instantiatedFrom`.
+Terms: Cloud Resource, `provisionedFor`; `instantiatedFrom`.
 
-- **Estate returns.** The resource by declared address or alias; `provisionedBy` the Instance,
-  Environment, or Core Infrastructure whose declaration creates it; from an Instance,
-  `instantiatedFrom` Service and `memberOf` Application.
-- **Last mile.** None. Three hops.
+- **Estate returns.** The resource by declared address or alias; `provisionedFor` the Instance,
+  Environment, Application, Service, or Core Infrastructure whose declaration creates it; from an
+  Instance, `instantiatedFrom` Service, and from a Service, `memberOf` Application.
+- **Last mile.** None. At most three hops.
 - **Same for everyone.** Ownership is read from the module or chart boundary the declaration
   sits inside, never a name match.
 
@@ -132,9 +132,9 @@ logs (tool).
 Terms: `implementedIn`; Pipeline; `observedBy` a CI system; git
 and CI system (tool).
 
-- **Estate returns.** Application to Services to the Repos that implement them; each Repo's
-  Pipelines with their CI identifiers.
-- **Last mile.** `git log` per repo since yesterday; run links from the CI system by
+- **Estate returns.** Application to Services to the Repositories that implement them; each
+  Repository's Pipelines with their CI identifiers.
+- **Last mile.** `git log` per repository since yesterday; run links from the CI system by
   identifier.
 - **Same for everyone.** The set of repositories is the estate's; the links are the CI
   system's URLs for pinned identifiers.
@@ -145,7 +145,7 @@ Terms: `deploys` and its write location; Cloud Resource declared address; git
 diff (tool).
 
 - **Estate returns.** Recent `deploys` edges and the paths they write; every Cloud Resource's
-  declared address in the same Repo.
+  declared address in the same Repository.
 - **Last mile.** For each run's commit, diff it: did it touch a resource declaration and
   application code?
 - **Same for everyone.** Declared addresses are what classify a diff as infrastructure; without
@@ -189,23 +189,23 @@ system (tool).
 
 ### What changed in production since yesterday that explains the latency spike?
 
-Terms: `deploys` and its write location; Cloud Resource, `runsOn`, `dependsOn`,
-`provisionedBy`, `observedBy` identifiers; git diff and monitoring tool (tool).
+Terms: `deploys` and its write location; Cloud Resource, `runsOn`, `connectsTo`,
+`provisionedFor`, `observedBy` identifiers; git diff and monitoring tool (tool).
 
 - **Estate returns.** Prod's Instances and their pinned write paths; the Cloud Resources they
-  `runsOn` and `dependsOn`, with the declared addresses of each and of the Core Infrastructure
-  that provisions the shared ones; the monitoring identifiers.
+  `runsOn` and `connectsTo`, with the declared addresses of each and of the Core Infrastructure
+  that the shared ones are provisioned for; the monitoring identifiers.
 - **Last mile.** `git diff` at the pinned paths since yesterday; latency from the tool.
 - **Same for everyone.** The set of paths to diff is the estate's, so nobody diffs a different
   set.
 
 ### Were there config changes in critical components of an app that explain pod thrashing in a cluster?
 
-Terms: `dependsOn`, `readsSecretsFrom`, `runsOn`; git diff and cluster events
+Terms: `connectsTo`, `readsSecretsFrom`, `runsOn`; git diff and cluster events
 (tool).
 
 - **Estate returns.** The Application's Instances that `runsOn` that cluster; what each
-  `dependsOn` and `readsSecretsFrom`, with paths; their deploy write paths.
+  `connectsTo` and `readsSecretsFrom`, with paths; their deploy write paths.
 - **Last mile.** Diff those paths; read cluster events from the tool.
 - **Same for everyone.** "Critical" is the practitioner's word: the estate lists, it does not
   rank. Dependencies, what a workload reaches, are what blast radius is made of.
@@ -214,7 +214,7 @@ Terms: `dependsOn`, `readsSecretsFrom`, `runsOn`; git diff and cluster events
 
 ### How much does prod cost per month, and what are the most expensive resources?
 
-Terms: Cloud Resource aliases, `provisionedBy`, Cloud Account; cost store (tool).
+Terms: Cloud Resource aliases, `provisionedFor`, Cloud Account; cost store (tool).
 
 - **Estate returns.** Prod's resources by owner, Instance-owned and Environment-owned; the
   shared resources of the Core Infrastructure prod's Instances run on; each resource's aliases;
@@ -227,11 +227,12 @@ Terms: Cloud Resource aliases, `provisionedBy`, Cloud Account; cost store (tool)
 
 ### What does a service cost across every environment?
 
-Terms: Cloud Resource, `provisionedBy`; `instantiatedFrom`; cost store
+Terms: Cloud Resource, `provisionedFor`; `instantiatedFrom`; cost store
 (tool).
 
-- **Estate returns.** The climb by software: resource, `provisionedBy` Instance,
-  `instantiatedFrom` Service, `memberOf` Application.
+- **Estate returns.** The climb by software: resource, `provisionedFor` Instance,
+  `instantiatedFrom` Service, `memberOf` Application; a resource `provisionedFor` the Service
+  itself joins the climb at the Service.
 - **Last mile.** Sum along that climb.
 - **Same for everyone.** The question names which climb it takes, by place or by software.
   They agree for a service in one Application and disagree, correctly, for a shared one.
@@ -252,8 +253,8 @@ Terms: Cloud Resource aliases; cost store (tool).
 Terms: Core Infrastructure, Cloud Resource declared address, `runsOn`; file reads (tool).
 
 - **Estate returns.** Each cluster, a Cloud Resource with its declared address and the Core
-  Infrastructure that provisions it; every Instance that `runsOn` it; each Instance's deploy evidence pointing at its
-  manifests.
+  Infrastructure it is provisioned for; every Instance that `runsOn` it; each Instance's deploy
+  evidence pointing at its manifests.
 - **Last mile.** Read the declared version at the commit; read each manifest for APIs removed
   by 1.32 against the model's own knowledge.
 - **Same for everyone.** The set of manifests is the estate's. The version is a pinned read at
@@ -261,10 +262,10 @@ Terms: Core Infrastructure, Cloud Resource declared address, `runsOn`; file read
 
 ### Can I scale a service from one pod to two without issues?
 
-Terms: `dependsOn`; `deploys`; manifest reads (tool).
+Terms: `connectsTo`; `deploys`; manifest reads (tool).
 
-- **Estate returns.** The Instance, its manifest path, what it `dependsOn`, and what depends
-  on it.
+- **Estate returns.** The Instance, its manifest path, what it `connectsTo`, and what connects
+  to it.
 - **Last mile.** Read the manifest for state, sessions, leader election; check dependencies
   for connection limits.
 - **Same for everyone.** What a dependency means at runtime is the model's reading of the
@@ -272,9 +273,9 @@ Terms: `dependsOn`; `deploys`; manifest reads (tool).
 
 ### Which workloads depend on the Redis cluster, and what happens if it is restarted?
 
-Terms: `dependsOn`, Cloud Resource; manifest reads (tool).
+Terms: `connectsTo`, Cloud Resource; manifest reads (tool).
 
-- **Estate returns.** The Redis Cloud Resource; everything that `dependsOn` it; their
+- **Estate returns.** The Redis Cloud Resource; everything that `connectsTo` it; their
   Instances and Environments.
 - **Last mile.** One walk for "which". The model reasons about restart behavior from the
   manifests.
@@ -283,11 +284,11 @@ Terms: `dependsOn`, Cloud Resource; manifest reads (tool).
 
 ### How do I reach prod's state, or prod's cluster, from this workstation?
 
-Terms: Cloud Account, Identity, `within`, `connectedVia`; a local credential
+Terms: Cloud Account, Identity, `within`, `accessedAs`; a local credential
 (outside the estate).
 
 - **Estate returns.** The Cloud Account holding the state bucket, or the cluster; the Identities
-  `within` it; and the credential name prod's repositories declare on `connectedVia`.
+  `within` it; and the credential name prod's repositories declare on `accessedAs`.
 - **Last mile.** Use the local profile or kube context that maps to one of those Identities.
 - **Same for everyone.** Every workstation maps its own credentials to the same Identities; the
   estate never holds a credential or a person.

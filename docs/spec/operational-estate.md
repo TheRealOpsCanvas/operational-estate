@@ -2,6 +2,7 @@
 
 **Status:** draft. Every term in this document is `draft`.
 **Prefix:** `estate:` **Namespace:** `https://w3id.org/operational-estate#` (reserved)
+**Built on:** RDF 1.2, full conformance, whose concrete syntaxes are not yet W3C Recommendations
 
 ## 1. Scope
 
@@ -15,6 +16,8 @@ that one program reads two kinds of thing, does not make them one class. How an 
 stores, discovers, or serves an estate is outside this specification.
 
 An **estate graph** is a set of facts about one estate, each attributed to whoever asserted it.
+Its facts are about **entities**, the things section 4 defines, each identified by a key, and the
+relations between them.
 The graph describes what has been confirmed: candidates not yet confirmed are not in it.
 
 ## 2. Principles
@@ -55,15 +58,15 @@ A grouping is a class only where a relation needs exactly that set of classes.
 
 | Grouping | Members | Needed by |
 |---|---|---|
-| **Software** | Application, Service | domain of `implementedIn` |
-| **Runtime** | Service Instance, Cloud Resource | range of `dependsOn` |
+| **Software** | Application, Service | domain of `implementedIn`, range of `provisionedFor` |
+| **Runtime** | Service Instance, Cloud Resource | range of `connectsTo` |
 
 **Scope**, Environment and Core Infrastructure, the named units runtime things are placed in and
 owned by, is vocabulary for explaining the model and not a class, because no relation ranges over
-exactly those two. Every other class sits directly under `estate:Node`.
+exactly those two. Every other class sits directly under `estate:Entity`.
 
-**A role is not a class.** Where what a relation points at crosses classes, the relation carries
-the role. What a workload reads secrets from may be a Service Instance (a self-hosted Vault), a Cloud
+**A role is not a class.** Where what a relation points at crosses classes, the relation carries the
+role. What a workload reads secrets from may be a Service Instance (a self-hosted Vault), a Cloud
 Resource (a cloud secrets manager), or an External System (a hosted secrets service), so there is no
 Secret Store class: the secret stores in an estate are the targets of `readsSecretsFrom`. An
 observability tool is the same, through `observedBy`.
@@ -73,9 +76,13 @@ observability tool is the same, through `observedBy`.
 ### Application
 
 A product or capability that delivers value to its users: a set of Services and the Environments
-they are deployed into. Not a single deployable (a Service), and not the platform it runs on (Core
-Infrastructure). An Application needs no repository of its own: in an estate of services, it is
-named where it is composed and deployed.
+they are deployed into. Not a single deployable (a Service), and not what it runs on: its Service
+Instances run on Cloud Resources, provisioned by its own Environments, by Core Infrastructure, by
+the Application itself or one of its Services across every Environment, such as the Application's
+DNS zone or a Service's image registry, or by one Service Instance, when the deployment code
+declares a resource for that Instance alone, such as its queue, or its chart creates one, such as a
+load balancer. An Application needs no repository of its own: in an estate of services, it is named
+where it is composed and deployed.
 
 ### Service
 
@@ -99,10 +106,10 @@ Application has its own, so shop dev and checkout dev are two Environments. An E
 run; its Service Instances do.
 
 A runtime thing is in an Environment in one of two ways. A Cloud Resource declared in the
-Environment's own code, such as a database in `envs/dev/`, is `provisionedBy` it. A Service Instance
-deployed into it has the Environment in its key; a file name, a pipeline stage, a tag, or an account
-name is the evidence for which Environment that is, confirmed where that evidence is only a naming
-convention.
+Environment's own code, such as a database in `envs/dev/`, is `provisionedFor` it. A Service
+Instance deployed into it has the Environment in its key; a file name, a pipeline stage, a tag, or
+an account name is the evidence for which Environment that is, confirmed where that evidence is only
+a naming convention.
 
 *Aliases:* "app-env", "the environment", "stage".
 
@@ -119,13 +126,13 @@ is a live fact the estate never holds.
 
 ### Core Infrastructure
 
-Infrastructure declared outside any single Environment's declarations: a platform team's
-repository, stack, or module. The test is where the declaration lives, not how many Environments
-use it today, so a cluster a platform repository declares is Core Infrastructure while only dev
-uses it. It is an owner, not a place: it provisions Cloud Resources, and it is not the cluster it
-provisions.
+Infrastructure declared outside the declarations of any single Environment, Application, or Service:
+a platform team's repository, stack, or module. The test is where the declaration lives, not how
+many Environments use it today, so a cluster a shared infrastructure repository declares is Core
+Infrastructure while only dev uses it. It is an owner, not a place: Cloud Resources are provisioned
+for it, and it is not the cluster provisioned for it.
 
-*Aliases:* "platform", "landing zone".
+*Aliases:* "landing zone".
 
 ### Cloud Resource
 
@@ -152,17 +159,19 @@ they bill to.
 
 *Aliases:* "account", "project", "subscription".
 
-### Repo
+### Repository
 
-A version-controlled repository, whose role is `app`, `iac`, or `mixed`. Where things are declared;
-neither software nor runtime.
+A version-controlled store of files, such as a Git repository, whose role is `app`, `iac`, or
+`mixed`. Where things are declared; neither software nor runtime.
+
+*Aliases:* "repo".
 
 ### Pipeline
 
 A CI/CD definition file, such as a GitHub Actions workflow or a `.gitlab-ci.yml`, contained by its
-Repo, with the events it listens for. Every definition file is a Pipeline, whether or not any of its
-jobs relates it to anything else. A job is never a node: it is a discriminator on the relations out
-of a Pipeline.
+Repository, with the events it listens for. Every definition file is a Pipeline, whether or not any
+of its jobs relates it to anything else. A job is never an entity: it is a discriminator on the
+relations out of a Pipeline.
 
 ### External System
 
@@ -181,66 +190,100 @@ Team owns things and contains no one.
 
 ## 5. Relations
 
-A relation that carries nothing is an object property. A relation that carries data is a relation
-class (the n-ary pattern), with properties to its two endpoints and datatype properties for what it
-carries. Every object property declares its inverse. Provenance relations read from subject to
-context (`implementedIn`, `deployedFrom`, `provisionedBy`); causal relations read from cause to
+Every relation joins two entities and declares its inverse. Provenance relations read from subject
+to context (`implementedIn`, `deployedFrom`, `provisionedFor`); causal relations read from cause to
 effect (`triggers`, `deploys`, `deliversTo`).
+
+A relation that carries data of its own, a deployment's job and write location, is stated as the
+relation, and the data is put on a **detail**: an RDF 1.2 reifier of that relation's triple. The
+relation is the fact: `pipeline deploys instance`. A detail is optional, and one relation may have
+several, told apart by their key (section 6). The detail's class names the relation it describes
+(`Deployment` for `deploys`); it is how the vocabulary stores a relation's data, and it is not an
+entity. In Turtle the annotation syntax states both at once:
+
+```turtle
+:deploy-yml estate:deploys :user-svc-prod
+    ~ :deploy-yml.deploys.user-svc-prod.deploy-prod
+    {| estate:job "deploy-prod" ; estate:writesPath "values-prod.yaml" ; estate:writesField "image.tag" |} .
+```
+
+A reifier describes a triple without asserting it, so the relation a detail reifies must be
+asserted too; the annotation syntax does this, and section 7 requires it of every estate graph.
 
 | Relation | From | To | Carries |
 |---|---|---|---|
+| `declaredIn` | Service, Pipeline, Core Infrastructure, Cloud Resource | Repository | |
+| `inEnvironment` | Service Instance | Environment | |
 | `memberOf` | Service | Application | |
-| `implementedIn` | Software | Repo | |
-| `placedUnder` | Environment | Application | placement origin |
-| `instantiatedFrom` | Service Instance | Service | placement origin |
-| `deployedFrom` | Environment, Service Instance | Repo | |
+| `implementedIn` | Software | Repository | |
+| `placedUnder` | Environment | Application | |
+| `instantiatedFrom` | Service Instance | Service | |
+| `deployedFrom` | Environment, Service Instance | Repository | |
 | `triggers` | Pipeline | Pipeline | job, variables sent |
-| `deploys` | Pipeline | Environment, Service Instance | job, pinned write location |
+| `deploys` | Pipeline | Environment, Core Infrastructure, Software, Service Instance | job, pinned write location |
 | `builds` | Pipeline | Service | job, tag scheme |
 | `deliversTo` | Pipeline | Cloud Resource, External System | job |
-| `provisionedBy` | Cloud Resource, Identity | Environment, Core Infrastructure, Service Instance | |
+| `provisionedFor` | Cloud Resource, Identity | Environment, Core Infrastructure, Software, Service Instance | |
 | `runsOn` | Service Instance | Cloud Resource | |
 | `providedAs` | Service Instance | Cloud Resource | |
 | `within` | Cloud Resource, Identity, Cloud Account | Cloud Account, Cloud Resource | |
-| `dependsOn` | Service Instance | Runtime | |
+| `connectsTo` | Service Instance | Runtime | |
 | `readsSecretsFrom` | Service Instance, Pipeline | Service Instance, Cloud Resource, External System | path or name |
 | `observedBy` | Service Instance, Environment, Pipeline | Service Instance, Cloud Resource, External System | the tool's identifiers |
-| `connectedVia` | Environment | Identity | declared credential name |
+| `accessedAs` | Environment | Identity | declared credential name |
 | `runsAs` | Service Instance, Pipeline | Identity | |
-| `trusts` | Identity | Pipeline, Repo, Identity | |
-| `ownedBy` | Application, Service, Repo, Core Infrastructure, Cloud Account, Cloud Resource, Identity | Team | |
+| `trusts` | Identity | Pipeline, Repository, Identity | |
+| `ownedBy` | Application, Service, Repository, Core Infrastructure, Cloud Account, Cloud Resource, Identity | Team | |
+
+### Containment
+
+`declaredIn` and `inEnvironment` are containment: the parent is part of the child's key, so each
+has exactly one. `declaredIn` is the Repository whose files declare a Service, Pipeline, Core
+Infrastructure, or Cloud Resource; it is not `implementedIn`, the Repository whose code implements
+software, and an upstream Service has the first and never the second. `inEnvironment` is the one
+Environment a Service Instance is deployed into.
 
 ### Placement
 
 `placedUnder` and `instantiatedFrom` attach a parent the practitioner's picture has but the evidence
-that produced the node did not assert. Each is resolved by name when either side arrives, and
-carries its placement origin: an automatic name match, or an operator's choice.
+that produced the entity did not assert. Each is resolved by name when either side arrives, or
+chosen where names do not settle it. How it was resolved is provenance, as for any fact (section 8):
+a match is generated by the activity that made it, and a choice is attributed to the agent that
+confirmed it.
 
 ### Delivery
 
-`deploys` carries the job and the pinned write location: the repository, path, and field a deploy
-writes, at the commit it was read at. `builds` carries the job and the tag scheme, `$CI_COMMIT_SHA`
-or a version scheme, which links what is declared in an Environment to the commit it came from; the
-artifact itself is not modeled. `triggers` carries the variables one Pipeline sends another.
+`deploys` runs from a Pipeline to any owner `provisionedFor` names: an Environment or Service
+Instance it deploys into, or the Core Infrastructure, Application, or Service whose declarations it
+applies. So the Pipeline and job that change a Cloud Resource are one join from it, through its
+owner. `deploys` carries the job and, where the deploy writes a version, the pinned write location:
+the repository, path, and field it writes, at the commit it was read at. `builds` carries the job
+and the tag scheme, `$CI_COMMIT_SHA` or a version scheme, which links what is declared in an
+Environment to the commit it came from; the artifact itself is not modeled. `triggers` carries the
+variables one Pipeline sends another.
 
 ### Where a Service Instance runs, and what it is
 
-`runsOn` is the Cloud Resource an Instance runs on: a cluster, a virtual machine, a function runtime.
-`providedAs` is the Cloud Resource an Instance is, such as a serverless function. A Kubernetes
-workload `runsOn` its cluster; a serverless deployment is `providedAs` its function. An Instance's
-Cloud Account is derived through them, never stored beside them.
+`runsOn` is the Cloud Resource an Instance runs on: a cluster, a virtual machine, a function
+runtime. `providedAs` is the Cloud Resource an Instance is, such as a serverless function. A
+Kubernetes workload `runsOn` its cluster; a serverless deployment is `providedAs` its function. An
+Instance's Cloud Account is derived through them, never stored beside them.
 
 ### Ownership
 
-`provisionedBy` is read from the module or chart boundary a declaration sits inside, a structural
-fact rather than a path token. `ownedBy` names a Team and only a Team. An Environment's owner and a
-Pipeline's are derived from their Application and Repo. Evidence that names only individuals,
-`@jane` in `CODEOWNERS`, establishes no owner. Membership is not ownership: `memberOf` says which
-Application a Service is part of, `ownedBy` says whose it is.
+`provisionedFor` is read from the module or chart boundary a declaration sits inside, a structural
+fact rather than a path token. A module for one Application or one Service outside any Environment,
+such as a deploy repository's `app/` declaring the Application's DNS zone or its
+`services/user-svc/` declaring that Service's image registry, is the Application's or the Service's;
+the same Service's module inside an Environment's declarations is its Instance's there. `ownedBy`
+names a Team and only a Team. An Environment's owner and a Pipeline's are derived from their
+Application and Repository. Evidence that names only individuals, `@jane` in `CODEOWNERS`,
+establishes no owner. Membership is not ownership: `memberOf` says which Application a Service is
+part of, `ownedBy` says whose it is.
 
 ### Access
 
-`connectedVia` is the credential a repository declares for deploying or operating an Environment: a
+`accessedAs` is the credential a repository declares for deploying or operating an Environment: a
 role the deploy job assumes, or the profile name its scripts pass. It is not where the Environment
 runs, and it is not derivable, because it is read from the repository's own deploy configuration. An
 Environment spanning accounts has one per credential. A declared role is an Identity; a declared
@@ -249,19 +292,21 @@ relation so that whoever holds a local credential by that name can match it to t
 
 `runsAs` is the Identity a workload or a pipeline acts as.
 
-`trusts` runs from an Identity to the Pipeline, Repo, or Identity its trust policy allows to assume
-it, read from the declaration. A question that starts from a role needs no relation, because the
-policy is in the file the Identity cites; a question that starts from a repository, what it can
+`trusts` runs from an Identity to the Pipeline, Repository, or Identity its trust policy allows to
+assume it, read from the declaration. A question that starts from a role needs no relation, because
+the policy is in the file the Identity cites; a question that starts from a repository, what it can
 reach if compromised, would otherwise be a search across every repository that declares roles.
 Chained assumption is a multi-hop walk. The walk ends at roles and the accounts they are within:
 what a role permits is a read of its cited policy, never an effective permission.
 
 ### Reach
 
-`dependsOn` is what an Instance reaches, read from the connection strings, hostnames, environment
+`connectsTo` is what an Instance reaches, read from the connection strings, hostnames, environment
 variables, and service references in its configuration: a Cloud Resource such as a Redis cluster,
-or another Instance it calls. It is cited, never inferred from a name. What a dependency means at
+or another Instance it calls. It is cited, never inferred from a name. What a connection means at
 runtime, sessions, retries, leader election, is a reading of the manifest the relation cites.
+
+*Aliases:* "depends on".
 
 `readsSecretsFrom` carries the path or name read, never the value. Where the secret is itself
 declared, the relation targets that Cloud Resource; otherwise it targets the store, with the path on
@@ -284,42 +329,52 @@ or a Buildkite pipeline has a name of its own.
 
 **A key is what independent readings agree on, and nothing another repository would have to say
 first.** A parent is in a key when two readings of different repositories must agree on it to
-produce the same node; otherwise it is a relation. Nothing infrastructural is in a key: a cluster or
-account name would put "cluster" in identifiers read by people who think "prod".
+produce the same entity; otherwise it is a relation. Nothing infrastructural is in a key: a cluster
+or account name would put "cluster" in identifiers read by people who think "prod".
 
 | Class | Key |
 |---|---|
 | Application | its name |
 | Environment | its asserted Application name and its name |
-| Service | the Repo that declares it and its name |
+| Service | the Repository that declares it and its name |
 | Service Instance | its Environment's key and its deployed name |
-| Repo | its canonical remote |
-| Pipeline | its Repo and its definition path |
-| Core Infrastructure | the Repo and the stack, module, or root that declares it |
-| Cloud Resource | the Repo that declares it, a source kind, and the declared address |
+| Repository | its canonical remote |
+| Pipeline | its Repository and its definition path |
+| Core Infrastructure | the Repository and the stack, module, or root that declares it |
+| Cloud Resource | the Repository that declares it, a source kind, and the declared address |
 | Identity | its provider and the provider's identifier for it |
 | Cloud Account | its provider and the provider's id |
 | External System | its provider, kind, and name |
 | Team | its name |
 
-**A Cloud Resource is keyed by where it is declared.** The source kind names the address grammar: a
-Terraform resource address in its root module, a CloudFormation stack and logical id, a CDK
-construct path, a Pulumi URN, or a Kubernetes manifest path and object. The last is how
-controller-created resources are declared: a `Service` of type `LoadBalancer` declares a load
-balancer, a `PersistentVolumeClaim` a volume, an `Ingress` an application load balancer, a
-Karpenter `NodePool` a fleet, a Crossplane managed resource anything.
+**A Cloud Resource is keyed by where it is declared.** The source kind names the address grammar, as
+one of `terraform`, `cloudformation`, `cdk`, `pulumi`, or `kubernetes`: a Terraform resource address
+in its root module, a CloudFormation stack and logical id, a CDK construct path, a Pulumi URN, or a
+Kubernetes manifest path and object. The last is how controller-created resources are declared: a
+`Service` of type `LoadBalancer` declares a load balancer, a `PersistentVolumeClaim` a volume, an
+`Ingress` an application load balancer, a Karpenter `NodePool` a fleet, a Crossplane managed
+resource anything.
 
 **Identity and Cloud Account are keyed by their provider identifier**, because it is fixed before
 anything is applied: an account id is issued when the account exists, and a role ARN is derivable
 from its account and name. A declaration is cited when one exists.
 
-**A live identifier is an alias, and it says where it came from.** The binding of a declared
-address to its id or ARN is read from a source that holds both halves: Terraform state, a
-CloudFormation stack listing, a Pulumi checkpoint, a Kubernetes object's status, or a controller's
-tags on the cloud side, such as `kubernetes.io/cluster/<name>`, which the alias marks as weaker than
-a declaration. An alias carries its source, the source's serial or version, and its as-of. When a
-source moves on and an address maps to a new id, the former alias is kept as former, because older
-cost rows still carry it. Environment and Team also carry alternate names.
+**A live identifier is an alias, and it says where it came from.** The binding of a declared address
+to its id or ARN is read from a source that holds both halves: Terraform state, a CloudFormation
+stack listing, a Pulumi checkpoint, a Kubernetes object's status, or a controller's tags on the
+cloud side, such as `kubernetes.io/cluster/<name>`, which the alias marks as weaker than a
+declaration. An alias carries its source, the source's serial or version, and its as-of. When a
+source moves on and an address maps to a new id, the former alias is kept and marked
+`prov:invalidatedAtTime`, the time it stopped holding, because older cost rows still carry it; an
+alias with no invalidation time is current. Environment and Team also carry
+alternate names.
+
+**A detail is keyed by the relation it reifies**, meaning its source's key, the relation, and its
+target's key, and, where one relation can have several details, by what tells them apart: the job
+for a `triggers`, `deploys`, `builds`, or `deliversTo`, the secret path for a `readsSecretsFrom`. An
+`observedBy` or `accessedAs` has at most one detail. A detail
+is named by an identifier derived from its key, never a blank node, so two graphs that say the same
+thing about one relation merge into one detail.
 
 **An individual's identifier is relative: its kind and key, resolved under a base.** For example
 `service_instance/shop/prod/user-svc`. A serialization sets `@base`, and how an implementation
@@ -329,26 +384,35 @@ rewritten, because keys are derived and the base is a prefix.
 ## 7. Constraints
 
 **Every runtime thing has exactly one owner, so Environments never overlap.** A Service Instance is
-in exactly one Environment, by its key. A Cloud Resource is `provisionedBy` exactly one of an
-Environment, a Core Infrastructure, or a Service Instance. Use across Environments is `dependsOn`,
-never shared membership, and a `dependsOn` from one Environment into another is a gap worth
-surfacing. An Identity is `provisionedBy` its declaring owner when it has one.
+in exactly one Environment, by its key. A Cloud Resource is `provisionedFor` exactly one of an
+Environment, a Core Infrastructure, an Application, a Service, or a Service Instance; one
+provisioned for an Application or Service is in no Environment. Use across Environments is
+`connectsTo`, never shared membership, and a `connectsTo` from one Environment into another is a gap
+worth surfacing. An Identity is `provisionedFor` its declaring owner when it has one.
 
-Further constraints, each to be stated as a SHACL shape:
+Further constraints, each to be stated as a SHACL shape. The ones about details are checked today as
+SPARQL 1.2 queries, until SHACL 1.2 is published:
 
+- A detail is named by an identifier derived from its key, never a blank node.
+- A detail reifies exactly one relation, that relation carries data, and it is asserted.
+- A relation's data is on a detail of that relation: a `job` is on a `triggers`, `deploys`,
+  `builds`, or `deliversTo`, never on a `readsSecretsFrom`.
 - A Service Instance has at most one `instantiatedFrom`, and its target is a Service.
 - An Environment has exactly one asserted Application.
-- A Pipeline that `deploys` an Environment or Instance is in the Repo it is `deployedFrom`.
+- A Pipeline that `deploys` an Environment or Instance is in the Repository it is `deployedFrom`.
 - `ownedBy` targets only a Team.
 - A `readsSecretsFrom` carries no secret value.
 - Every alias carries its source.
+- At most one alias per declared address and source has no `prov:invalidatedAtTime`.
 - No individual `prov:Person` appears in an estate graph.
 
 ## 8. Provenance
 
 Provenance uses PROV-O directly, under the `prov:` prefix. A fact `prov:wasDerivedFrom` each
 citation; a scan is a `prov:Activity` that generated it; a confirmation `prov:wasAttributedTo` the
-`prov:Agent` that made it; `prov:generatedAtTime` is its as-of.
+`prov:Agent` that made it; `prov:generatedAtTime` is its as-of; `prov:invalidatedAtTime` is when a
+fact that was true stopped being so, such as an alias its source has moved past. A fact is never
+rewritten to say it no longer holds.
 
 ## 9. Cost
 
@@ -356,11 +420,12 @@ Cost adds no terms. Cost rows are not in the estate. A row lands on a Cloud Reso
 for a charge that belongs to no resource (a commitment, support, a credit, tax), on the Cloud
 Account billed for it, and climbs by ownership. It climbs two ways that answer different questions:
 by place, Instance to Environment to Application, "what does checkout's prod cost"; by software,
-Instance to Service to Application, "what does `auth-svc` cost everywhere". They agree for a Service
-in one Application and differ, correctly, for a shared one. A tag, or a controller's tag, is
-evidence for a relation the model already has. How cost shared through Core Infrastructure is split
-is decided downstream: the estate serves the ownership. A cost row that matches no declared resource
-is a gap, never "other".
+Instance to Service to Application, "what does `auth-svc` cost everywhere". A resource provisioned
+for an Application or Service is in no Environment's cost: it joins the climb at the Application or
+the Service. They agree for a Service in one Application and differ, correctly, for a shared one. A
+tag, or a controller's tag, is evidence for a relation the model already has. How cost shared
+through Core Infrastructure is split is decided downstream: the estate serves the ownership. A cost
+row that matches no declared resource is a gap, never "other".
 
 ## 10. Testing the model
 
@@ -380,7 +445,9 @@ is said, the model is wrong there.
 Every term is `draft` until the first published version, and a draft term may be renamed or
 removed. After publication a term is `stable`: it is added and never removed or repurposed, and one
 that turns out wrong is marked `owl:deprecated` with a pointer to its replacement. `owl:versionInfo`
-carries a version; the namespace never carries one and never moves.
+carries a version; the namespace never carries one and never moves. The first published version
+waits for RDF 1.2 to become a W3C Recommendation, so that nothing this specification depends on
+changes after its terms are stable.
 
 ## Appendix: rationale
 
@@ -388,8 +455,31 @@ carries a version; the namespace never carries one and never moves.
 subclass, inverses, and keys, and it is what the industry reads a model in. It cannot state "exactly
 one owner" or "no value on a secret reference"; SHACL can, and validating an estate graph against
 shapes makes the specification checkable by anyone. Rejected: a programming-language schema, which
-speaks to nobody outside one codebase; LinkML, which adds a generator between the model and OWL for a
-model this size; prose alone, because nothing checks a description.
+speaks to nobody outside one codebase; LinkML, which adds a generator between the model and OWL for
+a model this size; prose alone, because nothing checks a description.
+
+**RDF 1.2 reifiers for a relation's data, rather than qualified details.** RDF 1.1 can put data on a
+relation only through a separate resource that repeats the relation's target, PROV-O's
+qualification pattern, which then needs a rule that the two agree. A reifier is bound to the triple
+it describes, so the target cannot disagree, and several reifiers of one triple are part of the
+model. The cost is that RDF 1.2 is newer than the tools most estates already use; the W3C's RDF 1.2
+Interoperability note gives a lossless translation to RDF 1.1 for any tool that needs one.
+
+**How a placement was resolved is provenance, not a property.** An earlier draft gave `placedUnder`
+and `instantiatedFrom` a placement origin, a name match or an operator's choice. It was rejected:
+how a fact came to be is what PROV-O states for every fact, a private two-value copy of it on two
+relations would say it for those alone, and the graph holds only what has been confirmed.
+
+**When an alias stopped holding is provenance, not a status.** An earlier draft gave an alias a
+status, `current` or `former`. It was rejected: a status goes stale when the source moves on and has
+to be rewritten, while `prov:invalidatedAtTime` is written once and says when, which is what
+attributing an older cost row needs.
+
+**`connectsTo` rather than `dependsOn`.** The relation is read from connection strings and
+references, and "connects to" says exactly that. "Depends on" claims the connection is critical,
+which the estate does not know, invites dependencies no configuration shows, and in Terraform and
+Compose means apply or startup order. It is kept as an alias. The credential relation, once
+`connectedVia`, is `accessedAs`, beside `runsAs`, so the two names do not collide.
 
 **Software, Scope, Runtime rather than Logical and Deployed.** Environment is not something that
 runs, and Core Infrastructure is not something deployed. A grouping named for meaning but populated
@@ -404,7 +494,8 @@ would move its existing Instance from Application to Service.
 rule and the undeclared-is-a-gap rule on the day it landed, and it could not hold identities that
 live in no cloud account.
 
-**Cloud Account is not a Cloud Resource.** Nothing runs in it; what makes it matter is what it holds.
+**Cloud Account is not a Cloud Resource.** Nothing runs in it; what makes it matter is what it
+holds.
 
 **Core Infrastructure is not an Application.** A tenant is not an Application's Environment, and
 Application should keep meaning something that delivers value.

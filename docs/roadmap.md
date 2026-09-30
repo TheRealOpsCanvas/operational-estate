@@ -5,16 +5,21 @@ tests it against estates other than the one it was first drawn from.
 
 ## Vocabulary and constraints
 
-- `estate.ttl`: every class and relation in OWL under the `estate:` prefix, each with its
-  definition, what it is not, its `skos:altLabel` aliases, its key, and its maturity. Relations that
-  carry data are relation classes (the n-ary pattern); every object property has an inverse.
+- Done: [`ontology/estate.ttl`](../ontology/estate.ttl), every class and relation in OWL under the
+  `estate:` prefix, each with its definition, what it is not, its aliases, its key rule, and its
+  maturity. Every relation between entities has an inverse, and a relation that carries data puts
+  it on an RDF 1.2 reifier of a detail class. `tools/check.py` asserts its structural consistency
+  and its agreement with the prose specification, and checks the specification's Turtle examples
+  against the rules every detail keeps, as SPARQL 1.2 queries run with pyoxigraph.
 - PROV-O used directly for provenance: `prov:wasDerivedFrom` for a citation, `prov:Activity` for a
   scan, `prov:wasAttributedTo` a `prov:Agent` for a confirmation, `prov:generatedAtTime` for the
   as-of.
 - `estate-shapes.ttl`: SHACL for what OWL cannot state. Key derivation; exactly one owner per
   runtime thing; at most one `instantiatedFrom` per Service Instance, targeting a Service; relation
-  endpoint classes; no individual `prov:Person` and no relation touching one; no value on a
-  `readsSecretsFrom`; every alias carrying its source; `ownedBy` targeting only a Team.
+  endpoint classes; the rules every detail keeps, moved from SPARQL once SHACL 1.2 is published and
+  a validator reads RDF 1.2; no individual `prov:Person` and no relation touching one; no value on
+  a `readsSecretsFrom`; every alias carrying its source, and at most one current alias per address
+  and source; values only from a property's listed set; `ownedBy` targeting only a Team.
 
 ## Competency questions and worked estates
 
@@ -33,14 +38,14 @@ tests it against estates other than the one it was first drawn from.
 
 ## Tooling
 
-- A check that parses the vocabulary and shapes, runs a structural consistency check (declared
-  domains and ranges, symmetric inverses, two endpoints per relation class, no class in two
-  groupings), validates every example, confirms the wrong one fails, and runs every competency
-  question over every example.
+- Extend `tools/check.py`, which already parses the vocabulary, checks its structural consistency,
+  and checks it against the prose specification, to validate every example against the shapes,
+  confirm the wrong one fails, and run every competency question over every example.
 - A generated human rendering of the vocabulary, checked for staleness.
 
 ## Later
 
+- The first published version, once RDF 1.2 is a W3C Recommendation.
 - A JSON-LD context, so JSON that implementations already produce can be read as the vocabulary.
 - Alignments to OpenTelemetry semantic conventions and FOCUS, the two standards an estate's
   telemetry and cost rows already use, with a note on each lossy mapping.
