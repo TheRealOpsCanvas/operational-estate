@@ -22,6 +22,14 @@ estate:
     owl:versionInfo "0.1.0-draft" ;
     rdfs:seeAlso <https://github.com/TheRealOpsCanvas/operational-estate> .
 
+estate:Scope
+    a owl:Class ;
+    rdfs:subClassOf estate:Entity ;
+    rdfs:label "Scope"@en ;
+    skos:definition "The named unit a Service Instance is placed in and its runtime things are owned by: an Environment or a Core Infrastructure."@en ;
+    skos:scopeNote "A grouping, not something with individuals of its own. It exists because inScope ranges over exactly its members. Not a place: an Environment spans whatever clusters and accounts it uses."@en ;
+    estate:maturity "draft" .
+
 #################################################################
 # Annotations
 #################################################################
@@ -88,10 +96,10 @@ estate:Service
 
 estate:Environment
     a owl:Class ;
-    rdfs:subClassOf estate:Entity ;
+    rdfs:subClassOf estate:Scope ;
     rdfs:label "Environment"@en ;
     skos:altLabel "app-env"@en, "the environment"@en, "stage"@en ;
-    skos:definition "A named set of runtime things belonging to one Application, as a practitioner means it, across whatever clouds, accounts, and clusters it spans. Each Application has its own. A Cloud Resource declared in its own code is provisionedFor it; a Service Instance deployed into it is inEnvironment it."@en ;
+    skos:definition "A named set of runtime things belonging to one Application, as a practitioner means it, across whatever clouds, accounts, and clusters it spans. Each Application has its own. A Cloud Resource declared in its own code is provisionedFor it; a Service Instance deployed into it is inScope it."@en ;
     skos:scopeNote "Not the cluster or account it runs in, and not shared between Applications: what several Applications' Environments share is Core Infrastructure. It does not run; its Service Instances do."@en ;
     estate:keyRule "Its asserted Application name and its name."@en ;
     estate:maturity "draft" .
@@ -101,17 +109,17 @@ estate:ServiceInstance
     rdfs:subClassOf estate:Runtime ;
     rdfs:label "Service Instance"@en ;
     skos:altLabel "Deployed Instance"@en ;
-    skos:definition "One deployment of one Service into one Environment. Its Service is always a Service, never an Application, so every question about software takes one path from an Instance through its Service to its Application."@en ;
+    skos:definition "One deployment of one Service into one Scope: an Environment, or a Core Infrastructure for software the platform installs, such as an ingress controller. Its Service is always a Service, never an Application, so every question about software takes one path from an Instance through its Service to its Application."@en ;
     skos:scopeNote "Not one replica, and not a virtual machine instance. \"Deployed Instance\" is a draft rename."@en ;
-    estate:keyRule "Its Environment's key and its deployed name."@en ;
+    estate:keyRule "Its Scope's key and its deployed name."@en ;
     estate:maturity "draft" .
 
 estate:CoreInfrastructure
     a owl:Class ;
-    rdfs:subClassOf estate:Entity ;
+    rdfs:subClassOf estate:Scope ;
     rdfs:label "Core Infrastructure"@en ;
     skos:altLabel "landing zone"@en ;
-    skos:definition "Infrastructure declared outside the declarations of any single Environment, Application, or Service: a platform team's repository, stack, or module. It is an owner Cloud Resources are provisioned for. The test is where the declaration lives, not how many Environments use it today."@en ;
+    skos:definition "Infrastructure declared outside the declarations of any single Environment, Application, or Service: a platform team's repository, stack, or module. It is an owner: Cloud Resources and Identities are provisioned for it, and the Service Instances of the software it installs are in it. The test is where the declaration lives, not how many Environments use it today."@en ;
     skos:scopeNote "Not a place and not the cluster provisioned for it, which is a Cloud Resource. Not an Application."@en ;
     estate:keyRule "The Repository and the stack, module, or root that declares it."@en ;
     estate:maturity "draft" .
@@ -205,7 +213,7 @@ estate:Identifier
                   estate:Detail ) .
 
 [] a owl:AllDisjointClasses ;
-    owl:members ( estate:Trigger estate:Deployment estate:Build estate:Delivery estate:SecretRead estate:Observation estate:Access ) .
+    owl:members ( estate:Trigger estate:Deployment estate:Build estate:Delivery estate:SecretRead estate:Observation estate:Access estate:Pull ) .
 
 #################################################################
 # Relations that carry nothing
@@ -259,19 +267,20 @@ estate:declares
     skos:definition "An entity a Repository's files declare."@en ;
     estate:maturity "draft" .
 
-estate:inEnvironment
+estate:inScope
     a owl:ObjectProperty, owl:FunctionalProperty ;
-    rdfs:label "in environment"@en ;
+    rdfs:label "in scope"@en ;
+    skos:altLabel "in environment"@en ;
     rdfs:domain estate:ServiceInstance ;
-    rdfs:range estate:Environment ;
+    rdfs:range estate:Scope ;
     owl:inverseOf estate:hasInstance ;
-    skos:definition "The one Environment a Service Instance is deployed into, whose key is part of the Instance's key."@en ;
+    skos:definition "The one Scope a Service Instance is deployed into, an Environment or a Core Infrastructure, whose key is part of the Instance's key."@en ;
     estate:maturity "draft" .
 
 estate:hasInstance
     a owl:ObjectProperty ;
     rdfs:label "has instance"@en ;
-    skos:definition "A Service Instance deployed into an Environment."@en ;
+    skos:definition "A Service Instance deployed into an Environment or a Core Infrastructure."@en ;
     estate:maturity "draft" .
 
 estate:deployedFrom
@@ -356,10 +365,10 @@ estate:connectsTo
     a owl:ObjectProperty ;
     rdfs:label "connects to"@en ;
     skos:altLabel "depends on"@en ;
-    rdfs:domain estate:ServiceInstance ;
+    rdfs:domain estate:Runtime ;
     rdfs:range estate:Runtime ;
     owl:inverseOf estate:connectedFrom ;
-    skos:definition "What a Service Instance reaches, read from the connection strings, hostnames, environment variables, and service references in its configuration."@en ;
+    skos:definition "What a runtime thing reaches or uses: for a Service Instance, read from the connection strings, hostnames, environment variables, and service references in its configuration; for a Cloud Resource, read from the references in its declaration, such as a cluster's subnets and security groups."@en ;
     skos:scopeNote "Never inferred from a name. Not a claim that the connection is critical: what it means at runtime is a reading of the manifest it cites. Not apply or startup order, which Terraform and Compose call depends_on."@en ;
     estate:maturity "draft" .
 
@@ -388,9 +397,9 @@ estate:trusts
     a owl:ObjectProperty ;
     rdfs:label "trusts"@en ;
     rdfs:domain estate:Identity ;
-    rdfs:range [ a owl:Class ; owl:unionOf ( estate:Pipeline estate:Repository estate:Identity ) ] ;
+    rdfs:range [ a owl:Class ; owl:unionOf ( estate:Pipeline estate:Repository estate:Identity estate:CloudResource ) ] ;
     owl:inverseOf estate:trustedBy ;
-    skos:definition "What an Identity's trust policy allows to assume it, read from the declaration."@en ;
+    skos:definition "What an Identity's trust policy allows to assume it, read from the declaration: a Pipeline or Repository by its CI identity, another Identity, or a Cloud Resource such as a cluster's OIDC provider."@en ;
     skos:scopeNote "Not what the Identity is permitted to do, which is a reading of its cited policy, never an effective permission."@en ;
     estate:maturity "draft" .
 
@@ -478,6 +487,7 @@ estate:triggers
     rdfs:range estate:Pipeline ;
     owl:inverseOf estate:triggeredBy ;
     skos:definition "A Pipeline another Pipeline starts from one of its jobs."@en ;
+    skos:scopeNote "States that the trigger is declared, not whether it runs automatically or on which branch: that is a reading of the job's rule in the cited file."@en ;
     estate:maturity "draft" .
 
 estate:triggeredBy
@@ -502,6 +512,7 @@ estate:deploys
     rdfs:range [ a owl:Class ; owl:unionOf ( estate:Environment estate:CoreInfrastructure estate:Software estate:ServiceInstance ) ] ;
     owl:inverseOf estate:deployedBy ;
     skos:definition "An owner whose declarations a Pipeline applies: an Environment or Service Instance it deploys into, or the Core Infrastructure, Application, or Service whose infrastructure it applies. Its targets are the owners provisionedFor names, so the Pipeline that changes a Cloud Resource is one join away."@en ;
+    skos:scopeNote "States that the deploy is declared, not whether it runs automatically or on which branch: that is a reading of the job's rule in the cited file."@en ;
     estate:maturity "draft" .
 
 estate:deployedBy
@@ -515,7 +526,7 @@ estate:Deployment
     rdfs:subClassOf estate:Detail ;
     rdfs:label "Deployment"@en ;
     estate:detailOf estate:deploys ;
-    skos:definition "The details of a deploys: the job, and the pinned location it writes: repository, path, field, and commit."@en ;
+    skos:definition "The details of a deploys: the job and the variables it sets, and the pinned location it writes: repository, path, field, commit, and the value declared there."@en ;
     estate:keyRule "The relation it reifies, and its job."@en ;
     estate:maturity "draft" .
 
@@ -548,9 +559,9 @@ estate:deliversTo
     a owl:ObjectProperty ;
     rdfs:label "delivers to"@en ;
     rdfs:domain estate:Pipeline ;
-    rdfs:range [ a owl:Class ; owl:unionOf ( estate:CloudResource estate:ExternalSystem ) ] ;
+    rdfs:range [ a owl:Class ; owl:unionOf ( estate:ServiceInstance estate:CloudResource estate:ExternalSystem ) ] ;
     owl:inverseOf estate:deliveredToBy ;
-    skos:definition "A registry, bucket, or hosted destination a Pipeline delivers an artifact to."@en ;
+    skos:definition "A registry, image repository, bucket, or hosted destination a Pipeline delivers an artifact to. A self-hosted registry is the Service Instance that serves it."@en ;
     estate:maturity "draft" .
 
 estate:deliveredToBy
@@ -566,6 +577,32 @@ estate:Delivery
     estate:detailOf estate:deliversTo ;
     skos:definition "The details of a deliversTo: the job."@en ;
     estate:keyRule "The relation it reifies, and its job."@en ;
+    estate:maturity "draft" .
+
+estate:pullsFrom
+    a owl:ObjectProperty ;
+    rdfs:label "pulls from"@en ;
+    rdfs:domain estate:ServiceInstance ;
+    rdfs:range [ a owl:Class ; owl:unionOf ( estate:ServiceInstance estate:CloudResource estate:ExternalSystem ) ] ;
+    owl:inverseOf estate:pulledBy ;
+    skos:definition "The image repository or registry a Service Instance's images are pulled from, read from the image references in its manifest, values, or task definition. A self-hosted registry is the Service Instance that serves it. With deliversTo, the registries in an estate are the targets of these relations."@en ;
+    skos:scopeNote "Not a pull that happened, which is live and held by the registry."@en ;
+    estate:maturity "draft" .
+
+estate:pulledBy
+    a owl:ObjectProperty ;
+    rdfs:label "pulled by"@en ;
+    skos:definition "The inverse of pullsFrom."@en ;
+    estate:maturity "draft" .
+
+estate:Pull
+    a owl:Class ;
+    rdfs:subClassOf estate:Detail ;
+    rdfs:label "Pull"@en ;
+    estate:detailOf estate:pullsFrom ;
+    skos:definition "The details of a pullsFrom: the image reference as declared, and the name of the pull secret, if one is declared."@en ;
+    skos:scopeNote "Never carries the pull secret's value."@en ;
+    estate:keyRule "The relation it reifies."@en ;
     estate:maturity "draft" .
 
 estate:readsSecretsFrom
@@ -770,9 +807,9 @@ estate:job
 estate:variable
     a owl:DatatypeProperty ;
     rdfs:label "variable"@en ;
-    rdfs:domain estate:Trigger ;
+    rdfs:domain [ a owl:Class ; owl:unionOf ( estate:Trigger estate:Deployment ) ] ;
     rdfs:range xsd:string ;
-    skos:definition "A variable a Trigger sends, as NAME=value."@en ;
+    skos:definition "A variable a Trigger sends or a Deployment's job sets, as NAME=value."@en ;
     skos:scopeNote "Never a secret's value."@en ;
     estate:maturity "draft" .
 
@@ -808,12 +845,38 @@ estate:atCommit
     skos:definition "The commit the write location was read at, so everyone who reads it reads the same value."@en ;
     estate:maturity "draft" .
 
+estate:declaredValue
+    a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:label "declared value"@en ;
+    rdfs:domain estate:Deployment ;
+    rdfs:range xsd:string ;
+    skos:definition "The value in a Deployment's written field, read verbatim at the commit it was read at, such as an image tag."@en ;
+    skos:scopeNote "What is declared, never what is running, which is live and held by a tool."@en ;
+    estate:maturity "draft" .
+
 estate:tagScheme
     a owl:DatatypeProperty, owl:FunctionalProperty ;
     rdfs:label "tag scheme"@en ;
     rdfs:domain estate:Build ;
     rdfs:range xsd:string ;
     skos:definition "How a Build's tag maps to a commit, such as $CI_COMMIT_SHA or a version scheme."@en ;
+    estate:maturity "draft" .
+
+estate:imageReference
+    a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:label "image reference"@en ;
+    rdfs:domain estate:Pull ;
+    rdfs:range xsd:string ;
+    skos:definition "The image a Pull names, as its manifest declares it, such as registry.example.com/shop/user-svc:1.4.2."@en ;
+    estate:maturity "draft" .
+
+estate:pullSecretName
+    a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:label "pull secret name"@en ;
+    rdfs:domain estate:Pull ;
+    rdfs:range xsd:string ;
+    skos:definition "The name of the secret a Pull authenticates with, as its manifest declares it."@en ;
+    skos:scopeNote "Never the secret's value."@en ;
     estate:maturity "draft" .
 
 estate:secretPath

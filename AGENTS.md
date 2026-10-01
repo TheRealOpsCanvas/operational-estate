@@ -37,7 +37,8 @@ changing anything, and [docs/competency-questions.md](docs/competency-questions.
 - **State a term completely:** its definition, what it is not, its aliases, its key, its domain
   and range, its direction and inverse.
 - **Connections, not interpretations.** A property belongs in the model only if it could not be
-  rebuilt from one file the estate already points at.
+  rebuilt from one file the estate already points at, or it is a value copied verbatim from a
+  pinned file.
 - **Nothing about a person.** No class, relation, or example identifies an individual.
 - **Maturity.** Every term is `draft` until the first published version and may change. After
   that, terms are added and deprecated, never removed or repurposed.

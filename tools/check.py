@@ -98,7 +98,7 @@ def main() -> int:
     annotation_properties = {p for p in graph.subjects(RDF.type, OWL.AnnotationProperty) if is_estate(p)}
 
     entity = ESTATE.Entity
-    groupings = {ESTATE.Software, ESTATE.Runtime}
+    groupings = {ESTATE.Software, ESTATE.Runtime, ESTATE.Scope}
     entity_classes = {c for c in classes if entity in superclasses(graph, c) or c == entity}
 
     # Every term is documented, and every term but an annotation carries a maturity.
@@ -203,7 +203,7 @@ def check_against_spec(
     # Classes: every heading under "## 4. Classes" is a class, and every leaf entity class has one.
     section = text.split("## 4. Classes", 1)[1].split("\n## ", 1)[0]
     headings = set(re.findall(r"^### (.+)$", section, flags=re.MULTILINE))
-    groupings = {ESTATE.Software, ESTATE.Runtime, ESTATE.Entity}
+    groupings = {ESTATE.Software, ESTATE.Runtime, ESTATE.Scope, ESTATE.Entity}
     leaves = {label_of[c] for c in entity_classes - groupings}
     for heading in sorted(headings - set(class_by_label)):
         finding(f"spec: class '{heading}' has no class in the vocabulary")
@@ -288,11 +288,11 @@ BROKEN = """
 :p1 estate:deploys :i1 {| estate:job "unnamed" |} .
 :unasserted rdf:reifies <<( :p1 estate:deploys :i2 )>> ; estate:job "deploy-dev" .
 :two rdf:reifies <<( :p1 estate:deploys :i1 )>>, <<( :p1 estate:builds :s1 )>> .
-:plain rdf:reifies <<( :i1 estate:inEnvironment :e1 )>> .
+:plain rdf:reifies <<( :i1 estate:inScope :e1 )>> .
 :wrong rdf:reifies <<( :i1 estate:readsSecretsFrom :v1 )>> ; estate:job "deploy-prod" .
 :i1 estate:readsSecretsFrom :v1 .
 :p1 estate:builds :s1 .
-:i1 estate:inEnvironment :e1 .
+:i1 estate:inScope :e1 .
 """
 BROKEN_EXPECTED = {
     "a detail is named by an IRI, never a blank node": 1,
