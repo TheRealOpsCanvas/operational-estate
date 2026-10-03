@@ -361,8 +361,8 @@ or account name would put "cluster" in identifiers read by people who think "pro
 | Service Instance | its Scope's key and its deployed name |
 | Repository | its canonical remote |
 | Pipeline | its Repository and its definition path |
-| Core Infrastructure | the Repository and the stack, module, or root that declares it |
-| Cloud Resource | the Repository that declares it, a source kind, and the declared address |
+| Core Infrastructure | the Repository, the stack, module, or root that declares it, and its applied configuration |
+| Cloud Resource | the Repository that declares it, a source kind, the declared address, and its root's applied configuration |
 | Identity | its provider and the provider's identifier for it |
 | Cloud Account | its provider and the provider's id |
 | External System | its provider, kind, and name |
@@ -375,6 +375,16 @@ Kubernetes manifest path and object. The last is how controller-created resource
 `Service` of type `LoadBalancer` declares a load balancer, a `PersistentVolumeClaim` a volume, an
 `Ingress` an application load balancer, a Karpenter `NodePool` a fleet, a Crossplane managed
 resource anything.
+
+**A declaration may be a module call, and one root may be applied more than once.** A resource
+declared through a module, such as a cluster created by a call to a registry module, is declared by
+that call: its address is the module call's address in the root, and the address of the resource
+inside the module, which the repository does not contain, is read from state as an alias. A root
+applied once per environment, with a var file, a workspace, a stack, or an overlay, declares a
+separate resource for each, so the applied configuration is part of the key of every Cloud Resource
+and Core Infrastructure it declares: one module call applied with `prod.tfvars` and with
+`dev.tfvars` is two clusters, and two Core Infrastructures. A name computed from variables is read
+with every file it is computed from cited.
 
 **Identity and Cloud Account are keyed by their provider identifier**, because it is fixed before
 anything is applied: an account id is issued when the account exists, and a role ARN is derivable

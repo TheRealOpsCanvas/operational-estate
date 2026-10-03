@@ -341,8 +341,13 @@ Terms: `connectsTo`, `provisionedFor`, `trusts`, `runsOn`; Cloud Resource aliase
   security groups, and whatever else `connectsTo` those; the Cloud Resources provisioned for the
   same Core Infrastructure, which share its declaration; every Identity that `trusts` its OIDC
   provider; each with its aliases and their as-of.
+- **Estate returns, too.** The Core Infrastructure it is provisioned for, the Pipeline job that
+  `deploys` it, and the commit its declaration was read at.
 - **Last mile.** Read the cited declarations for what a shared resource would lose; whether each
-  still exists is a query to the cloud.
+  still exists is a query to the cloud. Before any plan or destroy from the declaring job, compare
+  the declaration at its commit with the live resource: a resource changed from somewhere else,
+  such as a cluster upgraded past the version its declaration names, makes that job's plan
+  destructive or failing.
 - **Same for everyone.** Shared use is read from references in declarations, never inferred from
   names, and anything not declared is a gap rather than "unaffected".
 

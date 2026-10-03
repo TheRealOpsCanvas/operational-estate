@@ -121,7 +121,7 @@ estate:CoreInfrastructure
     skos:altLabel "landing zone"@en ;
     skos:definition "Infrastructure declared outside the declarations of any single Environment, Application, or Service: a platform team's repository, stack, or module. It is an owner: Cloud Resources and Identities are provisioned for it, and the Service Instances of the software it installs are in it. The test is where the declaration lives, not how many Environments use it today."@en ;
     skos:scopeNote "Not a place and not the cluster provisioned for it, which is a Cloud Resource. Not an Application."@en ;
-    estate:keyRule "The Repository and the stack, module, or root that declares it."@en ;
+    estate:keyRule "The Repository, the stack, module, or root that declares it, and the configuration it is applied with where one root is applied more than once."@en ;
     estate:maturity "draft" .
 
 estate:CloudResource
@@ -130,7 +130,7 @@ estate:CloudResource
     rdfs:label "Cloud Resource"@en ;
     skos:definition "A provisioned thing in a cloud or cluster: a database, a bucket, a load balancer, a cluster, a function, a registry repository, a declared secret. It has exactly one owner. One with no declaration is a gap."@en ;
     skos:scopeNote "Not an Identity and not a Cloud Account."@en ;
-    estate:keyRule "The Repository that declares it, a source kind, and the declared address."@en ;
+    estate:keyRule "The Repository that declares it, a source kind, the declared address, and the configuration its root is applied with where one root is applied more than once."@en ;
     estate:maturity "draft" .
 
 estate:Identity
