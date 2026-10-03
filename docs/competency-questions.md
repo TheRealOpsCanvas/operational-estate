@@ -340,9 +340,8 @@ Terms: `connectsTo`, `provisionedFor`, `trusts`, `runsOn`; Cloud Resource aliase
 - **Estate returns.** The Instances that `runsOn` it; what it `connectsTo`, its subnets and
   security groups, and whatever else `connectsTo` those; the Cloud Resources provisioned for the
   same Core Infrastructure, which share its declaration; every Identity that `trusts` its OIDC
-  provider; each with its aliases and their as-of.
-- **Estate returns, too.** The Core Infrastructure it is provisioned for, the Pipeline job that
-  `deploys` it, and the commit its declaration was read at.
+  provider; each with its aliases and their as-of; the Core Infrastructure it is provisioned for,
+  the Pipeline job that `deploys` it, and the commit its declaration was read at.
 - **Last mile.** Read the cited declarations for what a shared resource would lose; whether each
   still exists is a query to the cloud. Before any plan or destroy from the declaring job, compare
   the declaration at its commit with the live resource: a resource changed from somewhere else,
