@@ -27,7 +27,7 @@ Five rules the questions are written against:
 
 - **Connections, not interpretations.** The estate holds what a model cannot rebuild per
   prompt, with evidence citing where it was read, and never a reading of a file the model can
-  open once pointed at it.
+  open once pointed at it. A value copied verbatim at a pinned commit is not a reading.
 - **The join, not the value.** For anything live, which tool, which identifier, as of when.
 - **Every pointer is pinned.** A path at a commit, a field, a tool identifier. Never "the
   current file".
@@ -96,16 +96,19 @@ Terms: Team, `ownedBy`.
 
 ## Deployments and pipelines
 
-### What commit of the service is in prod?
+### What commit of the service is in prod, and does it include my fix?
 
-Terms: the `deploys` write location, `builds`; one pinned read (tool).
+Terms: the `deploys` write location and declared value, `builds`; git history (tool).
 
 - **Estate returns.** The deploy edge's write location, `services/user-svc/values-prod.yaml`
-  at commit `abc123`, field `userServiceImageTag`; the build edge's tag scheme,
-  `$CI_COMMIT_SHA`.
-- **Last mile.** Read the field at that commit, apply the scheme. The value is never stored.
-- **Same for everyone.** Path, field, commit, and scheme are pinned, so the read is the same
-  whatever HEAD a checkout is at. The honest answer is "declared as of", never "running".
+  at commit `abc123`, field `userServiceImageTag`, and the value declared there,
+  `main-851dfd9c`; the build edge's tag scheme, `$CI_COMMIT_SHA`.
+- **Last mile.** Apply the scheme to the value to get the commit; ask the git host whether that
+  commit contains the fix, starting from the merge commit of the fix's pull request, since a
+  squash merge leaves the fix's own commits out of the default branch.
+- **Same for everyone.** Path, field, commit, value, and scheme are pinned, so the answer is the
+  same whatever a checkout is at. The honest answer is "declared as of", never "running": what is
+  running is a query to the tool that observes it.
 
 ### Which pipelines deployed unsuccessfully?
 
@@ -141,11 +144,12 @@ and CI system (tool).
 
 ### Which recent deployments changed both infrastructure and application behavior?
 
-Terms: `deploys` and its write location; Cloud Resource declared address; git
+Terms: `deploys` with its variables and write location; Cloud Resource declared address; git
 diff (tool).
 
-- **Estate returns.** Recent `deploys` edges and the paths they write; every Cloud Resource's
-  declared address in the same Repository.
+- **Estate returns.** Recent `deploys` edges, the variables each job sets, such as one selecting
+  infrastructure or configuration, and the paths they write; every Cloud Resource's declared
+  address in the same Repository.
 - **Last mile.** For each run's commit, diff it: did it touch a resource declaration and
   application code?
 - **Same for everyone.** Declared addresses are what classify a diff as infrastructure; without
@@ -302,6 +306,49 @@ Terms: Pipeline; Identity, `trusts`, `within`; policy reads (tool).
 - **Last mile.** Read each role's cited policy for what it permits.
 - **Same for everyone.** The set of roles is a walk over declared trust, never a search across
   the repositories that declare roles.
+
+## Retiring infrastructure
+
+### What pushes to and pulls from this registry?
+
+Terms: `deliversTo`, `pullsFrom`, `connectsTo`; `within`.
+
+- **Estate returns.** The registry, a managed Cloud Resource or the Service Instance serving a
+  self-hosted one, and its image repositories `within` it; every Pipeline that `deliversTo` them
+  with its job; every Service Instance that `pullsFrom` them with its image reference and pull
+  secret name; everything that `connectsTo` the registry's hostname.
+- **Last mile.** None for what is declared. Whether anything pulled recently is a query to the
+  registry, and a workload whose image is cached on its node may not have pulled for weeks.
+- **Same for everyone.** The set is a walk over declared references, never a search for the
+  hostname across repositories.
+
+### What runs on this cluster, including what the platform installs?
+
+Terms: `runsOn`, `inScope`, Core Infrastructure; `instantiatedFrom`.
+
+- **Estate returns.** Every Service Instance that `runsOn` the cluster, each with its Scope: an
+  Application's Environment, or the Core Infrastructure whose declaration installs it, such as an
+  ingress controller or a CI runner; each Instance's Service.
+- **Last mile.** None for what is declared. What is running now is a query to the cluster.
+- **Same for everyone.** Platform software has a Scope like any other, so it is never left out
+  for lacking an Application.
+
+### What breaks if this cluster is deleted?
+
+Terms: `connectsTo`, `provisionedFor`, `trusts`, `runsOn`; Cloud Resource aliases.
+
+- **Estate returns.** The Instances that `runsOn` it; what it `connectsTo`, its subnets and
+  security groups, and whatever else `connectsTo` those; the Cloud Resources provisioned for the
+  same Core Infrastructure, which share its declaration; every Identity that `trusts` its OIDC
+  provider; each with its aliases and their as-of; the Core Infrastructure it is provisioned for,
+  the Pipeline job that `deploys` it, and the commit its declaration was read at.
+- **Last mile.** Read the cited declarations for what a shared resource would lose; whether each
+  still exists is a query to the cloud. Before any plan or destroy from the declaring job, compare
+  the declaration at its commit with the live resource: a resource changed from somewhere else,
+  such as a cluster upgraded past the version its declaration names, makes that job's plan
+  destructive or failing.
+- **Same for everyone.** Shared use is read from references in declarations, never inferred from
+  names, and anything not declared is a gap rather than "unaffected".
 
 ## Adding questions
 

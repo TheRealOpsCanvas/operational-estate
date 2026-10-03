@@ -31,16 +31,19 @@ things, each with evidence citing where it was read. It does not hold a reading 
 contents, such as whether a CI job is manual, because a reader handed the file reads that in one
 step, and a stored reading is a verdict true only at one reading of a file nothing re-checks. A
 property belongs in the model only if it could not be rebuilt from one file the estate already
-points at.
+points at, or it is a value copied verbatim from a pinned file, such as the version a deploy
+writes: a copy at a pinned commit is never stale, and it outlives the commit if that is lost.
 
 **For anything live, the join and not the value.** The last error, the current cost, what is
 running now: the estate holds which tool, which identifier, and as of when, and the tool holds the
-value. The version declared in an environment is not stored either: the estate pins the path, the
-field, and the commit, and reading the field at that commit gives everyone the same value.
+value. The version declared in an environment is a declared value, not a live one: the estate holds
+it with the path, the field, and the commit it was read at, and what is running is the tool's.
 
 **Every pointer is a citation pinned to a commit.** "Read `values-prod.yaml`" gives different
 answers on different days; "read it at `abc123`, field `imageTag`" gives one, and the as-of says how
-old it is.
+old it is. A pin is taken from a repository's default branch or a tag, the history everyone shares,
+never from a branch only one checkout has. A commit that later becomes unreachable, through a
+rewritten history, invalidates the facts pinned to it (section 8), and they are read again.
 
 **The same answer for everyone.** The estate does not answer questions; it points a reader, often
 an AI model, at the answer, so that different people asking the same thing get the same one. What
@@ -59,11 +62,11 @@ A grouping is a class only where a relation needs exactly that set of classes.
 | Grouping | Members | Needed by |
 |---|---|---|
 | **Software** | Application, Service | domain of `implementedIn`, range of `provisionedFor` |
-| **Runtime** | Service Instance, Cloud Resource | range of `connectsTo` |
+| **Runtime** | Service Instance, Cloud Resource | domain and range of `connectsTo` |
+| **Scope** | Environment, Core Infrastructure | range of `inScope` |
 
-**Scope**, Environment and Core Infrastructure, the named units runtime things are placed in and
-owned by, is vocabulary for explaining the model and not a class, because no relation ranges over
-exactly those two. Every other class sits directly under `estate:Entity`.
+Scope is the named unit runtime things are placed in and owned by: an Application's Environment, or
+the Core Infrastructure a platform declares. Every other class sits directly under `estate:Entity`.
 
 **A role is not a class.** Where what a relation points at crosses classes, the relation carries the
 role. What a workload reads secrets from may be a Service Instance (a self-hosted Vault), a Cloud
@@ -115,9 +118,10 @@ a naming convention.
 
 ### Service Instance
 
-One deployment of one Service into one Environment. It is `instantiatedFrom` exactly one Service,
-never an Application, so every question about software takes one path, from an Instance through its
-Service to its Application.
+One deployment of one Service into one Scope: an Environment, or a Core Infrastructure for software
+the platform installs, such as an ingress controller or a CI runner its cluster declaration deploys.
+It is `instantiatedFrom` exactly one Service, never an Application, so every question about software
+takes one path, from an Instance through its Service to its Application.
 
 *Draft rename:* **Deployed Instance**. "Service Instance" reads wrong for a monolith, and
 "Instance" alone collides with a virtual machine instance and with OpenTelemetry's
@@ -129,8 +133,9 @@ is a live fact the estate never holds.
 Infrastructure declared outside the declarations of any single Environment, Application, or Service:
 a platform team's repository, stack, or module. The test is where the declaration lives, not how
 many Environments use it today, so a cluster a shared infrastructure repository declares is Core
-Infrastructure while only dev uses it. It is an owner, not a place: Cloud Resources are provisioned
-for it, and it is not the cluster provisioned for it.
+Infrastructure while only dev uses it. It is an owner, not a place: Cloud Resources and Identities
+are provisioned for it, the Service Instances of the software it installs are in it, and it is not
+the cluster provisioned for it.
 
 *Aliases:* "landing zone".
 
@@ -213,7 +218,7 @@ asserted too; the annotation syntax does this, and section 7 requires it of ever
 | Relation | From | To | Carries |
 |---|---|---|---|
 | `declaredIn` | Service, Pipeline, Core Infrastructure, Cloud Resource | Repository | |
-| `inEnvironment` | Service Instance | Environment | |
+| `inScope` | Service Instance | Scope | |
 | `memberOf` | Service | Application | |
 | `implementedIn` | Software | Repository | |
 | `placedUnder` | Environment | Application | |
@@ -222,26 +227,28 @@ asserted too; the annotation syntax does this, and section 7 requires it of ever
 | `triggers` | Pipeline | Pipeline | job, variables sent |
 | `deploys` | Pipeline | Environment, Core Infrastructure, Software, Service Instance | job, pinned write location |
 | `builds` | Pipeline | Service | job, tag scheme |
-| `deliversTo` | Pipeline | Cloud Resource, External System | job |
+| `deliversTo` | Pipeline | Service Instance, Cloud Resource, External System | job |
+| `pullsFrom` | Service Instance | Service Instance, Cloud Resource, External System | image reference, pull secret name |
 | `provisionedFor` | Cloud Resource, Identity | Environment, Core Infrastructure, Software, Service Instance | |
 | `runsOn` | Service Instance | Cloud Resource | |
 | `providedAs` | Service Instance | Cloud Resource | |
 | `within` | Cloud Resource, Identity, Cloud Account | Cloud Account, Cloud Resource | |
-| `connectsTo` | Service Instance | Runtime | |
+| `connectsTo` | Runtime | Runtime | |
 | `readsSecretsFrom` | Service Instance, Pipeline | Service Instance, Cloud Resource, External System | path or name |
 | `observedBy` | Service Instance, Environment, Pipeline | Service Instance, Cloud Resource, External System | the tool's identifiers |
 | `accessedAs` | Environment | Identity | declared credential name |
 | `runsAs` | Service Instance, Pipeline | Identity | |
-| `trusts` | Identity | Pipeline, Repository, Identity | |
+| `trusts` | Identity | Pipeline, Repository, Identity, Cloud Resource | |
 | `ownedBy` | Application, Service, Repository, Core Infrastructure, Cloud Account, Cloud Resource, Identity | Team | |
 
 ### Containment
 
-`declaredIn` and `inEnvironment` are containment: the parent is part of the child's key, so each
-has exactly one. `declaredIn` is the Repository whose files declare a Service, Pipeline, Core
+`declaredIn` and `inScope` are containment: the parent is part of the child's key, so each has
+exactly one. `declaredIn` is the Repository whose files declare a Service, Pipeline, Core
 Infrastructure, or Cloud Resource; it is not `implementedIn`, the Repository whose code implements
-software, and an upstream Service has the first and never the second. `inEnvironment` is the one
-Environment a Service Instance is deployed into.
+software, and an upstream Service has the first and never the second. `inScope` is the one Scope a
+Service Instance is deployed into: an Environment, or the Core Infrastructure whose declaration
+installs it.
 
 ### Placement
 
@@ -256,11 +263,21 @@ confirmed it.
 `deploys` runs from a Pipeline to any owner `provisionedFor` names: an Environment or Service
 Instance it deploys into, or the Core Infrastructure, Application, or Service whose declarations it
 applies. So the Pipeline and job that change a Cloud Resource are one join from it, through its
-owner. `deploys` carries the job and, where the deploy writes a version, the pinned write location:
-the repository, path, and field it writes, at the commit it was read at. `builds` carries the job
-and the tag scheme, `$CI_COMMIT_SHA` or a version scheme, which links what is declared in an
-Environment to the commit it came from; the artifact itself is not modeled. `triggers` carries the
-variables one Pipeline sends another.
+owner. `deploys` carries the job, the variables the job sets, such as one that selects which
+component it deploys, and, where the deploy writes a version, the pinned write location: the
+repository, path, and field it writes, at the commit it was read at, with the value declared there.
+`builds` carries the job and the tag scheme, `$CI_COMMIT_SHA` or a version scheme, which links what
+is declared in an Environment to the commit it came from; the artifact itself is not modeled.
+`triggers` carries the variables one Pipeline sends another. Neither `triggers` nor `deploys` says
+whether it runs automatically or on which branch: that is the job's rule, read in the cited file.
+
+A registry is where build meets runtime. A Pipeline `deliversTo` the image repository it pushes to,
+and a Service Instance `pullsFrom` the one its manifest's image reference names, with that
+reference and the name of any pull secret on the relation. Push and pull meet at the image
+repository, a Cloud Resource `within` its registry, or at the Service Instance that serves a
+self-hosted registry. As with secret stores, a registry is a role: the registries in an estate are
+the targets of these two relations. Tags, digests, and what was pushed or pulled when are live and
+the registry's.
 
 ### Where a Service Instance runs, and what it is
 
@@ -292,19 +309,23 @@ relation so that whoever holds a local credential by that name can match it to t
 
 `runsAs` is the Identity a workload or a pipeline acts as.
 
-`trusts` runs from an Identity to the Pipeline, Repository, or Identity its trust policy allows to
-assume it, read from the declaration. A question that starts from a role needs no relation, because
-the policy is in the file the Identity cites; a question that starts from a repository, what it can
-reach if compromised, would otherwise be a search across every repository that declares roles.
-Chained assumption is a multi-hop walk. The walk ends at roles and the accounts they are within:
-what a role permits is a read of its cited policy, never an effective permission.
+`trusts` runs from an Identity to the Pipeline, Repository, Identity, or Cloud Resource its trust
+policy allows to assume it, read from the declaration; the Cloud Resource is a federation provider,
+such as a cluster's OIDC provider that workloads assume roles through. A question that starts from a
+role needs no relation, because the policy is in the file the Identity cites; a question that starts
+from a repository, what it can reach if compromised, would otherwise be a search across every
+repository that declares roles. Chained assumption is a multi-hop walk. The walk ends at roles and
+the accounts they are within: what a role permits is a read of its cited policy, never an effective
+permission.
 
 ### Reach
 
 `connectsTo` is what an Instance reaches, read from the connection strings, hostnames, environment
-variables, and service references in its configuration: a Cloud Resource such as a Redis cluster,
-or another Instance it calls. It is cited, never inferred from a name. What a connection means at
-runtime, sessions, retries, leader election, is a reading of the manifest the relation cites.
+variables, and service references in its configuration: a Cloud Resource such as a Redis cluster, or
+another Instance it calls. A Cloud Resource `connectsTo` what its declaration references: a cluster
+its subnets and security groups, a load balancer its target group. That is what deleting a shared
+resource breaks. It is cited, never inferred from a name. What a connection means at runtime,
+sessions, retries, leader election, is a reading of the manifest the relation cites.
 
 *Aliases:* "depends on".
 
@@ -337,11 +358,11 @@ or account name would put "cluster" in identifiers read by people who think "pro
 | Application | its name |
 | Environment | its asserted Application name and its name |
 | Service | the Repository that declares it and its name |
-| Service Instance | its Environment's key and its deployed name |
+| Service Instance | its Scope's key and its deployed name |
 | Repository | its canonical remote |
 | Pipeline | its Repository and its definition path |
-| Core Infrastructure | the Repository and the stack, module, or root that declares it |
-| Cloud Resource | the Repository that declares it, a source kind, and the declared address |
+| Core Infrastructure | the Repository, the stack, module, or root that declares it, and its applied configuration |
+| Cloud Resource | the Repository that declares it, a source kind, the declared address, and its root's applied configuration |
 | Identity | its provider and the provider's identifier for it |
 | Cloud Account | its provider and the provider's id |
 | External System | its provider, kind, and name |
@@ -354,6 +375,16 @@ Kubernetes manifest path and object. The last is how controller-created resource
 `Service` of type `LoadBalancer` declares a load balancer, a `PersistentVolumeClaim` a volume, an
 `Ingress` an application load balancer, a Karpenter `NodePool` a fleet, a Crossplane managed
 resource anything.
+
+**A declaration may be a module call, and one root may be applied more than once.** A resource
+declared through a module, such as a cluster created by a call to a registry module, is declared by
+that call: its address is the module call's address in the root, and the address of the resource
+inside the module, which the repository does not contain, is read from state as an alias. A root
+applied once per environment, with a var file, a workspace, a stack, or an overlay, declares a
+separate resource for each, so the applied configuration is part of the key of every Cloud Resource
+and Core Infrastructure it declares: one module call applied with `prod.tfvars` and with
+`dev.tfvars` is two clusters, and two Core Infrastructures. A name computed from variables is read
+with every file it is computed from cited.
 
 **Identity and Cloud Account are keyed by their provider identifier**, because it is fixed before
 anything is applied: an account id is issued when the account exists, and a role ARN is derivable
@@ -372,9 +403,9 @@ alternate names.
 **A detail is keyed by the relation it reifies**, meaning its source's key, the relation, and its
 target's key, and, where one relation can have several details, by what tells them apart: the job
 for a `triggers`, `deploys`, `builds`, or `deliversTo`, the secret path for a `readsSecretsFrom`. An
-`observedBy` or `accessedAs` has at most one detail. A detail
-is named by an identifier derived from its key, never a blank node, so two graphs that say the same
-thing about one relation merge into one detail.
+`observedBy`, `accessedAs`, or `pullsFrom` has at most one detail. A detail is named by an
+identifier derived from its key, never a blank node, so two graphs that say the same thing about one
+relation merge into one detail.
 
 **An individual's identifier is relative: its kind and key, resolved under a base.** For example
 `service_instance/shop/prod/user-svc`. A serialization sets `@base`, and how an implementation
@@ -384,7 +415,7 @@ rewritten, because keys are derived and the base is a prefix.
 ## 7. Constraints
 
 **Every runtime thing has exactly one owner, so Environments never overlap.** A Service Instance is
-in exactly one Environment, by its key. A Cloud Resource is `provisionedFor` exactly one of an
+in exactly one Scope, by its key. A Cloud Resource is `provisionedFor` exactly one of an
 Environment, a Core Infrastructure, an Application, a Service, or a Service Instance; one
 provisioned for an Application or Service is in no Environment. Use across Environments is
 `connectsTo`, never shared membership, and a `connectsTo` from one Environment into another is a gap
@@ -411,21 +442,27 @@ SPARQL 1.2 queries, until SHACL 1.2 is published:
 Provenance uses PROV-O directly, under the `prov:` prefix. A fact `prov:wasDerivedFrom` each
 citation; a scan is a `prov:Activity` that generated it; a confirmation `prov:wasAttributedTo` the
 `prov:Agent` that made it; `prov:generatedAtTime` is its as-of; `prov:invalidatedAtTime` is when a
-fact that was true stopped being so, such as an alias its source has moved past. A fact is never
-rewritten to say it no longer holds.
+fact that was true stopped being so, such as an alias its source has moved past, or a fact pinned
+to a commit that became unreachable. A fact is never rewritten to say it no longer holds.
+
+A scan records what it looked at: it `prov:used` each repository it read, at the commit it read.
+That is what tells "not recorded", where nothing that would show a thing was read, from "looked and
+not found", where it was read and the thing is not there. An answer about something the estate
+does not hold says which.
 
 ## 9. Cost
 
 Cost adds no terms. Cost rows are not in the estate. A row lands on a Cloud Resource by alias, or,
 for a charge that belongs to no resource (a commitment, support, a credit, tax), on the Cloud
 Account billed for it, and climbs by ownership. It climbs two ways that answer different questions:
-by place, Instance to Environment to Application, "what does checkout's prod cost"; by software,
-Instance to Service to Application, "what does `auth-svc` cost everywhere". A resource provisioned
-for an Application or Service is in no Environment's cost: it joins the climb at the Application or
-the Service. They agree for a Service in one Application and differ, correctly, for a shared one. A
-tag, or a controller's tag, is evidence for a relation the model already has. How cost shared
-through Core Infrastructure is split is decided downstream: the estate serves the ownership. A cost
-row that matches no declared resource is a gap, never "other".
+by place, Instance to Environment to Application, "what does checkout's prod cost", or Instance to
+Core Infrastructure for software the platform installs; by software, Instance to Service to
+Application, "what does `auth-svc` cost everywhere". A resource provisioned for an Application or
+Service is in no Environment's cost: it joins the climb at the Application or the Service. They
+agree for a Service in one Application and differ, correctly, for a shared one. A tag, or a
+controller's tag, is evidence for a relation the model already has. How cost shared through Core
+Infrastructure is split is decided downstream: the estate serves the ownership. A cost row that
+matches no declared resource is a gap, never "other".
 
 ## 10. Testing the model
 
@@ -480,6 +517,17 @@ references, and "connects to" says exactly that. "Depends on" claims the connect
 which the estate does not know, invites dependencies no configuration shows, and in Terraform and
 Compose means apply or startup order. It is kept as an alias. The credential relation, once
 `connectedVia`, is `accessedAs`, beside `runsAs`, so the two names do not collide.
+
+**Platform software is in a Scope, not an Application.** An ingress controller or a CI runner a
+platform's cluster declaration installs is software with versions, deploys, and connections, so it
+is a Service Instance. Its Scope is the Core Infrastructure that installs it. Rejected: treating it
+as a Cloud Resource, which puts software in the resource class; and a "platform" Application,
+whose Environments would be a fiction.
+
+**A declared value is stored with its pin.** Reading the field at the pinned commit gives the value,
+so storing it was once excluded. But a value copied at a pinned commit never goes stale, it survives
+the commit being lost, and a reader without it tends to substitute the repository's latest commit
+for what was declared.
 
 **Software, Scope, Runtime rather than Logical and Deployed.** Environment is not something that
 runs, and Core Infrastructure is not something deployed. A grouping named for meaning but populated
