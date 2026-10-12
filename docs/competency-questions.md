@@ -309,11 +309,12 @@ Terms: Deployed Resource, `declaredAs`, `connectsTo`, `runsOn`; route reads (too
 
 - **Estate returns.** The NAT gateway, a Deployed Resource `declaredAs` the network module call that
   declares it; the Deployed Resources joined to it by `connectsTo` in either direction, its route
-  tables, routes, and subnets, and those joined to them in turn; the clusters and machines among
-  them, the Declared Resources they are `declaredAs`, and the Instances that `runsOn` them.
-- **Last mile.** None for which workloads sit behind it. Whether their traffic takes the route
-  through it is one read of the cited routes; routes the provider propagates from elsewhere are a
-  query to the provider.
+  tables, routes, and subnets, and those joined to them in turn, as candidates; the clusters and
+  machines among them, the Declared Resources they are `declaredAs`, and the Instances that `runsOn`
+  them.
+- **Last mile.** One read of the cited routes, for which of those candidates route through this
+  gateway rather than merely sharing a network with it; routes the provider propagates from
+  elsewhere are a query to the provider.
 - **Same for everyone.** The one NAT gateway is its own entity, not a module call that declares
   three of them, so the walk starts from the same resource for everyone. A route is read where it
   is cited, never computed into an effective path.

@@ -67,7 +67,7 @@ estate:Runtime
     a owl:Class ;
     rdfs:subClassOf estate:Entity ;
     rdfs:label "Runtime"@en ;
-    skos:definition "What exists in the cloud to run the software: a Service Instance, a Declared Resource, or a Deployed Resource."@en ;
+    skos:definition "What is declared or reported in a cloud or cluster to run the software: a Service Instance, a Declared Resource, or a Deployed Resource."@en ;
     skos:scopeNote "A grouping, not something with individuals of its own. It exists because connectsTo ranges over exactly its members. Environment is not Runtime: its Instances run, the Environment does not."@en ;
     estate:maturity "draft" .
 
@@ -130,7 +130,6 @@ estate:DeclaredResource
     rdfs:label "Declared Resource"@en ;
     skos:definition "A thing in a cloud or cluster as a declaration states it: a database, a bucket, a load balancer, a cluster, a function, a registry repository, a secret. It has exactly one owner. What a provider reports was made of it is a Deployed Resource declaredAs it."@en ;
     skos:scopeNote "Not a confirmation that the thing exists or is running: whether it does is a query to the provider. Not what a provider reports was made of it, which is a Deployed Resource. Not an Identity and not a Cloud Account."@en ;
-    skos:altLabel "cloud resource"@en, "resource"@en ;
     estate:keyRule "The Repository that declares it, a source kind, the declared address, and the configuration its root is applied with where one root is applied more than once."@en ;
     estate:maturity "draft" .
 
@@ -139,7 +138,8 @@ estate:DeployedResource
     rdfs:subClassOf estate:Runtime ;
     rdfs:label "Deployed Resource"@en ;
     skos:definition "A thing in a cloud or cluster as it is reported to exist, by a provisioning tool's record of what it made or by the provider itself, as of when it was reported. It is declaredAs the Declared Resource whose declaration produced it, and one declaration may be deployed as many. One declaredAs nothing is a gap."@en ;
-    skos:scopeNote "Not a confirmation that the thing is running now, which is a query to the provider. Not an owner of anything and owned by nothing of its own: it takes its Declared Resource's owner."@en ;
+    skos:scopeNote "Not a confirmation that the thing is running now, which is a query to the provider. Not an owner of anything and owned by nothing of its own: it takes its Declared Resource's owner. Not a replica, pod, or task a Service Instance's deployment makes, nor the workload object it deploys, which are live and the provider's. Not an Identity and not a Cloud Account, even where a module creates one."@en ;
+    skos:altLabel "cloud resource"@en ;
     estate:keyRule "Its provider and the provider's id for it: unique across the provider, in the one form the provider uses in its own references."@en ;
     estate:maturity "draft" .
 
@@ -148,7 +148,7 @@ estate:Identity
     rdfs:subClassOf estate:Entity ;
     rdfs:label "Identity"@en ;
     skos:definition "Something that acts: the role a deploy job assumes, the role a workload runs as, a service principal, a managed identity, a permission set people assume, a Kubernetes user. It may have no declaration and no owner in the estate, which is normal rather than a gap."@en ;
-    skos:scopeNote "Not a Declared Resource, and never a human principal: a user account named after a person stays out of the estate."@en ;
+    skos:scopeNote "Not a Declared or Deployed Resource, and never a human principal: a user account named after a person stays out of the estate."@en ;
     estate:keyRule "Its provider and the provider's identifier for it."@en ;
     estate:maturity "draft" .
 
@@ -157,8 +157,8 @@ estate:CloudAccount
     rdfs:subClassOf estate:Entity ;
     rdfs:label "Cloud Account"@en ;
     skos:altLabel "account"@en, "project"@en, "subscription"@en ;
-    skos:definition "An AWS account, a GCP project, an Azure subscription: the provider-defined unit that Declared Resources, Identities, and credentials sit within, and that charges belonging to no resource land on."@en ;
-    skos:scopeNote "A place things live, not a thing that runs: not a Declared Resource, and not a unit a practitioner defines."@en ;
+    skos:definition "An AWS account, a GCP project, an Azure subscription: the provider-defined unit that Declared Resources, Deployed Resources, Identities, and credentials sit within, and that charges belonging to no resource land on."@en ;
+    skos:scopeNote "A place things live, not a thing that runs: not a Declared or Deployed Resource, and not a unit a practitioner defines."@en ;
     estate:keyRule "Its provider and the provider's id."@en ;
     estate:maturity "draft" .
 
@@ -349,6 +349,22 @@ estate:provides
     skos:definition "The Service Instance a Declared Resource is the runtime form of."@en ;
     estate:maturity "draft" .
 
+estate:declaredAs
+    a owl:ObjectProperty ;
+    rdfs:label "declared as"@en ;
+    rdfs:domain estate:DeployedResource ;
+    rdfs:range estate:DeclaredResource ;
+    owl:inverseOf estate:deployedAs ;
+    skos:definition "The Declared Resource whose declaration produced a Deployed Resource, as whatever reported the Deployed Resource says."@en ;
+    skos:scopeNote "Not declaredIn, the Repository whose files hold a declaration. Not a claim that the resource is running now. A Deployed Resource has at most one current declaredAs. A relation that may end at a Declared or a Deployed Resource ends at the one its evidence names, and a walk follows declaredAs both ways."@en ;
+    estate:maturity "draft" .
+
+estate:deployedAs
+    a owl:ObjectProperty ;
+    rdfs:label "deployed as"@en ;
+    skos:definition "A Deployed Resource a Declared Resource's declaration produced: one for a plain declaration, every resource inside the module for a module call, one per element for a repeated one."@en ;
+    estate:maturity "draft" .
+
 estate:within
     a owl:ObjectProperty ;
     rdfs:label "within"@en ;
@@ -378,7 +394,7 @@ estate:connectsTo
 estate:connectedFrom
     a owl:ObjectProperty ;
     rdfs:label "connected from"@en ;
-    skos:definition "A Service Instance that reaches a runtime thing."@en ;
+    skos:definition "A runtime thing that reaches another."@en ;
     estate:maturity "draft" .
 
 estate:runsAs
@@ -681,22 +697,6 @@ estate:Access
     skos:definition "The details of an accessedAs: the profile name the repository's scripts pass, if any."@en ;
     skos:scopeNote "Not where the Environment runs."@en ;
     estate:keyRule "The relation it reifies."@en ;
-    estate:maturity "draft" .
-
-estate:declaredAs
-    a owl:ObjectProperty ;
-    rdfs:label "declared as"@en ;
-    rdfs:domain estate:DeployedResource ;
-    rdfs:range estate:DeclaredResource ;
-    owl:inverseOf estate:deployedAs ;
-    skos:definition "The Declared Resource whose declaration produced a Deployed Resource, as whatever reported the Deployed Resource says."@en ;
-    skos:scopeNote "Not declaredIn, the Repository whose files hold a declaration. Not a claim that the resource is running now."@en ;
-    estate:maturity "draft" .
-
-estate:deployedAs
-    a owl:ObjectProperty ;
-    rdfs:label "deployed as"@en ;
-    skos:definition "A Deployed Resource a Declared Resource's declaration produced: one for a plain declaration, every resource inside the module for a module call, one per element for a repeated one."@en ;
     estate:maturity "draft" .
 
 #################################################################

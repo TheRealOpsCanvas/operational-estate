@@ -147,8 +147,6 @@ declaration says practitioners expect to exist, not a confirmation that it exist
 whether it does is a query to the provider. What a provider reports was made of it is a Deployed
 Resource `declaredAs` it.
 
-*Aliases:* "cloud resource", "resource".
-
 ### Deployed Resource
 
 A thing in a cloud or cluster as it is reported to exist, by a provisioning tool's record of what
@@ -162,22 +160,29 @@ It owns nothing and has no owner of its own: it takes its Declared Resource's. O
 nothing is a gap, something deployed that no declaration the estate has read accounts for, because
 its cost and its failures belong to nobody the estate can name.
 
+Not a replica, pod, or task a Service Instance's deployment makes, nor the workload object it
+deploys: those are live and the provider's, and the Service Instance stands for them. Not an
+Identity and not a Cloud Account, even where a module creates one: those are keyed by their own
+classes.
+
+*Aliases:* "cloud resource".
+
 ### Identity
 
 Something that acts: the role a deploy job assumes, the role a workload runs as, a service
-principal, a managed identity, a permission set people assume, a Kubernetes user. Not a Declared
-Resource: many identities have no owner in the estate and no declaration, such as a permission set
-created in a console, and that is normal rather than a gap; and some live in no cloud account, such
-as an identity provider's group or the OIDC subject a role trusts. Never a human principal: a user
-account named after a person stays out.
+principal, a managed identity, a permission set people assume, a Kubernetes user. Not a Declared or
+Deployed Resource: many identities have no owner in the estate and no declaration, such as a
+permission set created in a console, and that is normal rather than a gap; and some live in no cloud
+account, such as an identity provider's group or the OIDC subject a role trusts. Never a human
+principal: a user account named after a person stays out.
 
 ### Cloud Account
 
 An AWS account, a GCP project, an Azure subscription: the provider-defined unit that Declared
 Resources, Deployed Resources, Identities, and credentials sit `within`, and that charges belonging
-to no resource land on. A place things live, not a thing that runs, so it is not a Declared
-Resource, and not in Scope, which holds the units a practitioner defines. Member accounts are
-`within` the payer or organization they bill to.
+to no resource land on. A place things live, not a thing that runs, so it is not a Declared or
+Deployed Resource, and not in Scope, which holds the units a practitioner defines. Member accounts
+are `within` the payer or organization they bill to.
 
 *Aliases:* "account", "project", "subscription".
 
@@ -273,6 +278,13 @@ declaration installs it.
 `declaredAs` runs from a Deployed Resource to the Declared Resource whose declaration produced it,
 as whatever reported the Deployed Resource says. It is not `declaredIn`, the Repository whose files
 hold a declaration. A Deployed Resource has at most one current `declaredAs`.
+
+A relation that may end at a Declared or a Deployed Resource ends at the one its evidence names. A
+reference from one declaration to another, such as an output of a module call, ends at the Declared
+Resource. A reference to what was made, such as a hostname or provider id in configuration, or a
+reference reported for a Deployed Resource, ends at that Deployed Resource. A walk treats a Declared
+Resource and the Deployed Resources `declaredAs` it as one thing, following `declaredAs` both ways,
+so an answer does not depend on which kind of evidence an estate holds.
 
 ### Placement
 
@@ -428,9 +440,9 @@ Environment and Team also carry alternate names.
 **A detail is keyed by the relation it reifies**, meaning its source's key, the relation, and its
 target's key, and, where one relation can have several details, by what tells them apart: the job
 for a `triggers`, `deploys`, `builds`, or `deliversTo`, the secret path for a `readsSecretsFrom`. An
-`observedBy`, `accessedAs`, or `pullsFrom` has at most one detail. A detail is named
-by an identifier derived from its key, never a blank node, so two graphs that say the same thing
-about one relation merge into one detail.
+`observedBy`, `accessedAs`, or `pullsFrom` has at most one detail. A detail is named by an
+identifier derived from its key, never a blank node, so two graphs that say the same thing about one
+relation merge into one detail.
 
 **An individual's identifier is relative: its kind and key, resolved under a base.** For example
 `service_instance/shop/prod/user-svc`. A serialization sets `@base`, and how an implementation
@@ -537,10 +549,10 @@ and `instantiatedFrom` a placement origin, a name match or an operator's choice.
 how a fact came to be is what PROV-O states for every fact, a private two-value copy of it on two
 relations would say it for those alone, and the graph holds only what has been confirmed.
 
-**When a fact stopped holding is provenance, not a status.** An earlier draft gave a live
-identifier's binding a status, `current` or `former`. It was rejected: a status goes stale when the
-source moves on and has to be rewritten, while `prov:invalidatedAtTime` is written once and says
-when, which is what attributing an older cost row needs.
+**When a fact stopped holding is provenance, not a status.** An earlier draft gave the link from a
+declaration to its live identifier a status, `current` or `former`. It was rejected: a status goes
+stale when the source moves on and has to be rewritten, while `prov:invalidatedAtTime` is written
+once and says when, which is what attributing an older cost row needs.
 
 **`connectsTo` rather than `dependsOn`.** The relation is read from connection strings and
 references, and "connects to" says exactly that. "Depends on" claims the connection is critical,
@@ -568,12 +580,12 @@ directly when it has no Services, matches how monolith teams speak, but gives ev
 software two paths and needs a rule for which applies; and a monolith that grows a second deployable
 would move its existing Instance from Application to Service.
 
-**Identity is not a Declared Resource.** As a subclass it would need exceptions to both the
-one-owner rule and the undeclared-is-a-gap rule on the day it landed, and it could not hold
+**Identity is not a resource, declared or deployed.** As a subclass it would need exceptions to both
+the one-owner rule and the undeclared-is-a-gap rule on the day it landed, and it could not hold
 identities that live in no cloud account.
 
-**Cloud Account is not a Declared Resource.** Nothing runs in it; what makes it matter is what it
-holds.
+**Cloud Account is not a resource, declared or deployed.** Nothing runs in it; what makes it matter
+is what it holds.
 
 **Core Infrastructure is not an Application.** A tenant is not an Application's Environment, and
 Application should keep meaning something that delivers value.
@@ -581,7 +593,8 @@ Application should keep meaning something that delivers value.
 **Declared Resource rather than Cloud Resource.** The class is keyed by its declaration, and the
 declaration is what practitioners expect, not what exists: "cloud resource" reads as something
 confirmed to be running, which no reading of a repository can show, and it misnames a Kubernetes
-object a manifest declares. "Cloud resource" is kept as an alias.
+object a manifest declares. "Cloud resource" is kept as an alias of Deployed Resource, whose
+meaning it fits, and the bare "resource", which fits both classes, is no alias of either.
 
 **Declared Resource and Deployed Resource are two classes, joined by `declaredAs`.** An earlier
 draft bound a declaration to its live id with an alias, a value on the Declared Resource. It was
