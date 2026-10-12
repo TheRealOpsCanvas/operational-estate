@@ -202,12 +202,13 @@ relations out of a Pipeline.
 
 ### External System
 
-Something the estate references and nothing in it provisions: the tools a thing is observed by,
-such as Datadog or PagerDuty, and the hosted destinations a Pipeline delivers to, such as npmjs.org
-or Docker Hub, and what a runtime thing reaches beyond the estate, such as a hosted API a workload
-calls or the interconnection fabric a dedicated link lands on. Anything with a class of its own is
-not an External System: a role is an Identity; a cluster, registry repository, or bucket is a
-Declared Resource; an account is a Cloud Account.
+Something the estate references and nothing in it provisions: a tool a thing is observed by, such as
+Datadog or PagerDuty; a hosted destination a Pipeline delivers to, such as npmjs.org or Docker Hub;
+or something a runtime thing reaches beyond the estate, such as a hosted API a workload calls or
+the interconnection fabric a dedicated link lands on. Anything with a class of its own is not an
+External System: a role is an Identity; a cluster, registry repository, or bucket is a Declared
+Resource; an account is a Cloud Account; a fabric connection the estate declares is a Declared
+Resource; an API another Application in the estate serves is that Service Instance.
 
 ### Team
 
@@ -368,10 +369,11 @@ breaks. It is cited, never inferred from a name. What a connection means at runt
 retries, leader election, is a reading of the manifest the relation cites.
 
 What a runtime thing reaches beyond the estate is an External System: a hosted API in a workload's
-configuration, or the interconnection fabric reported as a dedicated link's far side. Links
-that reach the same External System meet there, which is how networks in different clouds are seen
-to connect. An External System's own connections are not the estate's to describe, so `connectsTo`
-never runs from one.
+configuration, or the interconnection fabric reported as a dedicated link's far side. Resources in
+different networks that reach the same External System meet there, which is one way networks in
+different clouds connect; the other is one network's resources referencing the other's directly,
+such as a tunnel naming its peer. An External System's own connections are not the estate's to
+describe, so `connectsTo` never runs from one.
 
 *Aliases:* "depends on".
 
@@ -391,8 +393,9 @@ Instance a tool knows by an identifier no file declares is a gap. A Pipeline has
 where its CI system knows it by something other than its key: a pipeline in GitHub Actions or GitLab
 is known by its repository and path, which its key holds, while a Jenkins job, a CircleCI project,
 or a Buildkite pipeline has a name of its own. A Declared or Deployed Resource has the relation
-where a tool measures it by an identifier, such as the traffic a network link or gateway carries;
-the measurement is live and the tool's.
+where a tool measures it, such as the traffic a network link or gateway carries, even when the
+tool knows it by its provider id, because which tool measures it is not in its key; the
+measurement is live and the tool's.
 
 ## 6. Identity and keys
 
@@ -593,6 +596,12 @@ would move its existing Instance from Application to Service.
 **Identity is not a resource, declared or deployed.** As a subclass it would need exceptions to both
 the one-owner rule and the undeclared-is-a-gap rule on the day it landed, and it could not hold
 identities that live in no cloud account.
+
+**A link's far side is an External System, not a class of its own.** What a dedicated link lands
+on, or a hosted API a workload calls, is referenced and provisioned by nothing in the estate, which
+is what External System already means. A class for interconnection points would describe someone
+else's network, which is outside the estate. For the same reason `connectsTo` ends at an External
+System and never runs from one.
 
 **Cloud Account is not a resource, declared or deployed.** Nothing runs in it; what makes it matter
 is what it holds.

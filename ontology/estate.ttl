@@ -186,7 +186,7 @@ estate:ExternalSystem
     rdfs:subClassOf estate:Entity ;
     rdfs:label "External System"@en ;
     skos:definition "Something the estate references and nothing in it provisions: a tool a thing is observed by, a hosted destination a Pipeline delivers to, or something a runtime thing reaches beyond the estate, such as a hosted API or an interconnection fabric."@en ;
-    skos:scopeNote "Anything with a class of its own is not an External System: a role is an Identity; a cluster, registry repository, or bucket is a Declared Resource; an account is a Cloud Account."@en ;
+    skos:scopeNote "Anything with a class of its own is not an External System: a role is an Identity; a cluster, registry repository, or bucket is a Declared Resource; an account is a Cloud Account; a fabric connection the estate declares is a Declared Resource; an API another Application in the estate serves is that Service Instance."@en ;
     estate:keyRule "Its provider, kind, and name."@en ;
     estate:maturity "draft" .
 
