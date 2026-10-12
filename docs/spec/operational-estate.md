@@ -62,7 +62,7 @@ A grouping is a class only where a relation needs exactly that set of classes.
 | Grouping | Members | Needed by |
 |---|---|---|
 | **Software** | Application, Service | domain of `implementedIn`, range of `provisionedFor` |
-| **Runtime** | Service Instance, Declared Resource | domain and range of `connectsTo` |
+| **Runtime** | Service Instance, Declared Resource, Deployed Resource | domain and range of `connectsTo` |
 | **Scope** | Environment, Core Infrastructure | range of `inScope` |
 
 Scope is the named unit runtime things are placed in and owned by: an Application's Environment, or
@@ -144,11 +144,24 @@ it is not the cluster provisioned for it.
 A thing in a cloud or cluster as a declaration states it: a database, a bucket, a load balancer, a
 cluster, a function, a registry repository, a secret. It has exactly one owner. It is what the
 declaration says practitioners expect to exist, not a confirmation that it exists or is running:
-whether it does is a query to the provider, and the provider's id for it is an alias. A thing that
-exists with no declaration is not a Declared Resource but a gap, because its cost and its failures
-belong to nobody the estate can name.
+whether it does is a query to the provider. What a deployment made of it is a Deployed Resource
+`declaredAs` it.
 
 *Aliases:* "cloud resource", "resource".
+
+### Deployed Resource
+
+A thing in a cloud or cluster as a deployment's record states it: what Terraform state, a
+CloudFormation stack listing, a Pulumi checkpoint, or a Kubernetes object's status says a deployment
+made. It is `declaredAs` the Declared Resource whose declaration produced it, and one declaration
+may be deployed as many: a module call as every resource inside the module, such as the subnets,
+route tables, and NAT gateways of a network module, and a repeated declaration as one per element. A
+record is as of its serial, so a Deployed Resource is not a confirmation that the thing still exists
+or is running; whether it does is a query to the provider.
+
+It owns nothing and has no owner of its own: it takes its Declared Resource's. One `declaredAs`
+nothing is a gap, something deployed that no declaration the estate has read accounts for, because
+its cost and its failures belong to nobody the estate can name.
 
 ### Identity
 
@@ -223,6 +236,7 @@ asserted too; the annotation syntax does this, and section 7 requires it of ever
 | Relation | From | To | Carries |
 |---|---|---|---|
 | `declaredIn` | Service, Pipeline, Core Infrastructure, Declared Resource | Repository | |
+| `declaredAs` | Deployed Resource | Declared Resource | source, serial, recorded address |
 | `inScope` | Service Instance | Scope | |
 | `memberOf` | Service | Application | |
 | `implementedIn` | Software | Repository | |
@@ -237,7 +251,7 @@ asserted too; the annotation syntax does this, and section 7 requires it of ever
 | `provisionedFor` | Declared Resource, Identity | Environment, Core Infrastructure, Software, Service Instance | |
 | `runsOn` | Service Instance | Declared Resource | |
 | `providedAs` | Service Instance | Declared Resource | |
-| `within` | Declared Resource, Identity, Cloud Account | Cloud Account, Declared Resource | |
+| `within` | Declared Resource, Deployed Resource, Identity, Cloud Account | Cloud Account, Declared Resource | |
 | `connectsTo` | Runtime | Runtime | |
 | `readsSecretsFrom` | Service Instance, Pipeline | Service Instance, Declared Resource, External System | path or name |
 | `observedBy` | Service Instance, Environment, Pipeline | Service Instance, Declared Resource, External System | the tool's identifiers |
@@ -254,6 +268,26 @@ Infrastructure, or Declared Resource; it is not `implementedIn`, the Repository 
 implements software, and an upstream Service has the first and never the second. `inScope` is the
 one Scope a Service Instance is deployed into: an Environment, or the Core Infrastructure whose
 declaration installs it.
+
+### Declaration and deployment
+
+`declaredAs` runs from a Deployed Resource to the Declared Resource whose declaration produced it,
+as a deployment's record says. It is read from a source that holds both halves: Terraform state, a
+CloudFormation stack listing, a Pulumi checkpoint, a Kubernetes object's status, or a controller's
+tags on the cloud side, such as `kubernetes.io/cluster/<name>`, which are weaker than a record the
+provisioning tool keeps. It carries that source, the source's serial or version, and the address the
+source gives the resource, copied verbatim, such as its address inside a module. It is not
+`declaredIn`, the Repository whose files hold a declaration. A Deployed Resource has at most one
+current `declaredAs`. When a source moves on and a declaration is deployed as a new resource, the
+former relation is kept and marked `prov:invalidatedAtTime`, because older cost rows still name the
+former resource.
+
+```turtle
+:nat-a estate:declaredAs :network-module
+    ~ :nat-a.declaredAs.network-module
+    {| estate:recordSource "terraform state" ; estate:sourceVersion "42" ;
+       estate:recordedAddress "module.network.nat_gateway.this[0]" |} .
+```
 
 ### Placement
 
@@ -328,9 +362,11 @@ never an effective permission.
 `connectsTo` is what an Instance reaches, read from the connection strings, hostnames, environment
 variables, and service references in its configuration: a Declared Resource such as a Redis cluster,
 or another Instance it calls. A Declared Resource `connectsTo` what its declaration references: a
-cluster its subnets and security groups, a load balancer its target group. That is what deleting a
-shared resource breaks. It is cited, never inferred from a name. What a connection means at runtime,
-sessions, retries, leader election, is a reading of the manifest the relation cites.
+cluster its subnets and security groups, a load balancer its target group. A Deployed Resource
+`connectsTo` what its record references, such as the subnet a NAT gateway was deployed into, which
+is how one resource inside a module is reached. That is what deleting a shared resource breaks. It
+is cited, never inferred from a name. What a connection means at runtime, sessions, retries, leader
+election, is a reading of the manifest the relation cites.
 
 *Aliases:* "depends on".
 
@@ -368,6 +404,7 @@ or account name would put "cluster" in identifiers read by people who think "pro
 | Pipeline | its Repository and its definition path |
 | Core Infrastructure | the Repository, the stack, module, or root that declares it, and its applied configuration |
 | Declared Resource | the Repository that declares it, a source kind, the declared address, and its root's applied configuration |
+| Deployed Resource | its provider and the provider's id for it |
 | Identity | its provider and the provider's identifier for it |
 | Cloud Account | its provider and the provider's id |
 | External System | its provider, kind, and name |
@@ -383,34 +420,30 @@ managed resource anything.
 
 **A declaration may be a module call, and one root may be applied more than once.** A resource
 declared through a module, such as a cluster created by a call to a registry module, is declared by
-that call: its address is the module call's address in the root, and the address of the resource
-inside the module, which the repository does not contain, is read from state as an alias. A root
-applied once per environment, with a var file, a workspace, a stack, or an overlay, declares a
-separate resource for each, so the applied configuration is part of the key of every Declared
-Resource and Core Infrastructure it declares: one module call applied with `prod.tfvars` and with
-`dev.tfvars` is two clusters, and two Core Infrastructures. A name computed from variables is read
-with every file it is computed from cited.
+that call: its address is the module call's address in the root, and each resource inside the
+module, which the repository does not contain, is a Deployed Resource `declaredAs` that call, with
+its address inside the module on the relation. A root applied once per environment, with a var file,
+a workspace, a stack, or an overlay, declares a separate resource for each, so the applied
+configuration is part of the key of every Declared Resource and Core Infrastructure it declares: one
+module call applied with `prod.tfvars` and with `dev.tfvars` is two clusters, and two Core
+Infrastructures. A name computed from variables is read with every file it is computed from cited.
 
 **Identity and Cloud Account are keyed by their provider identifier**, because it is fixed before
 anything is applied: an account id is issued when the account exists, and a role ARN is derivable
 from its account and name. A declaration is cited when one exists.
 
-**A live identifier is an alias, and it says where it came from.** The binding of a declared address
-to its id or ARN is read from a source that holds both halves: Terraform state, a CloudFormation
-stack listing, a Pulumi checkpoint, a Kubernetes object's status, or a controller's tags on the
-cloud side, such as `kubernetes.io/cluster/<name>`, which the alias marks as weaker than a
-declaration. An alias carries its source, the source's serial or version, and its as-of. When a
-source moves on and an address maps to a new id, the former alias is kept and marked
-`prov:invalidatedAtTime`, the time it stopped holding, because older cost rows still carry it; an
-alias with no invalidation time is current. Environment and Team also carry
-alternate names.
+**A Deployed Resource is keyed by its provider id**, which the provider issues when it creates the
+thing: an ARN, a resource id, a Kubernetes object's uid. A replacement is a new Deployed Resource,
+and the former one keeps its key, because older cost rows still carry it. Its declaration is what
+lasts across replacements, so a Declared Resource is keyed by that instead. Environment and Team
+also carry alternate names.
 
 **A detail is keyed by the relation it reifies**, meaning its source's key, the relation, and its
 target's key, and, where one relation can have several details, by what tells them apart: the job
 for a `triggers`, `deploys`, `builds`, or `deliversTo`, the secret path for a `readsSecretsFrom`. An
-`observedBy`, `accessedAs`, or `pullsFrom` has at most one detail. A detail is named by an
-identifier derived from its key, never a blank node, so two graphs that say the same thing about one
-relation merge into one detail.
+`observedBy`, `accessedAs`, `pullsFrom`, or `declaredAs` has at most one detail. A detail is named
+by an identifier derived from its key, never a blank node, so two graphs that say the same thing
+about one relation merge into one detail.
 
 **An individual's identifier is relative: its kind and key, resolved under a base.** For example
 `service_instance/shop/prod/user-svc`. A serialization sets `@base`, and how an implementation
@@ -424,7 +457,8 @@ in exactly one Scope, by its key. A Declared Resource is `provisionedFor` exactl
 Environment, a Core Infrastructure, an Application, a Service, or a Service Instance; one
 provisioned for an Application or Service is in no Environment. Use across Environments is
 `connectsTo`, never shared membership, and a `connectsTo` from one Environment into another is a gap
-worth surfacing. An Identity is `provisionedFor` its declaring owner when it has one.
+worth surfacing. A Deployed Resource takes the owner of the Declared Resource it is `declaredAs` and
+has none of its own. An Identity is `provisionedFor` its declaring owner when it has one.
 
 Further constraints, each to be stated as a SHACL shape. The ones about details are checked today as
 SPARQL 1.2 queries, until SHACL 1.2 is published:
@@ -438,8 +472,8 @@ SPARQL 1.2 queries, until SHACL 1.2 is published:
 - A Pipeline that `deploys` an Environment or Instance is in the Repository it is `deployedFrom`.
 - `ownedBy` targets only a Team.
 - A `readsSecretsFrom` carries no secret value.
-- Every alias carries its source.
-- At most one alias per declared address and source has no `prov:invalidatedAtTime`.
+- Every `declaredAs` carries its source.
+- A Deployed Resource has at most one `declaredAs` with no `prov:invalidatedAtTime`.
 - No individual `prov:Person` appears in an estate graph.
 
 ## 8. Provenance
@@ -447,8 +481,8 @@ SPARQL 1.2 queries, until SHACL 1.2 is published:
 Provenance uses PROV-O directly, under the `prov:` prefix. A fact `prov:wasDerivedFrom` each
 citation; a scan is a `prov:Activity` that generated it; a confirmation `prov:wasAttributedTo` the
 `prov:Agent` that made it; `prov:generatedAtTime` is its as-of; `prov:invalidatedAtTime` is when a
-fact that was true stopped being so, such as an alias its source has moved past, or a fact pinned
-to a commit that became unreachable. A fact is never rewritten to say it no longer holds.
+fact that was true stopped being so, such as a `declaredAs` its source has moved past, or a fact
+pinned to a commit that became unreachable. A fact is never rewritten to say it no longer holds.
 
 A scan records what it looked at: it `prov:used` each repository it read, at the commit it read.
 That is what tells "not recorded", where nothing that would show a thing was read, from "looked and
@@ -457,17 +491,19 @@ does not hold says which.
 
 ## 9. Cost
 
-Cost adds no terms. Cost rows are not in the estate. A row lands on a Declared Resource by alias,
-or, for a charge that belongs to no resource (a commitment, support, a credit, tax), on the Cloud
-Account billed for it, and climbs by ownership. It climbs two ways that answer different questions:
-by place, Instance to Environment to Application, "what does checkout's prod cost", or Instance to
-Core Infrastructure for software the platform installs; by software, Instance to Service to
-Application, "what does `auth-svc` cost everywhere". A resource provisioned for an Application or
-Service is in no Environment's cost: it joins the climb at the Application or the Service. They
-agree for a Service in one Application and differ, correctly, for a shared one. A tag, or a
-controller's tag, is evidence for a relation the model already has. How cost shared through Core
-Infrastructure is split is decided downstream: the estate serves the ownership. A cost row that
-matches no declared resource is a gap, never "other".
+Cost adds no terms. Cost rows are not in the estate. A row lands on a Deployed Resource by its
+provider id and climbs through `declaredAs` to its Declared Resource, or, for a charge that belongs
+to no resource (a commitment, support, a credit, tax), on the Cloud Account billed for it, and
+climbs by ownership. It climbs two ways that answer different questions: by place, Instance to
+Environment to Application, "what does checkout's prod cost", or Instance to Core Infrastructure for
+software the platform installs; by software, Instance to Service to Application, "what does
+`auth-svc` cost everywhere". A resource provisioned for an Application or Service is in no
+Environment's cost: it joins the climb at the Application or the Service. They agree for a Service
+in one Application and differ, correctly, for a shared one. A tag, or a controller's tag, is
+evidence for a relation the model already has. How cost shared through Core Infrastructure is split
+is decided downstream: the estate serves the ownership. A Deployed Resource `declaredAs` nothing is
+a gap, cost with no declaration, never "other"; a row that matches no Deployed Resource is cost from
+a record the estate has not read.
 
 ## 10. Testing the model
 
@@ -512,10 +548,10 @@ and `instantiatedFrom` a placement origin, a name match or an operator's choice.
 how a fact came to be is what PROV-O states for every fact, a private two-value copy of it on two
 relations would say it for those alone, and the graph holds only what has been confirmed.
 
-**When an alias stopped holding is provenance, not a status.** An earlier draft gave an alias a
-status, `current` or `former`. It was rejected: a status goes stale when the source moves on and has
-to be rewritten, while `prov:invalidatedAtTime` is written once and says when, which is what
-attributing an older cost row needs.
+**When a binding stopped holding is provenance, not a status.** An earlier draft gave a live
+identifier's binding a status, `current` or `former`. It was rejected: a status goes stale when the
+source moves on and has to be rewritten, while `prov:invalidatedAtTime` is written once and says
+when, which is what attributing an older cost row needs.
 
 **`connectsTo` rather than `dependsOn`.** The relation is read from connection strings and
 references, and "connects to" says exactly that. "Depends on" claims the connection is critical,
@@ -557,6 +593,15 @@ Application should keep meaning something that delivers value.
 declaration is what practitioners expect, not what exists: "cloud resource" reads as something
 confirmed to be running, which no reading of a repository can show, and it misnames a Kubernetes
 object a manifest declares. "Cloud resource" is kept as an alias.
+
+**Declared Resource and Deployed Resource are two classes, joined by `declaredAs`.** An earlier
+draft bound a declaration to its live id with an alias, a value on the Declared Resource. It was
+rejected: one declaration is deployed as many resources, such as a module call as every resource
+inside the module, so the one subnet or NAT gateway a network question turns on could not be the end
+of a relation; and something deployed with no declaration had nowhere to be but outside the graph,
+seen only as cost rows that matched nothing. Rejected too: one class keyed by its declaration where
+it has one and its provider id where it has none, which gives the class two keys and the same
+database two identities across the moment its declaration is found.
 
 **A Declared Resource is keyed by its declaration, not its provider id.** For most resources the
 provider id exists only after apply, so two readings could never agree on it.

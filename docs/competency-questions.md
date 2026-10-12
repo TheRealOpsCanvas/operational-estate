@@ -75,12 +75,13 @@ Terms: Pipeline, `triggers`, `deploys`; one file read (tool).
 
 ### What software owns this cloud resource?
 
-Terms: Declared Resource, `provisionedFor`; `instantiatedFrom`.
+Terms: Declared Resource, Deployed Resource, `declaredAs`, `provisionedFor`; `instantiatedFrom`.
 
-- **Estate returns.** The resource by declared address or alias; `provisionedFor` the Instance,
+- **Estate returns.** The resource by declared address, or by provider id and the Declared
+  Resource its Deployed Resource is `declaredAs`; `provisionedFor` the Instance,
   Environment, Application, Service, or Core Infrastructure whose declaration creates it; from an
   Instance, `instantiatedFrom` Service, and from a Service, `memberOf` Application.
-- **Last mile.** None. At most three hops.
+- **Last mile.** None. At most four hops.
 - **Same for everyone.** Ownership is read from the module or chart boundary the declaration
   sits inside, never a name match.
 
@@ -218,23 +219,25 @@ Terms: `connectsTo`, `readsSecretsFrom`, `runsOn`; git diff and cluster events
 
 ### How much does prod cost per month, and what are the most expensive resources?
 
-Terms: Declared Resource aliases, `provisionedFor`, Cloud Account; cost store (tool).
+Terms: Deployed Resource, `declaredAs`, `provisionedFor`, Cloud Account; cost store (tool).
 
 - **Estate returns.** Prod's resources by owner, Instance-owned and Environment-owned; the
-  shared resources of the Core Infrastructure prod's Instances run on; each resource's aliases;
-  the Cloud Accounts billed, for charges that belong to no resource.
-- **Last mile.** Sum the rows those aliases match and sort; report shared Core Infrastructure
-  cost as shared.
-- **Same for everyone.** Aliases and ownership are pinned. How shared cost is split is decided
+  shared resources of the Core Infrastructure prod's Instances run on; the Deployed Resources each
+  is `declaredAs`, by provider id; the Cloud Accounts billed, for charges that belong to no
+  resource.
+- **Last mile.** Sum the rows those provider ids match and sort; report shared Core
+  Infrastructure cost as shared.
+- **Same for everyone.** Provider ids and ownership are pinned. How shared cost is split is decided
   downstream of the estate, so the estate's answer is the exact owned cost plus the shared cost
   beside it, never a silent split.
 
 ### What does a service cost across every environment?
 
-Terms: Declared Resource, `provisionedFor`; `instantiatedFrom`; cost store
+Terms: Declared Resource, `declaredAs`, `provisionedFor`; `instantiatedFrom`; cost store
 (tool).
 
-- **Estate returns.** The climb by software: resource, `provisionedFor` Instance,
+- **Estate returns.** The climb by software: Deployed Resource, `declaredAs` its Declared
+  Resource, `provisionedFor` Instance,
   `instantiatedFrom` Service, `memberOf` Application; a resource `provisionedFor` the Service
   itself joins the climb at the Service.
 - **Last mile.** Sum along that climb.
@@ -243,12 +246,26 @@ Terms: Declared Resource, `provisionedFor`; `instantiatedFrom`; cost store
 
 ### Show me the resources whose cost went up the most in the last 30 days.
 
-Terms: Declared Resource aliases; cost store (tool).
+Terms: Deployed Resource, `declaredAs`; cost store (tool).
 
-- **Estate returns.** Every resource with its aliases and owner.
+- **Estate returns.** Every Deployed Resource by provider id, with the Declared Resource it is
+  `declaredAs` and that resource's owner.
 - **Last mile.** Two periods from the cost store, diff, rank, climb to owners.
-- **Same for everyone.** Rows that match no alias are a gap, cost with no declared resource,
-  never "other".
+- **Same for everyone.** Rows land by provider id, the same string the cost store carries. A
+  Deployed Resource `declaredAs` nothing is a gap, cost with no declaration, never "other".
+
+### What is deployed that no declaration accounts for, and what does it cost?
+
+Terms: Deployed Resource, `declaredAs`, `within`, Cloud Account; cost store (tool).
+
+- **Estate returns.** Every Deployed Resource with no current `declaredAs`, by provider id, with
+  the record it was read from and that record's serial, and the Cloud Account it is `within`; and
+  for each record, the repositories the scan read, so a resource whose declaring repository was
+  never read is told apart from one no read repository declares.
+- **Last mile.** Sum each one's rows from the cost store by provider id.
+- **Same for everyone.** The set is a query over the graph, never a search of the cloud, and each
+  member is pinned to the record and serial that showed it. Whether it is a resource built by hand,
+  an import, or a declaration in an unread repository is said by the scan's record, not guessed.
 
 ## Capacity and dependencies
 
@@ -285,6 +302,22 @@ Terms: `connectsTo`, Declared Resource; manifest reads (tool).
   manifests.
 - **Same for everyone.** Dependencies are evidence-cited from configuration, never inferred
   from a name.
+
+### Which workloads lose their route out if this NAT gateway is removed?
+
+Terms: Deployed Resource, `declaredAs`, `connectsTo`, `runsOn`; record reads; provider (tool).
+
+- **Estate returns.** The NAT gateway, a Deployed Resource `declaredAs` the network module call that
+  declares it, with its address inside the module; the route tables that `connectsTo` it and the
+  subnets that `connectsTo` those route tables, each a Deployed Resource read from the same record;
+  the clusters and machines whose Deployed Resources `connectsTo` those subnets, the Declared
+  Resources they are `declaredAs`, and the Instances that `runsOn` them.
+- **Last mile.** One read of each cited route table at its record's serial, for whether its route
+  through the NAT gateway is the default route. Routes the provider propagates from elsewhere are
+  live, a query to the provider.
+- **Same for everyone.** The one NAT gateway is its own entity, not a module call that declares
+  three of them, so the walk starts from the same resource for everyone. A route is read in the
+  cited record, never computed into an effective path.
 
 ### How do I reach prod's state, or prod's cluster, from this workstation?
 
@@ -335,13 +368,13 @@ Terms: `runsOn`, `inScope`, Core Infrastructure; `instantiatedFrom`.
 
 ### What breaks if this cluster is deleted?
 
-Terms: `connectsTo`, `provisionedFor`, `trusts`, `runsOn`; Declared Resource aliases.
+Terms: `connectsTo`, `provisionedFor`, `trusts`, `runsOn`; Deployed Resource, `declaredAs`.
 
-- **Estate returns.** The Instances that `runsOn` it; what it `connectsTo`, its subnets and
-  security groups, and whatever else `connectsTo` those; the Declared Resources provisioned for the
-  same Core Infrastructure, which share its declaration; every Identity that `trusts` its OIDC
-  provider; each with its aliases and their as-of; the Core Infrastructure it is provisioned for,
-  the Pipeline job that `deploys` it, and the commit its declaration was read at.
+- **Estate returns.** The Instances that `runsOn` it; what it `connectsTo`, its subnets and security
+  groups, and whatever else `connectsTo` those; the Declared Resources provisioned for the same Core
+  Infrastructure, which share its declaration; every Identity that `trusts` its OIDC provider; the
+  Deployed Resources each is `declaredAs`, with their records' as-of; the Core Infrastructure it is
+  provisioned for, the Pipeline job that `deploys` it, and the commit its declaration was read at.
 - **Last mile.** Read the cited declarations for what a shared resource would lose; whether each
   still exists is a query to the cloud. Before any plan or destroy from the declaring job, compare
   the declaration at its commit with the live resource: a resource changed from somewhere else,
