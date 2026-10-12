@@ -412,7 +412,7 @@ estate:Assumption
     rdfs:subClassOf estate:Detail ;
     rdfs:label "Assumption"@en ;
     estate:detailOf estate:runsAs ;
-    skos:definition "The details of a Pipeline's runsAs: the job that acts as the Identity."@en ;
+    skos:definition "The details of a runsAs: where a Pipeline acts as the Identity, the job that does. A workload's runsAs carries no data and has no detail."@en ;
     estate:keyRule "The relation it reifies, and its job."@en ;
     estate:maturity "draft" .
 
