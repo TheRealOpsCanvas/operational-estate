@@ -75,12 +75,13 @@ Terms: Pipeline, `triggers`, `deploys`; one file read (tool).
 
 ### What software owns this cloud resource?
 
-Terms: Cloud Resource, `provisionedFor`; `instantiatedFrom`.
+Terms: Declared Resource, Deployed Resource, `declaredAs`, `provisionedFor`; `instantiatedFrom`.
 
-- **Estate returns.** The resource by declared address or alias; `provisionedFor` the Instance,
+- **Estate returns.** The resource by declared address, or by provider id and the Declared
+  Resource its Deployed Resource is `declaredAs`; `provisionedFor` the Instance,
   Environment, Application, Service, or Core Infrastructure whose declaration creates it; from an
   Instance, `instantiatedFrom` Service, and from a Service, `memberOf` Application.
-- **Last mile.** None. At most three hops.
+- **Last mile.** None. At most four hops.
 - **Same for everyone.** Ownership is read from the module or chart boundary the declaration
   sits inside, never a name match.
 
@@ -144,11 +145,11 @@ and CI system (tool).
 
 ### Which recent deployments changed both infrastructure and application behavior?
 
-Terms: `deploys` with its variables and write location; Cloud Resource declared address; git
+Terms: `deploys` with its variables and write location; Declared Resource address; git
 diff (tool).
 
 - **Estate returns.** Recent `deploys` edges, the variables each job sets, such as one selecting
-  infrastructure or configuration, and the paths they write; every Cloud Resource's declared
+  infrastructure or configuration, and the paths they write; every Declared Resource's
   address in the same Repository.
 - **Last mile.** For each run's commit, diff it: did it touch a resource declaration and
   application code?
@@ -193,10 +194,10 @@ system (tool).
 
 ### What changed in production since yesterday that explains the latency spike?
 
-Terms: `deploys` and its write location; Cloud Resource, `runsOn`, `connectsTo`,
+Terms: `deploys` and its write location; Declared Resource, `runsOn`, `connectsTo`,
 `provisionedFor`, `observedBy` identifiers; git diff and monitoring tool (tool).
 
-- **Estate returns.** Prod's Instances and their pinned write paths; the Cloud Resources they
+- **Estate returns.** Prod's Instances and their pinned write paths; the Declared Resources they
   `runsOn` and `connectsTo`, with the declared addresses of each and of the Core Infrastructure
   that the shared ones are provisioned for; the monitoring identifiers.
 - **Last mile.** `git diff` at the pinned paths since yesterday; latency from the tool.
@@ -218,23 +219,25 @@ Terms: `connectsTo`, `readsSecretsFrom`, `runsOn`; git diff and cluster events
 
 ### How much does prod cost per month, and what are the most expensive resources?
 
-Terms: Cloud Resource aliases, `provisionedFor`, Cloud Account; cost store (tool).
+Terms: Deployed Resource, `declaredAs`, `provisionedFor`, Cloud Account; cost store (tool).
 
 - **Estate returns.** Prod's resources by owner, Instance-owned and Environment-owned; the
-  shared resources of the Core Infrastructure prod's Instances run on; each resource's aliases;
-  the Cloud Accounts billed, for charges that belong to no resource.
-- **Last mile.** Sum the rows those aliases match and sort; report shared Core Infrastructure
-  cost as shared.
-- **Same for everyone.** Aliases and ownership are pinned. How shared cost is split is decided
+  shared resources of the Core Infrastructure prod's Instances run on; the Deployed Resources
+  `declaredAs` each, by provider id; the Cloud Accounts billed, for charges that belong to no
+  resource.
+- **Last mile.** Sum the rows those provider ids match and sort; report shared Core
+  Infrastructure cost as shared.
+- **Same for everyone.** Provider ids and ownership are pinned. How shared cost is split is decided
   downstream of the estate, so the estate's answer is the exact owned cost plus the shared cost
   beside it, never a silent split.
 
 ### What does a service cost across every environment?
 
-Terms: Cloud Resource, `provisionedFor`; `instantiatedFrom`; cost store
+Terms: Declared Resource, `declaredAs`, `provisionedFor`; `instantiatedFrom`; cost store
 (tool).
 
-- **Estate returns.** The climb by software: resource, `provisionedFor` Instance,
+- **Estate returns.** The climb by software: Deployed Resource, `declaredAs` its Declared
+  Resource, `provisionedFor` Instance,
   `instantiatedFrom` Service, `memberOf` Application; a resource `provisionedFor` the Service
   itself joins the climb at the Service.
 - **Last mile.** Sum along that climb.
@@ -243,20 +246,34 @@ Terms: Cloud Resource, `provisionedFor`; `instantiatedFrom`; cost store
 
 ### Show me the resources whose cost went up the most in the last 30 days.
 
-Terms: Cloud Resource aliases; cost store (tool).
+Terms: Deployed Resource, `declaredAs`; cost store (tool).
 
-- **Estate returns.** Every resource with its aliases and owner.
+- **Estate returns.** Every Deployed Resource by provider id, with the Declared Resource it is
+  `declaredAs` and that resource's owner.
 - **Last mile.** Two periods from the cost store, diff, rank, climb to owners.
-- **Same for everyone.** Rows that match no alias are a gap, cost with no declared resource,
-  never "other".
+- **Same for everyone.** Rows land by provider id, the same string the cost store carries. A
+  Deployed Resource `declaredAs` nothing is a gap, cost with no declaration, never "other".
+
+### What is deployed that no declaration accounts for, and what does it cost?
+
+Terms: Deployed Resource, `declaredAs`, `within`, Cloud Account; cost store (tool).
+
+- **Estate returns.** Every Deployed Resource with no current `declaredAs`, by provider id, with
+  the source that reported it and as of when, and the Cloud Account it is `within`; and the
+  sources the scan read, so a resource whose declaration sits somewhere the scan never read is
+  told apart from one nothing the scan read declares.
+- **Last mile.** Sum each one's rows from the cost store by provider id.
+- **Same for everyone.** The set is a query over the graph, never a search of the cloud, and each
+  member cites what reported it. Whether it was built by hand, imported, or declared somewhere
+  unread is said by what the scan read, not guessed.
 
 ## Capacity and dependencies
 
 ### Can I upgrade my EKS clusters from 1.28 to 1.32 without issues? Which pods need upgrading?
 
-Terms: Core Infrastructure, Cloud Resource declared address, `runsOn`; file reads (tool).
+Terms: Core Infrastructure, Declared Resource address, `runsOn`; file reads (tool).
 
-- **Estate returns.** Each cluster, a Cloud Resource with its declared address and the Core
+- **Estate returns.** Each cluster, a Declared Resource with its declared address and the Core
   Infrastructure it is provisioned for; every Instance that `runsOn` it; each Instance's deploy
   evidence pointing at its manifests.
 - **Last mile.** Read the declared version at the commit; read each manifest for APIs removed
@@ -277,14 +294,30 @@ Terms: `connectsTo`; `deploys`; manifest reads (tool).
 
 ### Which workloads depend on the Redis cluster, and what happens if it is restarted?
 
-Terms: `connectsTo`, Cloud Resource; manifest reads (tool).
+Terms: `connectsTo`, Declared Resource, Deployed Resource, `declaredAs`; manifest reads (tool).
 
-- **Estate returns.** The Redis Cloud Resource; everything that `connectsTo` it; their
-  Instances and Environments.
+- **Estate returns.** The Redis Declared Resource and the Deployed Resources `declaredAs` it;
+  everything that `connectsTo` any of them; their Instances and Environments.
 - **Last mile.** One walk for "which". The model reasons about restart behavior from the
   manifests.
 - **Same for everyone.** Dependencies are evidence-cited from configuration, never inferred
   from a name.
+
+### Which workloads lose their route out if this NAT gateway is removed?
+
+Terms: Deployed Resource, `declaredAs`, `connectsTo`, `runsOn`; route reads (tool).
+
+- **Estate returns.** The NAT gateway, a Deployed Resource `declaredAs` the network module call that
+  declares it; the Deployed Resources joined to it by `connectsTo` in either direction, its route
+  tables, routes, and subnets, and those joined to them in turn, as candidates; the clusters and
+  machines among them, the Declared Resources they are `declaredAs`, and the Instances that `runsOn`
+  them.
+- **Last mile.** One read of the cited routes, for which of those candidates route through this
+  gateway rather than merely sharing a network with it; routes the provider propagates from
+  elsewhere are a query to the provider.
+- **Same for everyone.** The one NAT gateway is its own entity, not a module call that declares
+  three of them, so the walk starts from the same resource for everyone. A route is read where it
+  is cited, never computed into an effective path.
 
 ### How do I reach prod's state, or prod's cluster, from this workstation?
 
@@ -313,7 +346,7 @@ Terms: Pipeline; Identity, `trusts`, `within`; policy reads (tool).
 
 Terms: `deliversTo`, `pullsFrom`, `connectsTo`; `within`.
 
-- **Estate returns.** The registry, a managed Cloud Resource or the Service Instance serving a
+- **Estate returns.** The registry, a managed Declared Resource or the Service Instance serving a
   self-hosted one, and its image repositories `within` it; every Pipeline that `deliversTo` them
   with its job; every Service Instance that `pullsFrom` them with its image reference and pull
   secret name; everything that `connectsTo` the registry's hostname.
@@ -335,13 +368,13 @@ Terms: `runsOn`, `inScope`, Core Infrastructure; `instantiatedFrom`.
 
 ### What breaks if this cluster is deleted?
 
-Terms: `connectsTo`, `provisionedFor`, `trusts`, `runsOn`; Cloud Resource aliases.
+Terms: `connectsTo`, `provisionedFor`, `trusts`, `runsOn`; Deployed Resource, `declaredAs`.
 
-- **Estate returns.** The Instances that `runsOn` it; what it `connectsTo`, its subnets and
-  security groups, and whatever else `connectsTo` those; the Cloud Resources provisioned for the
-  same Core Infrastructure, which share its declaration; every Identity that `trusts` its OIDC
-  provider; each with its aliases and their as-of; the Core Infrastructure it is provisioned for,
-  the Pipeline job that `deploys` it, and the commit its declaration was read at.
+- **Estate returns.** The Instances that `runsOn` it; what it `connectsTo`, its subnets and security
+  groups, and whatever else `connectsTo` those; the Declared Resources provisioned for the same Core
+  Infrastructure, which share its declaration; every Identity that `trusts` its OIDC provider; the
+  Deployed Resources `declaredAs` each, with their as-of; the Core Infrastructure it is
+  provisioned for, the Pipeline job that `deploys` it, and the commit its declaration was read at.
 - **Last mile.** Read the cited declarations for what a shared resource would lose; whether each
   still exists is a query to the cloud. Before any plan or destroy from the declaring job, compare
   the declaration at its commit with the live resource: a resource changed from somewhere else,

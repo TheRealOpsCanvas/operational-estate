@@ -15,11 +15,12 @@ tests it against estates other than the one it was first drawn from.
   scan, `prov:wasAttributedTo` a `prov:Agent` for a confirmation, `prov:generatedAtTime` for the
   as-of.
 - `estate-shapes.ttl`: SHACL for what OWL cannot state. Key derivation; exactly one owner per
-  runtime thing; at most one `instantiatedFrom` per Service Instance, targeting a Service; relation
-  endpoint classes; the rules every detail keeps, moved from SPARQL once SHACL 1.2 is published and
-  a validator reads RDF 1.2; no individual `prov:Person` and no relation touching one; no value on
-  a `readsSecretsFrom`; every alias carrying its source, and at most one current alias per address
-  and source; values only from a property's listed set; `ownedBy` targeting only a Team.
+  Service Instance and Declared Resource; at most one `instantiatedFrom` per Service Instance,
+  targeting a Service; relation endpoint classes; the rules every detail keeps, moved from SPARQL
+  once SHACL 1.2 is published and a validator reads RDF 1.2; no individual `prov:Person` and no
+  relation touching one; no value on a `readsSecretsFrom`; at most one current `declaredAs` per
+  Deployed Resource; a Deployed Resource's owner taken only through `declaredAs`; values only from a
+  property's listed set; `ownedBy` targeting only a Team.
 
 ## Competency questions and worked estates
 
@@ -34,7 +35,8 @@ tests it against estates other than the one it was first drawn from.
   cluster; virtual machines deployed by scripts with no pipeline. Any fact that has to be forced in
   is recorded as a defect in the model.
 - A deliberately wrong example the shapes must reject: an environment with two applications, a
-  cloud resource with no owner, a `prov:Person` individual, and a secret reference carrying a value.
+  declared resource with no owner, a `prov:Person` individual, and a secret reference carrying a
+  value.
 
 ## Tooling
 
