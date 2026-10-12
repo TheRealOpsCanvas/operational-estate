@@ -62,7 +62,7 @@ A grouping is a class only where a relation needs exactly that set of classes.
 | Grouping | Members | Needed by |
 |---|---|---|
 | **Software** | Application, Service | domain of `implementedIn`, range of `provisionedFor` |
-| **Runtime** | Service Instance, Declared Resource, Deployed Resource | domain and range of `connectsTo` |
+| **Runtime** | Service Instance, Declared Resource, Deployed Resource | domain of `connectsTo` |
 | **Scope** | Environment, Core Infrastructure | range of `inScope` |
 
 Scope is the named unit runtime things are placed in and owned by: an Application's Environment, or
@@ -204,8 +204,10 @@ relations out of a Pipeline.
 
 Something the estate references and nothing in it provisions: the tools a thing is observed by,
 such as Datadog or PagerDuty, and the hosted destinations a Pipeline delivers to, such as npmjs.org
-or Docker Hub. Anything with a class of its own is not an External System: a role is an Identity; a
-cluster, registry repository, or bucket is a Declared Resource; an account is a Cloud Account.
+or Docker Hub, and what a runtime thing reaches beyond the estate, such as a hosted API a workload
+calls or the interconnection fabric a dedicated link lands on. Anything with a class of its own is
+not an External System: a role is an Identity; a cluster, registry repository, or bucket is a
+Declared Resource; an account is a Cloud Account.
 
 ### Team
 
@@ -256,9 +258,9 @@ asserted too; the annotation syntax does this, and section 7 requires it of ever
 | `runsOn` | Service Instance | Declared Resource, Deployed Resource | |
 | `providedAs` | Service Instance | Declared Resource, Deployed Resource | |
 | `within` | Declared Resource, Deployed Resource, Identity, Cloud Account | Cloud Account, Declared Resource, Deployed Resource | |
-| `connectsTo` | Runtime | Runtime | |
+| `connectsTo` | Runtime | Runtime, External System | |
 | `readsSecretsFrom` | Service Instance, Pipeline | Service Instance, Declared Resource, Deployed Resource, External System | path or name |
-| `observedBy` | Service Instance, Environment, Pipeline | Service Instance, Declared Resource, Deployed Resource, External System | the tool's identifiers |
+| `observedBy` | Service Instance, Environment, Pipeline, Declared Resource, Deployed Resource | Service Instance, Declared Resource, Deployed Resource, External System | the tool's identifiers |
 | `accessedAs` | Environment | Identity | declared credential name |
 | `runsAs` | Service Instance, Pipeline | Identity | |
 | `trusts` | Identity | Pipeline, Repository, Identity, Declared Resource, Deployed Resource | |
@@ -365,6 +367,12 @@ into, which is how one resource inside a module is reached. That is what deletin
 breaks. It is cited, never inferred from a name. What a connection means at runtime, sessions,
 retries, leader election, is a reading of the manifest the relation cites.
 
+What a runtime thing reaches beyond the estate is an External System: a hosted API in a workload's
+configuration, or the interconnection fabric reported as a dedicated link's far side. Links
+that reach the same External System meet there, which is how networks in different clouds are seen
+to connect. An External System's own connections are not the estate's to describe, so `connectsTo`
+never runs from one.
+
 *Aliases:* "depends on".
 
 `readsSecretsFrom` carries the path or name read, never the value. Where the secret is itself
@@ -382,7 +390,9 @@ agent's environment tag, sits on the Environment's relation and is not copied on
 Instance a tool knows by an identifier no file declares is a gap. A Pipeline has the relation only
 where its CI system knows it by something other than its key: a pipeline in GitHub Actions or GitLab
 is known by its repository and path, which its key holds, while a Jenkins job, a CircleCI project,
-or a Buildkite pipeline has a name of its own.
+or a Buildkite pipeline has a name of its own. A Declared or Deployed Resource has the relation
+where a tool measures it by an identifier, such as the traffic a network link or gateway carries;
+the measurement is live and the tool's.
 
 ## 6. Identity and keys
 

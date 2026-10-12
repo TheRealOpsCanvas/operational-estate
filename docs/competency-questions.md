@@ -340,6 +340,46 @@ Terms: Pipeline; Identity, `trusts`, `within`; policy reads (tool).
 - **Same for everyone.** The set of roles is a walk over declared trust, never a search across
   the repositories that declare roles.
 
+## Connectivity
+
+### What leaves the cloud over this dedicated link, and what is on the other side?
+
+Terms: Deployed Resource, `connectsTo`, `within`, External System, `runsOn`; route reads (tool).
+
+- **Estate returns.** The link, a Deployed Resource `within` its Cloud Account; the External System
+  it `connectsTo` on its far side; the gateways and networks that `connectsTo` the link, and the
+  subnets, clusters, and machines joined to those, as candidates, with the Instances that `runsOn`
+  them.
+- **Last mile.** One read of the cited routes, for which candidates route over the link.
+- **Same for everyone.** Every link that lands on the same far side reaches the same External
+  System, so the walk ends at one node for everyone. What crosses the link at runtime is the
+  tool's.
+
+### Which networks in different accounts or clouds reach each other, and through what?
+
+Terms: Declared Resource, Deployed Resource, `connectsTo`, `within`, Cloud Account, External System.
+
+- **Estate returns.** The networks, each `within` its Cloud Account; the peerings, transit
+  attachments, and dedicated links that `connectsTo` them; and every External System reached by
+  links from more than one account or cloud, each a place where those networks meet.
+- **Last mile.** None for which networks connect. Whether traffic between two of them takes that
+  path is one read of the cited routes.
+- **Same for everyone.** The paths are walks over declared and reported references. Two clouds
+  meet only where their links reach the same External System, never by a guess from names or
+  regions.
+
+### How much traffic crossed this link or gateway last week?
+
+Terms: `observedBy` and its identifiers, Deployed Resource, `declaredAs`; the observing tool
+(tool).
+
+- **Estate returns.** The link or gateway, a Deployed Resource; the tool it is `observedBy` and the
+  identifiers the tool knows it by, as the tool spells them; the owner it takes through
+  `declaredAs`.
+- **Last mile.** One query to the tool with those identifiers.
+- **Same for everyone.** The identifiers are the same strings for everyone, and the estate never
+  holds a traffic volume, only the join to the tool that measures it.
+
 ## Retiring infrastructure
 
 ### What pushes to and pulls from this registry?
