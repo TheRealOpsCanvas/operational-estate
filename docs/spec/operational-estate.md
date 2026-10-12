@@ -69,7 +69,7 @@ Scope is the named unit runtime things are placed in and owned by: an Applicatio
 the Core Infrastructure a platform declares. Every other class sits directly under `estate:Entity`.
 
 **A role is not a class.** Where what a relation points at crosses classes, the relation carries the
-role. What a workload reads secrets from may be a Service Instance (a self-hosted Vault), a Cloud
+role. What a workload reads secrets from may be a Service Instance (a self-hosted Vault), a Declared
 Resource (a cloud secrets manager), or an External System (a hosted secrets service), so there is no
 Secret Store class: the secret stores in an estate are the targets of `readsSecretsFrom`. An
 observability tool is the same, through `observedBy`.
@@ -144,20 +144,19 @@ it is not the cluster provisioned for it.
 A thing in a cloud or cluster as a declaration states it: a database, a bucket, a load balancer, a
 cluster, a function, a registry repository, a secret. It has exactly one owner. It is what the
 declaration says practitioners expect to exist, not a confirmation that it exists or is running:
-whether it does is a query to the provider. What a deployment made of it is a Deployed Resource
-`declaredAs` it.
+whether it does is a query to the provider. What a provider reports was made of it is a Deployed
+Resource `declaredAs` it.
 
 *Aliases:* "cloud resource", "resource".
 
 ### Deployed Resource
 
-A thing in a cloud or cluster as a deployment's record states it: what Terraform state, a
-CloudFormation stack listing, a Pulumi checkpoint, or a Kubernetes object's status says a deployment
-made. It is `declaredAs` the Declared Resource whose declaration produced it, and one declaration
-may be deployed as many: a module call as every resource inside the module, such as the subnets,
-route tables, and NAT gateways of a network module, and a repeated declaration as one per element. A
-record is as of its serial, so a Deployed Resource is not a confirmation that the thing still exists
-or is running; whether it does is a query to the provider.
+A thing in a cloud or cluster as it is reported to exist, by a provisioning tool's record of what
+it made or by the provider itself, as of when it was reported. It is `declaredAs` the Declared
+Resource whose declaration produced it, and one declaration may be deployed as many: a module call
+as every resource inside the module, such as the subnets, route tables, and NAT gateways of a
+network module, and a repeated declaration as one per element. It is not a confirmation that the
+thing is running now, which is a query to the provider.
 
 It owns nothing and has no owner of its own: it takes its Declared Resource's. One `declaredAs`
 nothing is a gap, something deployed that no declaration the estate has read accounts for, because
@@ -166,7 +165,7 @@ its cost and its failures belong to nobody the estate can name.
 ### Identity
 
 Something that acts: the role a deploy job assumes, the role a workload runs as, a service
-principal, a managed identity, a permission set people assume, a Kubernetes user. Not a Cloud
+principal, a managed identity, a permission set people assume, a Kubernetes user. Not a Declared
 Resource: many identities have no owner in the estate and no declaration, such as a permission set
 created in a console, and that is normal rather than a gap; and some live in no cloud account, such
 as an identity provider's group or the OIDC subject a role trusts. Never a human principal: a user
@@ -174,11 +173,11 @@ account named after a person stays out.
 
 ### Cloud Account
 
-An AWS account, a GCP project, an Azure subscription: the provider-defined unit that Cloud
-Resources, Identities, and credentials sit `within`, and that charges belonging to no resource land
-on. A place things live, not a thing that runs, so it is not a Declared Resource, and not in Scope,
-which holds the units a practitioner defines. Member accounts are `within` the payer or organization
-they bill to.
+An AWS account, a GCP project, an Azure subscription: the provider-defined unit that Declared
+Resources, Deployed Resources, Identities, and credentials sit `within`, and that charges belonging
+to no resource land on. A place things live, not a thing that runs, so it is not a Declared
+Resource, and not in Scope, which holds the units a practitioner defines. Member accounts are
+`within` the payer or organization they bill to.
 
 *Aliases:* "account", "project", "subscription".
 
@@ -236,7 +235,7 @@ asserted too; the annotation syntax does this, and section 7 requires it of ever
 | Relation | From | To | Carries |
 |---|---|---|---|
 | `declaredIn` | Service, Pipeline, Core Infrastructure, Declared Resource | Repository | |
-| `declaredAs` | Deployed Resource | Declared Resource | source, serial, recorded address |
+| `declaredAs` | Deployed Resource | Declared Resource | |
 | `inScope` | Service Instance | Scope | |
 | `memberOf` | Service | Application | |
 | `implementedIn` | Software | Repository | |
@@ -251,13 +250,13 @@ asserted too; the annotation syntax does this, and section 7 requires it of ever
 | `provisionedFor` | Declared Resource, Identity | Environment, Core Infrastructure, Software, Service Instance | |
 | `runsOn` | Service Instance | Declared Resource | |
 | `providedAs` | Service Instance | Declared Resource | |
-| `within` | Declared Resource, Deployed Resource, Identity, Cloud Account | Cloud Account, Declared Resource | |
+| `within` | Declared Resource, Deployed Resource, Identity, Cloud Account | Cloud Account, Declared Resource, Deployed Resource | |
 | `connectsTo` | Runtime | Runtime | |
 | `readsSecretsFrom` | Service Instance, Pipeline | Service Instance, Declared Resource, External System | path or name |
 | `observedBy` | Service Instance, Environment, Pipeline | Service Instance, Declared Resource, External System | the tool's identifiers |
 | `accessedAs` | Environment | Identity | declared credential name |
 | `runsAs` | Service Instance, Pipeline | Identity | |
-| `trusts` | Identity | Pipeline, Repository, Identity, Declared Resource | |
+| `trusts` | Identity | Pipeline, Repository, Identity, Declared Resource, Deployed Resource | |
 | `ownedBy` | Application, Service, Repository, Core Infrastructure, Cloud Account, Declared Resource, Identity | Team | |
 
 ### Containment
@@ -272,22 +271,8 @@ declaration installs it.
 ### Declaration and deployment
 
 `declaredAs` runs from a Deployed Resource to the Declared Resource whose declaration produced it,
-as a deployment's record says. It is read from a source that holds both halves: Terraform state, a
-CloudFormation stack listing, a Pulumi checkpoint, a Kubernetes object's status, or a controller's
-tags on the cloud side, such as `kubernetes.io/cluster/<name>`, which are weaker than a record the
-provisioning tool keeps. It carries that source, the source's serial or version, and the address the
-source gives the resource, copied verbatim, such as its address inside a module. It is not
-`declaredIn`, the Repository whose files hold a declaration. A Deployed Resource has at most one
-current `declaredAs`. When a source moves on and a declaration is deployed as a new resource, the
-former relation is kept and marked `prov:invalidatedAtTime`, because older cost rows still name the
-former resource.
-
-```turtle
-:nat-a estate:declaredAs :network-module
-    ~ :nat-a.declaredAs.network-module
-    {| estate:recordSource "terraform state" ; estate:sourceVersion "42" ;
-       estate:recordedAddress "module.network.nat_gateway.this[0]" |} .
-```
+as whatever reported the Deployed Resource says. It is not `declaredIn`, the Repository whose files
+hold a declaration. A Deployed Resource has at most one current `declaredAs`.
 
 ### Placement
 
@@ -348,14 +333,14 @@ relation so that whoever holds a local credential by that name can match it to t
 
 `runsAs` is the Identity a workload or a pipeline acts as.
 
-`trusts` runs from an Identity to the Pipeline, Repository, Identity, or Declared Resource its trust
-policy allows to assume it, read from the declaration; the Declared Resource is a federation
-provider, such as a cluster's OIDC provider that workloads assume roles through. A question that
-starts from a role needs no relation, because the policy is in the file the Identity cites; a
-question that starts from a repository, what it can reach if compromised, would otherwise be a
-search across every repository that declares roles. Chained assumption is a multi-hop walk. The walk
-ends at roles and the accounts they are within: what a role permits is a read of its cited policy,
-never an effective permission.
+`trusts` runs from an Identity to the Pipeline, Repository, Identity, or resource its trust policy
+allows to assume it, read from the declaration; the resource is a federation provider, a Declared
+Resource or, where a module creates it, a Deployed Resource, such as a cluster's OIDC provider that
+workloads assume roles through. A question that starts from a role needs no relation, because the
+policy is in the file the Identity cites; a question that starts from a repository, what it can
+reach if compromised, would otherwise be a search across every repository that declares roles.
+Chained assumption is a multi-hop walk. The walk ends at roles and the accounts they are within:
+what a role permits is a read of its cited policy, never an effective permission.
 
 ### Reach
 
@@ -363,10 +348,10 @@ never an effective permission.
 variables, and service references in its configuration: a Declared Resource such as a Redis cluster,
 or another Instance it calls. A Declared Resource `connectsTo` what its declaration references: a
 cluster its subnets and security groups, a load balancer its target group. A Deployed Resource
-`connectsTo` what its record references, such as the subnet a NAT gateway was deployed into, which
-is how one resource inside a module is reached. That is what deleting a shared resource breaks. It
-is cited, never inferred from a name. What a connection means at runtime, sessions, retries, leader
-election, is a reading of the manifest the relation cites.
+`connectsTo` what is reported as referenced by it, such as the subnet a NAT gateway was deployed
+into, which is how one resource inside a module is reached. That is what deleting a shared resource
+breaks. It is cited, never inferred from a name. What a connection means at runtime, sessions,
+retries, leader election, is a reading of the manifest the relation cites.
 
 *Aliases:* "depends on".
 
@@ -421,27 +406,29 @@ managed resource anything.
 **A declaration may be a module call, and one root may be applied more than once.** A resource
 declared through a module, such as a cluster created by a call to a registry module, is declared by
 that call: its address is the module call's address in the root, and each resource inside the
-module, which the repository does not contain, is a Deployed Resource `declaredAs` that call, with
-its address inside the module on the relation. A root applied once per environment, with a var file,
-a workspace, a stack, or an overlay, declares a separate resource for each, so the applied
-configuration is part of the key of every Declared Resource and Core Infrastructure it declares: one
-module call applied with `prod.tfvars` and with `dev.tfvars` is two clusters, and two Core
-Infrastructures. A name computed from variables is read with every file it is computed from cited.
+module, which the repository does not contain, is a Deployed Resource `declaredAs` that call. A root
+applied once per environment, with a var file, a workspace, a stack, or an overlay, declares a
+separate resource for each, so the applied configuration is part of the key of every Declared
+Resource and Core Infrastructure it declares: one module call applied with `prod.tfvars` and with
+`dev.tfvars` is two clusters, and two Core Infrastructures. A name computed from variables is read
+with every file it is computed from cited.
 
 **Identity and Cloud Account are keyed by their provider identifier**, because it is fixed before
 anything is applied: an account id is issued when the account exists, and a role ARN is derivable
 from its account and name. A declaration is cited when one exists.
 
-**A Deployed Resource is keyed by its provider id**, which the provider issues when it creates the
-thing: an ARN, a resource id, a Kubernetes object's uid. A replacement is a new Deployed Resource,
-and the former one keeps its key, because older cost rows still carry it. Its declaration is what
-lasts across replacements, so a Declared Resource is keyed by that instead. Environment and Team
-also carry alternate names.
+**A Deployed Resource is keyed by its provider id**: the identifier the provider gives it that is
+unique across the provider, in the one form the provider uses in its own references, so that two
+readers key one thing the same way. A thing the provider replaces under a new id is a new Deployed
+Resource. Its declaration is what lasts across replacements, so a Declared Resource is keyed by that
+instead.
+
+Environment and Team also carry alternate names.
 
 **A detail is keyed by the relation it reifies**, meaning its source's key, the relation, and its
 target's key, and, where one relation can have several details, by what tells them apart: the job
 for a `triggers`, `deploys`, `builds`, or `deliversTo`, the secret path for a `readsSecretsFrom`. An
-`observedBy`, `accessedAs`, `pullsFrom`, or `declaredAs` has at most one detail. A detail is named
+`observedBy`, `accessedAs`, or `pullsFrom` has at most one detail. A detail is named
 by an identifier derived from its key, never a blank node, so two graphs that say the same thing
 about one relation merge into one detail.
 
@@ -452,13 +439,14 @@ rewritten, because keys are derived and the base is a prefix.
 
 ## 7. Constraints
 
-**Every runtime thing has exactly one owner, so Environments never overlap.** A Service Instance is
-in exactly one Scope, by its key. A Declared Resource is `provisionedFor` exactly one of an
-Environment, a Core Infrastructure, an Application, a Service, or a Service Instance; one
-provisioned for an Application or Service is in no Environment. Use across Environments is
-`connectsTo`, never shared membership, and a `connectsTo` from one Environment into another is a gap
-worth surfacing. A Deployed Resource takes the owner of the Declared Resource it is `declaredAs` and
-has none of its own. An Identity is `provisionedFor` its declaring owner when it has one.
+**Every Service Instance and Declared Resource has exactly one owner, so Environments never
+overlap.** A Service Instance is in exactly one Scope, by its key. A Declared Resource is
+`provisionedFor` exactly one of an Environment, a Core Infrastructure, an Application, a Service, or
+a Service Instance; one provisioned for an Application or Service is in no Environment. Use across
+Environments is `connectsTo`, never shared membership, and a `connectsTo` from one Environment into
+another is a gap worth surfacing. A Deployed Resource takes the owner of the Declared Resource it is
+`declaredAs` and has none of its own; one `declaredAs` nothing has no owner, which is a gap, not an
+error. An Identity is `provisionedFor` its declaring owner when it has one.
 
 Further constraints, each to be stated as a SHACL shape. The ones about details are checked today as
 SPARQL 1.2 queries, until SHACL 1.2 is published:
@@ -472,7 +460,6 @@ SPARQL 1.2 queries, until SHACL 1.2 is published:
 - A Pipeline that `deploys` an Environment or Instance is in the Repository it is `deployedFrom`.
 - `ownedBy` targets only a Team.
 - A `readsSecretsFrom` carries no secret value.
-- Every `declaredAs` carries its source.
 - A Deployed Resource has at most one `declaredAs` with no `prov:invalidatedAtTime`.
 - No individual `prov:Person` appears in an estate graph.
 
@@ -481,10 +468,12 @@ SPARQL 1.2 queries, until SHACL 1.2 is published:
 Provenance uses PROV-O directly, under the `prov:` prefix. A fact `prov:wasDerivedFrom` each
 citation; a scan is a `prov:Activity` that generated it; a confirmation `prov:wasAttributedTo` the
 `prov:Agent` that made it; `prov:generatedAtTime` is its as-of; `prov:invalidatedAtTime` is when a
-fact that was true stopped being so, such as a `declaredAs` its source has moved past, or a fact
+fact that was true stopped being so, such as a Deployed Resource that no longer exists, or a fact
 pinned to a commit that became unreachable. A fact is never rewritten to say it no longer holds.
 
-A scan records what it looked at: it `prov:used` each repository it read, at the commit it read.
+A scan records what it looked at: it `prov:used` each repository it read, at the commit it read,
+and each other source it read, such as a provisioning tool's record or a provider's report, as of
+when it read it.
 That is what tells "not recorded", where nothing that would show a thing was read, from "looked and
 not found", where it was read and the thing is not there. An answer about something the estate
 does not hold says which.
@@ -503,7 +492,7 @@ in one Application and differ, correctly, for a shared one. A tag, or a controll
 evidence for a relation the model already has. How cost shared through Core Infrastructure is split
 is decided downstream: the estate serves the ownership. A Deployed Resource `declaredAs` nothing is
 a gap, cost with no declaration, never "other"; a row that matches no Deployed Resource is cost from
-a record the estate has not read.
+something no source the estate read reported.
 
 ## 10. Testing the model
 
@@ -548,7 +537,7 @@ and `instantiatedFrom` a placement origin, a name match or an operator's choice.
 how a fact came to be is what PROV-O states for every fact, a private two-value copy of it on two
 relations would say it for those alone, and the graph holds only what has been confirmed.
 
-**When a binding stopped holding is provenance, not a status.** An earlier draft gave a live
+**When a fact stopped holding is provenance, not a status.** An earlier draft gave a live
 identifier's binding a status, `current` or `former`. It was rejected: a status goes stale when the
 source moves on and has to be rewritten, while `prov:invalidatedAtTime` is written once and says
 when, which is what attributing an older cost row needs.

@@ -128,8 +128,8 @@ estate:DeclaredResource
     a owl:Class ;
     rdfs:subClassOf estate:Runtime ;
     rdfs:label "Declared Resource"@en ;
-    skos:definition "A thing in a cloud or cluster as a declaration states it: a database, a bucket, a load balancer, a cluster, a function, a registry repository, a secret. It has exactly one owner. What a deployment made of it is a Deployed Resource declaredAs it."@en ;
-    skos:scopeNote "Not a confirmation that the thing exists or is running: whether it does is a query to the provider. Not what a deployment made of it, which is a Deployed Resource. Not an Identity and not a Cloud Account."@en ;
+    skos:definition "A thing in a cloud or cluster as a declaration states it: a database, a bucket, a load balancer, a cluster, a function, a registry repository, a secret. It has exactly one owner. What a provider reports was made of it is a Deployed Resource declaredAs it."@en ;
+    skos:scopeNote "Not a confirmation that the thing exists or is running: whether it does is a query to the provider. Not what a provider reports was made of it, which is a Deployed Resource. Not an Identity and not a Cloud Account."@en ;
     skos:altLabel "cloud resource"@en, "resource"@en ;
     estate:keyRule "The Repository that declares it, a source kind, the declared address, and the configuration its root is applied with where one root is applied more than once."@en ;
     estate:maturity "draft" .
@@ -138,9 +138,9 @@ estate:DeployedResource
     a owl:Class ;
     rdfs:subClassOf estate:Runtime ;
     rdfs:label "Deployed Resource"@en ;
-    skos:definition "A thing in a cloud or cluster as a deployment's record states it: what Terraform state, a stack listing, a Pulumi checkpoint, or a Kubernetes object's status says a deployment made. It is declaredAs the Declared Resource whose declaration produced it, and one declaration may be deployed as many. One declaredAs nothing is a gap."@en ;
-    skos:scopeNote "Not a confirmation that the thing still exists or is running: a record is as of its serial, and whether the thing exists now is a query to the provider. Not an owner of anything and owned by nothing of its own: it takes its Declared Resource's owner."@en ;
-    estate:keyRule "Its provider and the provider's id for it."@en ;
+    skos:definition "A thing in a cloud or cluster as it is reported to exist, by a provisioning tool's record of what it made or by the provider itself, as of when it was reported. It is declaredAs the Declared Resource whose declaration produced it, and one declaration may be deployed as many. One declaredAs nothing is a gap."@en ;
+    skos:scopeNote "Not a confirmation that the thing is running now, which is a query to the provider. Not an owner of anything and owned by nothing of its own: it takes its Declared Resource's owner."@en ;
+    estate:keyRule "Its provider and the provider's id for it: unique across the provider, in the one form the provider uses in its own references."@en ;
     estate:maturity "draft" .
 
 estate:Identity
@@ -216,7 +216,7 @@ estate:Identifier
     owl:members ( estate:Entity estate:Identifier estate:Detail ) .
 
 [] a owl:AllDisjointClasses ;
-    owl:members ( estate:Trigger estate:Deployment estate:Build estate:Delivery estate:SecretRead estate:Observation estate:Access estate:Pull estate:Binding ) .
+    owl:members ( estate:Trigger estate:Deployment estate:Build estate:Delivery estate:SecretRead estate:Observation estate:Access estate:Pull ) .
 
 #################################################################
 # Relations that carry nothing
@@ -353,15 +353,15 @@ estate:within
     a owl:ObjectProperty ;
     rdfs:label "within"@en ;
     rdfs:domain [ a owl:Class ; owl:unionOf ( estate:DeclaredResource estate:DeployedResource estate:Identity estate:CloudAccount ) ] ;
-    rdfs:range [ a owl:Class ; owl:unionOf ( estate:CloudAccount estate:DeclaredResource ) ] ;
+    rdfs:range [ a owl:Class ; owl:unionOf ( estate:CloudAccount estate:DeclaredResource estate:DeployedResource ) ] ;
     owl:inverseOf estate:contains ;
-    skos:definition "The Cloud Account or Declared Resource a thing sits within: a resource in an account, a namespace in a cluster, a member account in its organization."@en ;
+    skos:definition "The Cloud Account, Declared Resource, or Deployed Resource a thing sits within: a resource in an account, a namespace in a cluster, a member account in its organization."@en ;
     estate:maturity "draft" .
 
 estate:contains
     a owl:ObjectProperty ;
     rdfs:label "contains"@en ;
-    skos:definition "A thing that sits within a Cloud Account or Declared Resource."@en ;
+    skos:definition "A thing that sits within a Cloud Account, Declared Resource, or Deployed Resource."@en ;
     estate:maturity "draft" .
 
 estate:connectsTo
@@ -371,7 +371,7 @@ estate:connectsTo
     rdfs:domain estate:Runtime ;
     rdfs:range estate:Runtime ;
     owl:inverseOf estate:connectedFrom ;
-    skos:definition "What a runtime thing reaches or uses: for a Service Instance, read from the connection strings, hostnames, environment variables, and service references in its configuration; for a Declared Resource, read from the references in its declaration, such as a cluster's subnets and security groups; for a Deployed Resource, read from the references its record holds, such as the subnet a NAT gateway was deployed into."@en ;
+    skos:definition "What a runtime thing reaches or uses: for a Service Instance, read from the connection strings, hostnames, environment variables, and service references in its configuration; for a Declared Resource, read from the references in its declaration, such as a cluster's subnets and security groups; for a Deployed Resource, read from what is reported as referenced by it, such as the subnet a NAT gateway was deployed into."@en ;
     skos:scopeNote "Never inferred from a name. Not a claim that the connection is critical: what it means at runtime is a reading of the manifest it cites. Not apply or startup order, which Terraform and Compose call depends_on."@en ;
     estate:maturity "draft" .
 
@@ -400,9 +400,9 @@ estate:trusts
     a owl:ObjectProperty ;
     rdfs:label "trusts"@en ;
     rdfs:domain estate:Identity ;
-    rdfs:range [ a owl:Class ; owl:unionOf ( estate:Pipeline estate:Repository estate:Identity estate:DeclaredResource ) ] ;
+    rdfs:range [ a owl:Class ; owl:unionOf ( estate:Pipeline estate:Repository estate:Identity estate:DeclaredResource estate:DeployedResource ) ] ;
     owl:inverseOf estate:trustedBy ;
-    skos:definition "What an Identity's trust policy allows to assume it, read from the declaration: a Pipeline or Repository by its CI identity, another Identity, or a Declared Resource such as a cluster's OIDC provider."@en ;
+    skos:definition "What an Identity's trust policy allows to assume it, read from the declaration: a Pipeline or Repository by its CI identity, another Identity, or a Declared or Deployed Resource such as a cluster's OIDC provider."@en ;
     skos:scopeNote "Not what the Identity is permitted to do, which is a reading of its cited policy, never an effective permission."@en ;
     estate:maturity "draft" .
 
@@ -689,23 +689,14 @@ estate:declaredAs
     rdfs:domain estate:DeployedResource ;
     rdfs:range estate:DeclaredResource ;
     owl:inverseOf estate:deployedAs ;
-    skos:definition "The Declared Resource whose declaration a deployment's record says produced a Deployed Resource, read from a source that holds both halves: Terraform state, a stack listing, a Pulumi checkpoint, a Kubernetes object's status, or a controller's tags on the cloud side, which are weaker than a record the provisioning tool keeps."@en ;
-    skos:scopeNote "Not declaredIn, the Repository whose files hold a declaration. Not a claim that the resource still exists. Kept, marked prov:invalidatedAtTime, when its source moves on, because older cost rows name the former resource."@en ;
+    skos:definition "The Declared Resource whose declaration produced a Deployed Resource, as whatever reported the Deployed Resource says."@en ;
+    skos:scopeNote "Not declaredIn, the Repository whose files hold a declaration. Not a claim that the resource is running now."@en ;
     estate:maturity "draft" .
 
 estate:deployedAs
     a owl:ObjectProperty ;
     rdfs:label "deployed as"@en ;
-    skos:definition "A Deployed Resource a deployment's record says a Declared Resource's declaration produced: one for a plain declaration, every resource inside the module for a module call, one per element for a repeated one."@en ;
-    estate:maturity "draft" .
-
-estate:Binding
-    a owl:Class ;
-    rdfs:subClassOf estate:Detail ;
-    rdfs:label "Binding"@en ;
-    estate:detailOf estate:declaredAs ;
-    skos:definition "The details of a declaredAs: the source the binding was read from, that source's serial or version, and the address the source gives the resource, such as its address inside a module."@en ;
-    estate:keyRule "The relation it reifies."@en ;
+    skos:definition "A Deployed Resource a Declared Resource's declaration produced: one for a plain declaration, every resource inside the module for a module call, one per element for a repeated one."@en ;
     estate:maturity "draft" .
 
 #################################################################
@@ -945,28 +936,4 @@ estate:identifierValue
     rdfs:domain estate:Identifier ;
     rdfs:range xsd:string ;
     skos:definition "The identifier's value as the tool spells it."@en ;
-    estate:maturity "draft" .
-
-estate:recordSource
-    a owl:DatatypeProperty, owl:FunctionalProperty ;
-    rdfs:label "record source"@en ;
-    rdfs:domain estate:Binding ;
-    rdfs:range xsd:string ;
-    skos:definition "Where a Binding was read: Terraform state, a stack listing, a Pulumi checkpoint, a Kubernetes object's status, or a controller's tags."@en ;
-    estate:maturity "draft" .
-
-estate:sourceVersion
-    a owl:DatatypeProperty, owl:FunctionalProperty ;
-    rdfs:label "source version"@en ;
-    rdfs:domain estate:Binding ;
-    rdfs:range xsd:string ;
-    skos:definition "The serial or version of the source a Binding was read from."@en ;
-    estate:maturity "draft" .
-
-estate:recordedAddress
-    a owl:DatatypeProperty, owl:FunctionalProperty ;
-    rdfs:label "recorded address"@en ;
-    rdfs:domain estate:Binding ;
-    rdfs:range xsd:string ;
-    skos:definition "The address a Binding's source gives the Deployed Resource, copied verbatim, such as its address inside a module or its element of a repeated declaration."@en ;
     estate:maturity "draft" .

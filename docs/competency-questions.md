@@ -222,8 +222,8 @@ Terms: `connectsTo`, `readsSecretsFrom`, `runsOn`; git diff and cluster events
 Terms: Deployed Resource, `declaredAs`, `provisionedFor`, Cloud Account; cost store (tool).
 
 - **Estate returns.** Prod's resources by owner, Instance-owned and Environment-owned; the
-  shared resources of the Core Infrastructure prod's Instances run on; the Deployed Resources each
-  is `declaredAs`, by provider id; the Cloud Accounts billed, for charges that belong to no
+  shared resources of the Core Infrastructure prod's Instances run on; the Deployed Resources
+  `declaredAs` each, by provider id; the Cloud Accounts billed, for charges that belong to no
   resource.
 - **Last mile.** Sum the rows those provider ids match and sort; report shared Core
   Infrastructure cost as shared.
@@ -259,13 +259,13 @@ Terms: Deployed Resource, `declaredAs`; cost store (tool).
 Terms: Deployed Resource, `declaredAs`, `within`, Cloud Account; cost store (tool).
 
 - **Estate returns.** Every Deployed Resource with no current `declaredAs`, by provider id, with
-  the record it was read from and that record's serial, and the Cloud Account it is `within`; and
-  for each record, the repositories the scan read, so a resource whose declaring repository was
-  never read is told apart from one no read repository declares.
+  the source that reported it and as of when, and the Cloud Account it is `within`; and the
+  sources the scan read, so a resource whose declaration sits somewhere the scan never read is
+  told apart from one nothing the scan read declares.
 - **Last mile.** Sum each one's rows from the cost store by provider id.
 - **Same for everyone.** The set is a query over the graph, never a search of the cloud, and each
-  member is pinned to the record and serial that showed it. Whether it is a resource built by hand,
-  an import, or a declaration in an unread repository is said by the scan's record, not guessed.
+  member cites what reported it. Whether it was built by hand, imported, or declared somewhere
+  unread is said by what the scan read, not guessed.
 
 ## Capacity and dependencies
 
@@ -305,19 +305,18 @@ Terms: `connectsTo`, Declared Resource; manifest reads (tool).
 
 ### Which workloads lose their route out if this NAT gateway is removed?
 
-Terms: Deployed Resource, `declaredAs`, `connectsTo`, `runsOn`; record reads; provider (tool).
+Terms: Deployed Resource, `declaredAs`, `connectsTo`, `runsOn`; route reads (tool).
 
 - **Estate returns.** The NAT gateway, a Deployed Resource `declaredAs` the network module call that
-  declares it, with its address inside the module; the route tables that `connectsTo` it and the
-  subnets that `connectsTo` those route tables, each a Deployed Resource read from the same record;
-  the clusters and machines whose Deployed Resources `connectsTo` those subnets, the Declared
-  Resources they are `declaredAs`, and the Instances that `runsOn` them.
-- **Last mile.** One read of each cited route table at its record's serial, for whether its route
-  through the NAT gateway is the default route. Routes the provider propagates from elsewhere are
-  live, a query to the provider.
+  declares it; the Deployed Resources joined to it by `connectsTo` in either direction, its route
+  tables, routes, and subnets, and those joined to them in turn; the clusters and machines among
+  them, the Declared Resources they are `declaredAs`, and the Instances that `runsOn` them.
+- **Last mile.** None for which workloads sit behind it. Whether their traffic takes the route
+  through it is one read of the cited routes; routes the provider propagates from elsewhere are a
+  query to the provider.
 - **Same for everyone.** The one NAT gateway is its own entity, not a module call that declares
-  three of them, so the walk starts from the same resource for everyone. A route is read in the
-  cited record, never computed into an effective path.
+  three of them, so the walk starts from the same resource for everyone. A route is read where it
+  is cited, never computed into an effective path.
 
 ### How do I reach prod's state, or prod's cluster, from this workstation?
 
@@ -373,7 +372,7 @@ Terms: `connectsTo`, `provisionedFor`, `trusts`, `runsOn`; Deployed Resource, `d
 - **Estate returns.** The Instances that `runsOn` it; what it `connectsTo`, its subnets and security
   groups, and whatever else `connectsTo` those; the Declared Resources provisioned for the same Core
   Infrastructure, which share its declaration; every Identity that `trusts` its OIDC provider; the
-  Deployed Resources each is `declaredAs`, with their records' as-of; the Core Infrastructure it is
+  Deployed Resources `declaredAs` each, with their as-of; the Core Infrastructure it is
   provisioned for, the Pipeline job that `deploys` it, and the commit its declaration was read at.
 - **Last mile.** Read the cited declarations for what a shared resource would lose; whether each
   still exists is a query to the cloud. Before any plan or destroy from the declaring job, compare
