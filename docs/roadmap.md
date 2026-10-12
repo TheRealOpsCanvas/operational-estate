@@ -34,7 +34,8 @@ tests it against estates other than the one it was first drawn from.
   cluster; virtual machines deployed by scripts with no pipeline. Any fact that has to be forced in
   is recorded as a defect in the model.
 - A deliberately wrong example the shapes must reject: an environment with two applications, a
-  cloud resource with no owner, a `prov:Person` individual, and a secret reference carrying a value.
+  declared resource with no owner, a `prov:Person` individual, and a secret reference carrying a
+  value.
 
 ## Tooling
 

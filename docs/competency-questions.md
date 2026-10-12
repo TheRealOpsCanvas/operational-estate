@@ -75,7 +75,7 @@ Terms: Pipeline, `triggers`, `deploys`; one file read (tool).
 
 ### What software owns this cloud resource?
 
-Terms: Cloud Resource, `provisionedFor`; `instantiatedFrom`.
+Terms: Declared Resource, `provisionedFor`; `instantiatedFrom`.
 
 - **Estate returns.** The resource by declared address or alias; `provisionedFor` the Instance,
   Environment, Application, Service, or Core Infrastructure whose declaration creates it; from an
@@ -144,11 +144,11 @@ and CI system (tool).
 
 ### Which recent deployments changed both infrastructure and application behavior?
 
-Terms: `deploys` with its variables and write location; Cloud Resource declared address; git
+Terms: `deploys` with its variables and write location; Declared Resource address; git
 diff (tool).
 
 - **Estate returns.** Recent `deploys` edges, the variables each job sets, such as one selecting
-  infrastructure or configuration, and the paths they write; every Cloud Resource's declared
+  infrastructure or configuration, and the paths they write; every Declared Resource's
   address in the same Repository.
 - **Last mile.** For each run's commit, diff it: did it touch a resource declaration and
   application code?
@@ -193,10 +193,10 @@ system (tool).
 
 ### What changed in production since yesterday that explains the latency spike?
 
-Terms: `deploys` and its write location; Cloud Resource, `runsOn`, `connectsTo`,
+Terms: `deploys` and its write location; Declared Resource, `runsOn`, `connectsTo`,
 `provisionedFor`, `observedBy` identifiers; git diff and monitoring tool (tool).
 
-- **Estate returns.** Prod's Instances and their pinned write paths; the Cloud Resources they
+- **Estate returns.** Prod's Instances and their pinned write paths; the Declared Resources they
   `runsOn` and `connectsTo`, with the declared addresses of each and of the Core Infrastructure
   that the shared ones are provisioned for; the monitoring identifiers.
 - **Last mile.** `git diff` at the pinned paths since yesterday; latency from the tool.
@@ -218,7 +218,7 @@ Terms: `connectsTo`, `readsSecretsFrom`, `runsOn`; git diff and cluster events
 
 ### How much does prod cost per month, and what are the most expensive resources?
 
-Terms: Cloud Resource aliases, `provisionedFor`, Cloud Account; cost store (tool).
+Terms: Declared Resource aliases, `provisionedFor`, Cloud Account; cost store (tool).
 
 - **Estate returns.** Prod's resources by owner, Instance-owned and Environment-owned; the
   shared resources of the Core Infrastructure prod's Instances run on; each resource's aliases;
@@ -231,7 +231,7 @@ Terms: Cloud Resource aliases, `provisionedFor`, Cloud Account; cost store (tool
 
 ### What does a service cost across every environment?
 
-Terms: Cloud Resource, `provisionedFor`; `instantiatedFrom`; cost store
+Terms: Declared Resource, `provisionedFor`; `instantiatedFrom`; cost store
 (tool).
 
 - **Estate returns.** The climb by software: resource, `provisionedFor` Instance,
@@ -243,7 +243,7 @@ Terms: Cloud Resource, `provisionedFor`; `instantiatedFrom`; cost store
 
 ### Show me the resources whose cost went up the most in the last 30 days.
 
-Terms: Cloud Resource aliases; cost store (tool).
+Terms: Declared Resource aliases; cost store (tool).
 
 - **Estate returns.** Every resource with its aliases and owner.
 - **Last mile.** Two periods from the cost store, diff, rank, climb to owners.
@@ -254,9 +254,9 @@ Terms: Cloud Resource aliases; cost store (tool).
 
 ### Can I upgrade my EKS clusters from 1.28 to 1.32 without issues? Which pods need upgrading?
 
-Terms: Core Infrastructure, Cloud Resource declared address, `runsOn`; file reads (tool).
+Terms: Core Infrastructure, Declared Resource address, `runsOn`; file reads (tool).
 
-- **Estate returns.** Each cluster, a Cloud Resource with its declared address and the Core
+- **Estate returns.** Each cluster, a Declared Resource with its declared address and the Core
   Infrastructure it is provisioned for; every Instance that `runsOn` it; each Instance's deploy
   evidence pointing at its manifests.
 - **Last mile.** Read the declared version at the commit; read each manifest for APIs removed
@@ -277,9 +277,9 @@ Terms: `connectsTo`; `deploys`; manifest reads (tool).
 
 ### Which workloads depend on the Redis cluster, and what happens if it is restarted?
 
-Terms: `connectsTo`, Cloud Resource; manifest reads (tool).
+Terms: `connectsTo`, Declared Resource; manifest reads (tool).
 
-- **Estate returns.** The Redis Cloud Resource; everything that `connectsTo` it; their
+- **Estate returns.** The Redis Declared Resource; everything that `connectsTo` it; their
   Instances and Environments.
 - **Last mile.** One walk for "which". The model reasons about restart behavior from the
   manifests.
@@ -313,7 +313,7 @@ Terms: Pipeline; Identity, `trusts`, `within`; policy reads (tool).
 
 Terms: `deliversTo`, `pullsFrom`, `connectsTo`; `within`.
 
-- **Estate returns.** The registry, a managed Cloud Resource or the Service Instance serving a
+- **Estate returns.** The registry, a managed Declared Resource or the Service Instance serving a
   self-hosted one, and its image repositories `within` it; every Pipeline that `deliversTo` them
   with its job; every Service Instance that `pullsFrom` them with its image reference and pull
   secret name; everything that `connectsTo` the registry's hostname.
@@ -335,10 +335,10 @@ Terms: `runsOn`, `inScope`, Core Infrastructure; `instantiatedFrom`.
 
 ### What breaks if this cluster is deleted?
 
-Terms: `connectsTo`, `provisionedFor`, `trusts`, `runsOn`; Cloud Resource aliases.
+Terms: `connectsTo`, `provisionedFor`, `trusts`, `runsOn`; Declared Resource aliases.
 
 - **Estate returns.** The Instances that `runsOn` it; what it `connectsTo`, its subnets and
-  security groups, and whatever else `connectsTo` those; the Cloud Resources provisioned for the
+  security groups, and whatever else `connectsTo` those; the Declared Resources provisioned for the
   same Core Infrastructure, which share its declaration; every Identity that `trusts` its OIDC
   provider; each with its aliases and their as-of; the Core Infrastructure it is provisioned for,
   the Pipeline job that `deploys` it, and the commit its declaration was read at.
