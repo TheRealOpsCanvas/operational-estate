@@ -340,6 +340,51 @@ Terms: Pipeline; Identity, `trusts`, `within`; policy reads (tool).
 - **Same for everyone.** The set of roles is a walk over declared trust, never a search across
   the repositories that declare roles.
 
+## Connectivity
+
+### What leaves the cloud over this dedicated link, and what is on the other side?
+
+Terms: Declared Resource, Deployed Resource, `declaredAs`, `connectsTo`, `within`, External
+System, `runsOn`; route reads and the provider (tool).
+
+- **Estate returns.** The link, a Deployed Resource `within` its Cloud Account; the External System
+  it `connectsTo` on its far side; the gateways and networks joined to the link by `connectsTo` in
+  either direction, and those joined to them in turn, as candidates; the clusters and machines
+  among them, the Declared Resources they are `declaredAs`, and the Instances that `runsOn` them.
+- **Last mile.** One read of the cited routes, for which candidates route over the link; routes
+  learned over the link from its far side are a query to the provider.
+- **Same for everyone.** Every link that lands on the same far side reaches the same External
+  System, so the walk ends at one node for everyone. What crosses the link at runtime is the
+  tool's.
+
+### Which networks in different accounts or clouds are connected, and through what?
+
+Terms: Declared Resource, Deployed Resource, `declaredAs`, `connectsTo`, `within`, Cloud Account,
+External System.
+
+- **Estate returns.** The networks, each `within` its Cloud Account; the peerings, transit
+  attachments, tunnels, and dedicated links joined to them by `connectsTo`, including those whose
+  references reach a network in another account or cloud directly; and every External System that
+  resources in more than one account or cloud `connectsTo`, each a place where those networks
+  meet. A Declared Resource and the Deployed Resources `declaredAs` it are walked as one.
+- **Last mile.** None for which networks are connected and through what. Whether traffic between
+  two of them takes a given path is a separate question, answered from the routes each side cites.
+- **Same for everyone.** The paths are walks over declared and reported references. Two clouds are
+  connected only where one side's references reach the other directly or both reach the same
+  External System, never by a guess from names or regions.
+
+### How much traffic crossed this link or gateway last week?
+
+Terms: `observedBy` and its identifiers, Deployed Resource, `declaredAs`, `provisionedFor`; the
+observing tool (tool).
+
+- **Estate returns.** The link or gateway, a Deployed Resource; the tool it is `observedBy` and the
+  identifiers the tool knows it by, as the tool spells them; the owner it takes through
+  `declaredAs` and `provisionedFor`.
+- **Last mile.** One query to the tool with those identifiers.
+- **Same for everyone.** The identifiers are the same strings for everyone, and the estate never
+  holds a traffic volume, only the join to the tool that measures it.
+
 ## Retiring infrastructure
 
 ### What pushes to and pulls from this registry?

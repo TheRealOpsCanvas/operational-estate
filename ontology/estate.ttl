@@ -68,7 +68,7 @@ estate:Runtime
     rdfs:subClassOf estate:Entity ;
     rdfs:label "Runtime"@en ;
     skos:definition "What is declared or reported in a cloud or cluster to run the software: a Service Instance, a Declared Resource, or a Deployed Resource."@en ;
-    skos:scopeNote "A grouping, not something with individuals of its own. It exists because connectsTo ranges over exactly its members. Environment is not Runtime: its Instances run, the Environment does not."@en ;
+    skos:scopeNote "A grouping, not something with individuals of its own. It exists because connectsTo runs from exactly its members. Environment is not Runtime: its Instances run, the Environment does not."@en ;
     estate:maturity "draft" .
 
 #################################################################
@@ -185,8 +185,8 @@ estate:ExternalSystem
     a owl:Class ;
     rdfs:subClassOf estate:Entity ;
     rdfs:label "External System"@en ;
-    skos:definition "Something the estate references and nothing in it provisions: a tool a thing is observed by, or a hosted destination a Pipeline delivers to."@en ;
-    skos:scopeNote "Anything with a class of its own is not an External System: a role is an Identity; a cluster, registry repository, or bucket is a Declared Resource; an account is a Cloud Account."@en ;
+    skos:definition "Something the estate references and nothing in it provisions: a tool a thing is observed by, a hosted destination a Pipeline delivers to, or something a runtime thing reaches beyond the estate, such as a hosted API or an interconnection fabric."@en ;
+    skos:scopeNote "Anything with a class of its own is not an External System: a role is an Identity; a cluster, registry repository, or bucket is a Declared Resource; an account is a Cloud Account; a fabric connection the estate declares is a Declared Resource; an API another Application in the estate serves is that Service Instance."@en ;
     estate:keyRule "Its provider, kind, and name."@en ;
     estate:maturity "draft" .
 
@@ -385,16 +385,16 @@ estate:connectsTo
     rdfs:label "connects to"@en ;
     skos:altLabel "depends on"@en ;
     rdfs:domain estate:Runtime ;
-    rdfs:range estate:Runtime ;
+    rdfs:range [ a owl:Class ; owl:unionOf ( estate:Runtime estate:ExternalSystem ) ] ;
     owl:inverseOf estate:connectedFrom ;
-    skos:definition "What a runtime thing reaches or uses: for a Service Instance, read from the connection strings, hostnames, environment variables, and service references in its configuration; for a Declared Resource, read from the references in its declaration, such as a cluster's subnets and security groups; for a Deployed Resource, read from what is reported as referenced by it, such as the subnet a NAT gateway was deployed into."@en ;
-    skos:scopeNote "Never inferred from a name. Not a claim that the connection is critical: what it means at runtime is a reading of the manifest it cites. Not apply or startup order, which Terraform and Compose call depends_on."@en ;
+    skos:definition "What a runtime thing reaches or uses: for a Service Instance, read from the connection strings, hostnames, environment variables, and service references in its configuration; for a Declared Resource, read from the references in its declaration, such as a cluster's subnets and security groups; for a Deployed Resource, read from what is reported as referenced by it, such as the subnet a NAT gateway was deployed into. It may end at an External System the runtime thing reaches beyond the estate, such as a hosted API a workload calls or the interconnection fabric a dedicated link lands on."@en ;
+    skos:scopeNote "Never inferred from a name. Never runs from an External System, whose own connections the estate does not describe. Not a claim that the connection is critical: what it means at runtime is a reading of the manifest it cites. Not apply or startup order, which Terraform and Compose call depends_on."@en ;
     estate:maturity "draft" .
 
 estate:connectedFrom
     a owl:ObjectProperty ;
     rdfs:label "connected from"@en ;
-    skos:definition "A runtime thing that reaches another."@en ;
+    skos:definition "A runtime thing that reaches this one."@en ;
     estate:maturity "draft" .
 
 estate:runsAs
@@ -652,7 +652,7 @@ estate:SecretRead
 estate:observedBy
     a owl:ObjectProperty ;
     rdfs:label "observed by"@en ;
-    rdfs:domain [ a owl:Class ; owl:unionOf ( estate:ServiceInstance estate:Environment estate:Pipeline ) ] ;
+    rdfs:domain [ a owl:Class ; owl:unionOf ( estate:ServiceInstance estate:Environment estate:Pipeline estate:DeclaredResource estate:DeployedResource ) ] ;
     rdfs:range [ a owl:Class ; owl:unionOf ( estate:ServiceInstance estate:DeclaredResource estate:DeployedResource estate:ExternalSystem ) ] ;
     owl:inverseOf estate:observes ;
     skos:definition "A tool that observes a thing."@en ;
