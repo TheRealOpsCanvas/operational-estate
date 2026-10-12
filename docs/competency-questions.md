@@ -340,6 +340,18 @@ Terms: Pipeline; Identity, `trusts`, `within`; policy reads (tool).
 - **Same for everyone.** The set of roles is a walk over declared trust, never a search across
   the repositories that declare roles.
 
+### Which pipelines act in this account, and as what?
+
+Terms: Pipeline, Identity, `runsAs`, `within`, Cloud Account; policy reads (tool).
+
+- **Estate returns.** The Identities `within` the account, each Pipeline that `runsAs` one with
+  the job that does, and the line each is read from, pinned to a commit.
+- **Last mile.** Read each Identity's cited policy for what it permits.
+- **Same for everyone.** Which job acts as which role is read from its definition at a commit,
+  never from a run log or an audit trail, which are live and the provider's. A job whose role
+  names a variable no cited file sets is not in the answer, and the answer does not claim it acts
+  nowhere: it says that role is unread.
+
 ## Connectivity
 
 ### What leaves the cloud over this dedicated link, and what is on the other side?
