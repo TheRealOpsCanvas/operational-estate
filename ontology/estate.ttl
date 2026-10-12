@@ -149,7 +149,7 @@ estate:Identity
     rdfs:label "Identity"@en ;
     skos:definition "Something that acts: the role a deploy job assumes, the role a workload runs as, a service principal, a managed identity, a permission set people assume, a Kubernetes user. It may have no declaration and no owner in the estate, which is normal rather than a gap."@en ;
     skos:scopeNote "Not a Declared or Deployed Resource, and never a human principal: a user account named after a person stays out of the estate."@en ;
-    estate:keyRule "Its provider and the provider's identifier for it."@en ;
+    estate:keyRule "Its provider and the provider's identifier for it. A value that still names a variable, a secret, or a command whose value no cited file sets is not an identifier."@en ;
     estate:maturity "draft" .
 
 estate:CloudAccount
@@ -404,6 +404,16 @@ estate:runsAs
     rdfs:range estate:Identity ;
     owl:inverseOf estate:actsFor ;
     skos:definition "The Identity a workload or a pipeline acts as."@en ;
+    skos:scopeNote "A Pipeline's carries the job that acts as it, one detail per job."@en ;
+    estate:maturity "draft" .
+
+estate:Assumption
+    a owl:Class ;
+    rdfs:subClassOf estate:Detail ;
+    rdfs:label "Assumption"@en ;
+    estate:detailOf estate:runsAs ;
+    skos:definition "The details of a runsAs: where a Pipeline acts as the Identity, the job that does. A workload's runsAs carries no data and has no detail."@en ;
+    estate:keyRule "The relation it reifies, and its job."@en ;
     estate:maturity "draft" .
 
 estate:actsFor
@@ -680,7 +690,8 @@ estate:accessedAs
     rdfs:domain estate:Environment ;
     rdfs:range estate:Identity ;
     owl:inverseOf estate:accesses ;
-    skos:definition "The credential a repository declares for deploying or operating an Environment."@en ;
+    skos:definition "A credential a practitioner can hold for deploying or operating an Environment: a role people assume, or the profile name the repository's scripts pass."@en ;
+    skos:scopeNote "Not the Identity a pipeline acts as, which is runsAs, even where that pipeline deploys the Environment. Not where the Environment runs."@en ;
     estate:maturity "draft" .
 
 estate:accesses
@@ -818,7 +829,7 @@ estate:systemKind
 estate:job
     a owl:DatatypeProperty, owl:FunctionalProperty ;
     rdfs:label "job"@en ;
-    rdfs:domain [ a owl:Class ; owl:unionOf ( estate:Trigger estate:Deployment estate:Build estate:Delivery ) ] ;
+    rdfs:domain [ a owl:Class ; owl:unionOf ( estate:Trigger estate:Deployment estate:Build estate:Delivery estate:Assumption ) ] ;
     rdfs:range xsd:string ;
     skos:definition "The job in the source Pipeline a relation comes from."@en ;
     estate:maturity "draft" .

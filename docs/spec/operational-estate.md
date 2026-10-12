@@ -170,11 +170,12 @@ classes.
 ### Identity
 
 Something that acts: the role a deploy job assumes, the role a workload runs as, a service
-principal, a managed identity, a permission set people assume, a Kubernetes user. Not a Declared or
-Deployed Resource: many identities have no owner in the estate and no declaration, such as a
-permission set created in a console, and that is normal rather than a gap; and some live in no cloud
-account, such as an identity provider's group or the OIDC subject a role trusts. Never a human
-principal: a user account named after a person stays out.
+principal, a managed identity, a permission set people assume, a Kubernetes user. A workload or a
+pipeline `runsAs` it; a practitioner reaches an Environment through one the Environment is
+`accessedAs`. Not a Declared or Deployed Resource: many identities have no owner in the estate and
+no declaration, such as a permission set created in a console, and that is normal rather than a
+gap; and some live in no cloud account, such as an identity provider's group or the OIDC subject a
+role trusts. Never a human principal: a user account named after a person stays out.
 
 ### Cloud Account
 
@@ -263,7 +264,7 @@ asserted too; the annotation syntax does this, and section 7 requires it of ever
 | `readsSecretsFrom` | Service Instance, Pipeline | Service Instance, Declared Resource, Deployed Resource, External System | path or name |
 | `observedBy` | Service Instance, Environment, Pipeline, Declared Resource, Deployed Resource | Service Instance, Declared Resource, Deployed Resource, External System | the tool's identifiers |
 | `accessedAs` | Environment | Identity | declared credential name |
-| `runsAs` | Service Instance, Pipeline | Identity | |
+| `runsAs` | Service Instance, Pipeline | Identity | job |
 | `trusts` | Identity | Pipeline, Repository, Identity, Declared Resource, Deployed Resource | |
 | `ownedBy` | Application, Service, Repository, Core Infrastructure, Cloud Account, Declared Resource, Identity | Team | |
 
@@ -339,14 +340,20 @@ part of, `ownedBy` says whose it is.
 
 ### Access
 
-`accessedAs` is the credential a repository declares for deploying or operating an Environment: a
-role the deploy job assumes, or the profile name its scripts pass. It is not where the Environment
-runs, and it is not derivable, because it is read from the repository's own deploy configuration. An
-Environment spanning accounts has one per credential. A declared role is an Identity; a declared
-profile name is not an estate thing but the team's agreed name for a credential, carried on the
-relation so that whoever holds a local credential by that name can match it to the Identity.
+`accessedAs` is a credential a practitioner can hold for deploying or operating an Environment: a
+role people assume, or the profile name the repository's scripts pass. It is not the Identity a
+pipeline acts as, even where that pipeline deploys the Environment: a role only a pipeline can
+assume, or a profile a job writes for itself, is no credential a workstation holds, and it is a
+`runsAs`. It is not where the Environment runs, and it is not derivable, because it is read from
+the repository's own configuration. An Environment spanning accounts has one per credential. A
+declared role is an Identity; a declared profile name is not an estate thing but the team's agreed
+name for a credential, carried on the relation so that whoever holds a local credential by that
+name can match it to the Identity.
 
-`runsAs` is the Identity a workload or a pipeline acts as.
+`runsAs` is the Identity a workload or a pipeline acts as. A Pipeline's carries the job that acts
+as it, one detail per job, because the jobs of one definition file commonly assume different roles,
+such as one per Environment, and a question about what a deploy reaches has to follow the job that
+deploys.
 
 `trusts` runs from an Identity to the Pipeline, Repository, Identity, or resource its trust policy
 allows to assume it, read from the declaration; the resource is a federation provider, a Declared
@@ -440,7 +447,9 @@ with every file it is computed from cited.
 
 **Identity and Cloud Account are keyed by their provider identifier**, because it is fixed before
 anything is applied: an account id is issued when the account exists, and a role ARN is derivable
-from its account and name. A declaration is cited when one exists.
+from its account and name. A declaration is cited when one exists. A value that still names a
+variable, a secret, or a command whose value no cited file sets is not an identifier: the fact
+waits until the value is read or confirmed, and is not in the graph until then.
 
 **A Deployed Resource is keyed by its provider id**: the identifier the provider gives it that is
 unique across the provider, in the one form the provider uses in its own references, so that two
@@ -452,10 +461,10 @@ Environment and Team also carry alternate names.
 
 **A detail is keyed by the relation it reifies**, meaning its source's key, the relation, and its
 target's key, and, where one relation can have several details, by what tells them apart: the job
-for a `triggers`, `deploys`, `builds`, or `deliversTo`, the secret path for a `readsSecretsFrom`. An
-`observedBy`, `accessedAs`, or `pullsFrom` has at most one detail. A detail is named by an
-identifier derived from its key, never a blank node, so two graphs that say the same thing about one
-relation merge into one detail.
+for a `triggers`, `deploys`, `builds`, `deliversTo`, or `runsAs`, the secret path for a
+`readsSecretsFrom`. An `observedBy`, `accessedAs`, or `pullsFrom` has at most one detail. A detail
+is named by an identifier derived from its key, never a blank node, so two graphs that say the same
+thing about one relation merge into one detail.
 
 **An individual's identifier is relative: its kind and key, resolved under a base.** For example
 `service_instance/shop/prod/user-svc`. A serialization sets `@base`, and how an implementation
@@ -479,7 +488,7 @@ SPARQL 1.2 queries, until SHACL 1.2 is published:
 - A detail is named by an identifier derived from its key, never a blank node.
 - A detail reifies exactly one relation, that relation carries data, and it is asserted.
 - A relation's data is on a detail of that relation: a `job` is on a `triggers`, `deploys`,
-  `builds`, or `deliversTo`, never on a `readsSecretsFrom`.
+  `builds`, `deliversTo`, or `runsAs`, never on a `readsSecretsFrom`.
 - A Service Instance has at most one `instantiatedFrom`, and its target is a Service.
 - An Environment has exactly one asserted Application.
 - A Pipeline that `deploys` an Environment or Instance is in the Repository it is `deployedFrom`.
