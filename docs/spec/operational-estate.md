@@ -250,15 +250,15 @@ asserted too; the annotation syntax does this, and section 7 requires it of ever
 | `triggers` | Pipeline | Pipeline | job, variables sent |
 | `deploys` | Pipeline | Environment, Core Infrastructure, Software, Service Instance | job, pinned write location |
 | `builds` | Pipeline | Service | job, tag scheme |
-| `deliversTo` | Pipeline | Service Instance, Declared Resource, External System | job |
-| `pullsFrom` | Service Instance | Service Instance, Declared Resource, External System | image reference, pull secret name |
+| `deliversTo` | Pipeline | Service Instance, Declared Resource, Deployed Resource, External System | job |
+| `pullsFrom` | Service Instance | Service Instance, Declared Resource, Deployed Resource, External System | image reference, pull secret name |
 | `provisionedFor` | Declared Resource, Identity | Environment, Core Infrastructure, Software, Service Instance | |
-| `runsOn` | Service Instance | Declared Resource | |
-| `providedAs` | Service Instance | Declared Resource | |
+| `runsOn` | Service Instance | Declared Resource, Deployed Resource | |
+| `providedAs` | Service Instance | Declared Resource, Deployed Resource | |
 | `within` | Declared Resource, Deployed Resource, Identity, Cloud Account | Cloud Account, Declared Resource, Deployed Resource | |
 | `connectsTo` | Runtime | Runtime | |
-| `readsSecretsFrom` | Service Instance, Pipeline | Service Instance, Declared Resource, External System | path or name |
-| `observedBy` | Service Instance, Environment, Pipeline | Service Instance, Declared Resource, External System | the tool's identifiers |
+| `readsSecretsFrom` | Service Instance, Pipeline | Service Instance, Declared Resource, Deployed Resource, External System | path or name |
+| `observedBy` | Service Instance, Environment, Pipeline | Service Instance, Declared Resource, Deployed Resource, External System | the tool's identifiers |
 | `accessedAs` | Environment | Identity | declared credential name |
 | `runsAs` | Service Instance, Pipeline | Identity | |
 | `trusts` | Identity | Pipeline, Repository, Identity, Declared Resource, Deployed Resource | |
@@ -317,8 +317,8 @@ the registry's.
 
 ### Where a Service Instance runs, and what it is
 
-`runsOn` is the Declared Resource an Instance runs on: a cluster, a virtual machine, a function
-runtime. `providedAs` is the Declared Resource an Instance is, such as a serverless function. A
+`runsOn` is the resource an Instance runs on: a cluster, a virtual machine, a function runtime.
+`providedAs` is the resource an Instance is, such as a serverless function. A
 Kubernetes workload `runsOn` its cluster; a serverless deployment is `providedAs` its function. An
 Instance's Cloud Account is derived through them, never stored beside them.
 

@@ -321,32 +321,32 @@ estate:runsOn
     a owl:ObjectProperty ;
     rdfs:label "runs on"@en ;
     rdfs:domain estate:ServiceInstance ;
-    rdfs:range estate:DeclaredResource ;
+    rdfs:range [ a owl:Class ; owl:unionOf ( estate:DeclaredResource estate:DeployedResource ) ] ;
     owl:inverseOf estate:hosts ;
-    skos:definition "The Declared Resource a Service Instance runs on: a cluster, a virtual machine, a function runtime."@en ;
+    skos:definition "The resource, declared or deployed, a Service Instance runs on: a cluster, a virtual machine, a function runtime."@en ;
     skos:scopeNote "Not what the Instance is, which is providedAs."@en ;
     estate:maturity "draft" .
 
 estate:hosts
     a owl:ObjectProperty ;
     rdfs:label "hosts"@en ;
-    skos:definition "A Service Instance a Declared Resource runs."@en ;
+    skos:definition "A Service Instance a resource runs."@en ;
     estate:maturity "draft" .
 
 estate:providedAs
     a owl:ObjectProperty ;
     rdfs:label "provided as"@en ;
     rdfs:domain estate:ServiceInstance ;
-    rdfs:range estate:DeclaredResource ;
+    rdfs:range [ a owl:Class ; owl:unionOf ( estate:DeclaredResource estate:DeployedResource ) ] ;
     owl:inverseOf estate:provides ;
-    skos:definition "The Declared Resource a Service Instance is, such as a serverless function."@en ;
+    skos:definition "The resource, declared or deployed, a Service Instance is, such as a serverless function."@en ;
     skos:scopeNote "Not what it runs on, which is runsOn."@en ;
     estate:maturity "draft" .
 
 estate:provides
     a owl:ObjectProperty ;
     rdfs:label "provides"@en ;
-    skos:definition "The Service Instance a Declared Resource is the runtime form of."@en ;
+    skos:definition "The Service Instance a resource is the runtime form of."@en ;
     estate:maturity "draft" .
 
 estate:declaredAs
@@ -578,7 +578,7 @@ estate:deliversTo
     a owl:ObjectProperty ;
     rdfs:label "delivers to"@en ;
     rdfs:domain estate:Pipeline ;
-    rdfs:range [ a owl:Class ; owl:unionOf ( estate:ServiceInstance estate:DeclaredResource estate:ExternalSystem ) ] ;
+    rdfs:range [ a owl:Class ; owl:unionOf ( estate:ServiceInstance estate:DeclaredResource estate:DeployedResource estate:ExternalSystem ) ] ;
     owl:inverseOf estate:deliveredToBy ;
     skos:definition "A registry, image repository, bucket, or hosted destination a Pipeline delivers an artifact to. A self-hosted registry is the Service Instance that serves it."@en ;
     estate:maturity "draft" .
@@ -602,7 +602,7 @@ estate:pullsFrom
     a owl:ObjectProperty ;
     rdfs:label "pulls from"@en ;
     rdfs:domain estate:ServiceInstance ;
-    rdfs:range [ a owl:Class ; owl:unionOf ( estate:ServiceInstance estate:DeclaredResource estate:ExternalSystem ) ] ;
+    rdfs:range [ a owl:Class ; owl:unionOf ( estate:ServiceInstance estate:DeclaredResource estate:DeployedResource estate:ExternalSystem ) ] ;
     owl:inverseOf estate:pulledBy ;
     skos:definition "The image repository or registry a Service Instance's images are pulled from, read from the image references in its manifest, values, or task definition. A self-hosted registry is the Service Instance that serves it. With deliversTo, the registries in an estate are the targets of these relations."@en ;
     skos:scopeNote "Not a pull that happened, which is live and held by the registry."@en ;
@@ -628,7 +628,7 @@ estate:readsSecretsFrom
     a owl:ObjectProperty ;
     rdfs:label "reads secrets from"@en ;
     rdfs:domain [ a owl:Class ; owl:unionOf ( estate:ServiceInstance estate:Pipeline ) ] ;
-    rdfs:range [ a owl:Class ; owl:unionOf ( estate:ServiceInstance estate:DeclaredResource estate:ExternalSystem ) ] ;
+    rdfs:range [ a owl:Class ; owl:unionOf ( estate:ServiceInstance estate:DeclaredResource estate:DeployedResource estate:ExternalSystem ) ] ;
     owl:inverseOf estate:secretsReadBy ;
     skos:definition "A store a workload or pipeline reads secrets from. The secret stores in an estate are the targets of this relation."@en ;
     estate:maturity "draft" .
@@ -653,7 +653,7 @@ estate:observedBy
     a owl:ObjectProperty ;
     rdfs:label "observed by"@en ;
     rdfs:domain [ a owl:Class ; owl:unionOf ( estate:ServiceInstance estate:Environment estate:Pipeline ) ] ;
-    rdfs:range [ a owl:Class ; owl:unionOf ( estate:ServiceInstance estate:DeclaredResource estate:ExternalSystem ) ] ;
+    rdfs:range [ a owl:Class ; owl:unionOf ( estate:ServiceInstance estate:DeclaredResource estate:DeployedResource estate:ExternalSystem ) ] ;
     owl:inverseOf estate:observes ;
     skos:definition "A tool that observes a thing."@en ;
     estate:maturity "draft" .

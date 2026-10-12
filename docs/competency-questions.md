@@ -294,10 +294,10 @@ Terms: `connectsTo`; `deploys`; manifest reads (tool).
 
 ### Which workloads depend on the Redis cluster, and what happens if it is restarted?
 
-Terms: `connectsTo`, Declared Resource; manifest reads (tool).
+Terms: `connectsTo`, Declared Resource, Deployed Resource, `declaredAs`; manifest reads (tool).
 
-- **Estate returns.** The Redis Declared Resource; everything that `connectsTo` it; their
-  Instances and Environments.
+- **Estate returns.** The Redis Declared Resource and the Deployed Resources `declaredAs` it;
+  everything that `connectsTo` any of them; their Instances and Environments.
 - **Last mile.** One walk for "which". The model reasons about restart behavior from the
   manifests.
 - **Same for everyone.** Dependencies are evidence-cited from configuration, never inferred
