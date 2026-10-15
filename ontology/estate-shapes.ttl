@@ -1,0 +1,115 @@
+@prefix estate:  <https://w3id.org/operational-estate#> .
+@prefix shape:   <https://w3id.org/operational-estate/shapes#> .
+@prefix sh:      <http://www.w3.org/ns/shacl#> .
+@prefix rdf:     <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix owl:     <http://www.w3.org/2002/07/owl#> .
+@prefix xsd:     <http://www.w3.org/2001/XMLSchema#> .
+
+# Operational Estate constraints, as SHACL shapes over an estate graph. The prose specification,
+# docs/spec/operational-estate.md section 7, states each constraint; tools/check.py checks that
+# every estate: term a shape names is in the vocabulary.
+#
+# A shape is named for what it constrains. Each carries an rdfs:comment stating its rule in the
+# words section 7 uses.
+
+<https://w3id.org/operational-estate/shapes>
+    a owl:Ontology ;
+    owl:imports estate: ;
+    sh:declare [
+        sh:prefix "estate" ;
+        sh:namespace "https://w3id.org/operational-estate#"^^xsd:anyURI ;
+    ] .
+
+#################################################################
+# Networks
+#################################################################
+
+shape:NetworkValueShape
+    a sh:NodeShape ;
+    rdfs:comment "Only a Declared or Deployed Resource carries networkRole, region, zone, or accountZone, and at most one of each."@en ;
+    sh:targetSubjectsOf estate:networkRole, estate:region, estate:zone, estate:accountZone ;
+    sh:or (
+        [ sh:class estate:DeclaredResource ]
+        [ sh:class estate:DeployedResource ]
+    ) ;
+    sh:property [
+        sh:path estate:networkRole ;
+        sh:maxCount 1 ;
+        sh:datatype xsd:string ;
+        sh:in ( "network" "subnet" "connector" "exit" "entry" ) ;
+    ] , [
+        sh:path estate:region ;
+        sh:maxCount 1 ;
+        sh:datatype xsd:string ;
+    ] , [
+        sh:path estate:zone ;
+        sh:maxCount 1 ;
+        sh:datatype xsd:string ;
+    ] , [
+        sh:path estate:accountZone ;
+        sh:maxCount 1 ;
+        sh:datatype xsd:string ;
+    ] .
+
+shape:OperatorShape
+    a sh:NodeShape ;
+    rdfs:comment "Only an External System carries operator, at most one, from its listed values."@en ;
+    sh:targetSubjectsOf estate:operator ;
+    sh:class estate:ExternalSystem ;
+    sh:property [
+        sh:path estate:operator ;
+        sh:maxCount 1 ;
+        sh:datatype xsd:string ;
+        sh:in ( "organization" "third-party" ) ;
+    ] .
+
+shape:DeclaredAgreementShape
+    a sh:NodeShape ;
+    rdfs:comment "A Deployed Resource and the Declared Resource it is declaredAs agree on each of networkRole, region, zone, and accountZone they both carry."@en ;
+    sh:targetClass estate:DeployedResource ;
+    sh:sparql [
+        a sh:SPARQLConstraint ;
+        sh:message "Disagrees with the Declared Resource it is declaredAs on {?property}." ;
+        sh:prefixes <https://w3id.org/operational-estate/shapes> ;
+        sh:select """
+            SELECT $this ?property ?value WHERE {
+                $this estate:declaredAs ?declared ;
+                      ?property ?value .
+                ?declared ?property ?other .
+                FILTER (?property IN (estate:networkRole, estate:region, estate:zone, estate:accountZone))
+                FILTER (?value != ?other)
+            }""" ;
+    ] .
+
+shape:SubnetShape
+    a sh:NodeShape ;
+    rdfs:comment "A resource whose role is subnet is within at most one resource whose role is network."@en ;
+    sh:target [
+        a sh:SPARQLTarget ;
+        sh:prefixes <https://w3id.org/operational-estate/shapes> ;
+        sh:select """SELECT ?this WHERE { ?this estate:networkRole "subnet" }""" ;
+    ] ;
+    sh:property [
+        sh:path estate:within ;
+        sh:qualifiedValueShape [ sh:path estate:networkRole ; sh:hasValue "network" ] ;
+        sh:qualifiedMaxCount 1 ;
+    ] .
+
+shape:AccountZoneShape
+    a sh:NodeShape ;
+    rdfs:comment "A resource that carries an accountZone is within a Cloud Account, directly or through declaredAs; one that is not is a warning, because its zone cannot be compared."@en ;
+    sh:targetSubjectsOf estate:accountZone ;
+    sh:severity sh:Warning ;
+    sh:sparql [
+        a sh:SPARQLConstraint ;
+        sh:message "Carries an accountZone but is within no Cloud Account, so its zone cannot be compared." ;
+        sh:prefixes <https://w3id.org/operational-estate/shapes> ;
+        sh:select """
+            SELECT $this WHERE {
+                FILTER NOT EXISTS {
+                    $this (estate:declaredAs|^estate:declaredAs)?/estate:within+ ?account .
+                    ?account a estate:CloudAccount .
+                }
+            }""" ;
+    ] .

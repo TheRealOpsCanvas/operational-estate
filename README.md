@@ -14,14 +14,16 @@ read and check.
 ## Status
 
 **Draft.** Every term is `draft` and may change until the first published version. The prose
-specification and the OWL vocabulary are kept in step by a check; the constraints (SHACL), worked
-examples, and competency-question queries are on the [roadmap](docs/roadmap.md).
+specification and the OWL vocabulary are kept in step by a check. The constraints on networks are
+stated in SHACL; the rest of the constraints, worked examples, and competency-question queries are
+on the [roadmap](docs/roadmap.md).
 
 | Document | What it holds |
 |---|---|
 | [docs/spec/operational-estate.md](docs/spec/operational-estate.md) | The model: principles, classes, relations, keys, constraints |
 | [docs/competency-questions.md](docs/competency-questions.md) | The questions the model must answer, and how each is answered |
 | [ontology/estate.ttl](ontology/estate.ttl) | The vocabulary in OWL: every class and relation, with definitions and inverses |
+| [ontology/estate-shapes.ttl](ontology/estate-shapes.ttl) | The constraints in SHACL, so far those on networks |
 | [docs/roadmap.md](docs/roadmap.md) | What comes next |
 
 ## Identifiers
@@ -47,7 +49,8 @@ python tools/check.py
 ```
 
 The check parses the vocabulary, asserts its structural consistency, and confirms it names the same
-classes, relations, and endpoints as the prose specification. It then parses the specification's
+classes, relations, and endpoints as the prose specification. It checks that the SHACL shapes name
+only terms the vocabulary declares and allow the values it lists. It then parses the specification's
 Turtle examples as RDF 1.2 and checks the rules every detail keeps. It runs on every pull request.
 
 ## Contributing

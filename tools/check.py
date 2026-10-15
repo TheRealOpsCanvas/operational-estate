@@ -6,8 +6,10 @@ between entities has an inverse, every detail class names the one relation it de
 class sits in two groupings. It then checks that the vocabulary and the prose specification agree:
 the same classes, the same relations, the same endpoints, the same relations carrying data, and the
 same values for each property that allows only a listed set.
-Last, it parses every Turtle example in the specification as RDF 1.2 and checks the rules every
-detail keeps, after proving on a broken example that each rule still fires.
+It parses the SHACL shapes and checks that every estate: term a shape names is in the vocabulary,
+and that every list of values a shape allows is the list the vocabulary declares. Last, it parses
+every Turtle example in the specification as RDF 1.2 and checks the rules every detail keeps, after
+proving on a broken example that each rule still fires.
 
 Run from the repository root:  python tools/check.py
 Exits non-zero, listing every finding, if anything fails.
@@ -26,6 +28,8 @@ from rdflib.namespace import OWL, RDF, RDFS, SKOS, XSD
 
 ROOT = Path(__file__).resolve().parent.parent
 VOCABULARY = ROOT / "ontology" / "estate.ttl"
+SHAPES = ROOT / "ontology" / "estate-shapes.ttl"
+SH = Namespace("http://www.w3.org/ns/shacl#")
 SPEC = ROOT / "docs" / "spec" / "operational-estate.md"
 ESTATE = Namespace("https://w3id.org/operational-estate#")
 MATURITIES = {"draft", "stable"}
@@ -179,6 +183,7 @@ def main() -> int:
             finding(f"{local(cls)}: sits in {sorted(local(g) for g in both)}; a class has one grouping")
 
     check_against_spec(graph, classes, entity_classes, object_properties, inverses, set(detail_of.values()))
+    check_shapes(graph, classes | object_properties | datatype_properties)
     check_examples()
 
     for message in findings:
@@ -253,6 +258,32 @@ def check_against_spec(
             finding(f"'{name}': the spec's Carries column and the vocabulary's detail class disagree")
     for name in sorted(set(by_name) - table_names):
         finding(f"vocabulary: relation '{name}' is not in the spec's relation table")
+
+
+def check_shapes(graph: Graph, terms: set[URIRef]) -> None:
+    """The shapes name only terms the vocabulary declares, and allow the values it lists."""
+    shapes = Graph()
+    try:
+        shapes.parse(SHAPES, format="turtle")
+    except Exception as error:
+        finding(f"{SHAPES.relative_to(ROOT)}: does not parse: {error}")
+        return
+    named = {t for triple in shapes for t in triple if is_estate(t)}
+    for term in sorted(named - terms):
+        finding(f"{SHAPES.relative_to(ROOT)}: names {local(term)}, which the vocabulary does not declare")
+    # A SPARQL constraint names terms in its text, which the triples above do not see.
+    for text in shapes.objects(None, SH.select):
+        for name in re.findall(r"estate:(\w+)", str(text)):
+            if ESTATE[name] not in terms:
+                finding(f"{SHAPES.relative_to(ROOT)}: a query names estate:{name}, which the vocabulary does not declare")
+    for prop_shape in shapes.subjects(SH["in"], None):
+        path = shapes.value(prop_shape, SH.path)
+        allowed = list(Collection(shapes, shapes.value(prop_shape, SH["in"])))
+        listed = value_set(graph, graph.value(path, RDFS.range)) if path is not None else None
+        if listed is None:
+            finding(f"{SHAPES.relative_to(ROOT)}: sh:in on {path}, whose range lists no values")
+        elif set(allowed) != set(listed):
+            finding(f"{SHAPES.relative_to(ROOT)}: sh:in on {local(path)} differs from the values its range lists")
 
 
 # What every estate graph satisfies about details, as SPARQL 1.2 over the graph and the vocabulary.
