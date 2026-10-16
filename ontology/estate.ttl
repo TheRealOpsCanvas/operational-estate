@@ -187,7 +187,7 @@ estate:ExternalSystem
     rdfs:label "External System"@en ;
     skos:definition "Something the estate references and nothing in it provisions: a tool a thing is observed by, a hosted destination a Pipeline delivers to, or something a runtime thing reaches beyond the estate, such as a hosted API or an interconnection fabric."@en ;
     skos:scopeNote "Anything with a class of its own is not an External System: a role is an Identity; a cluster, registry repository, or bucket is a Declared Resource; an account is a Cloud Account; a fabric connection the estate declares is a Declared Resource; an API another Application in the estate serves is that Service Instance."@en ;
-    estate:keyRule "Its provider, kind, and name. Who runs it, its operator, is not part of the key."@en ;
+    estate:keyRule "Its provider, kind, and name. A system the organization runs outside every Cloud Account has the provider on-premises."@en ;
     estate:maturity "draft" .
 
 estate:Team
@@ -984,13 +984,4 @@ estate:accountZone
     rdfs:range xsd:string ;
     skos:definition "The name of the zone a resource is placed in, as it reads in the Cloud Account the resource is within, for a provider that names zones differently in each account, copied verbatim from whichever source states it."@en ;
     skos:scopeNote "Comparable only with another resource within the same Cloud Account; across accounts, comparing is one query per account for the stable identifiers of its zone names. Not part of any key."@en ;
-    estate:maturity "draft" .
-
-estate:operator
-    a owl:DatatypeProperty, owl:FunctionalProperty ;
-    rdfs:label "operator"@en ;
-    rdfs:domain estate:ExternalSystem ;
-    rdfs:range [ a rdfs:Datatype ; owl:oneOf ( "organization" "third-party" ) ] ;
-    skos:definition "Who runs an External System, where that is confirmed: \"organization\", a site the organization runs outside every Cloud Account, such as its own data center or the router a tunnel ends at; \"third-party\", something another party runs, such as a hosted API, a tool, or an interconnection fabric."@en ;
-    skos:scopeNote "Not the system's kind, which is part of its key. Not read from any file: it is confirmed, and attributed to the agent that confirmed it."@en ;
     estate:maturity "draft" .

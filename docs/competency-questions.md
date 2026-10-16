@@ -433,16 +433,15 @@ Terms: `networkRole`, `connectsTo`, `within`, `declaredAs`; route reads and the 
 
 ### Which networks are connected to on-premises, and through which hybrid connector?
 
-Terms: `networkRole`, `connectsTo`, External System, `operator`.
+Terms: `networkRole`, `connectsTo`, External System, `provider`.
 
-- **Estate returns.** Every chain of connectors that ends at an External System whose `operator` is
-  `organization`, and the networks attached to it; apart from them, every connector whose chain ends
-  only at an External System whose `operator` is `third-party`, such as an interconnection fabric.
-- **Last mile.** None for a chain that ends at the organization's own site. For one that ends at a
-  fabric, what is beyond the fabric is outside the estate, and the answer says the link reaches a
-  fabric.
-- **Same for everyone.** Who runs the far side is confirmed once on the External System, never
-  guessed from an address range.
+- **Estate returns.** Every chain of connectors that ends at an External System whose provider is
+  `on-premises`, and the networks attached to it; apart from them, every connector whose chain ends
+  only at another External System, such as an interconnection fabric.
+- **Last mile.** None. For a link that ends at a fabric, what is beyond the fabric is outside the
+  estate, and the answer says the link reaches a fabric.
+- **Same for everyone.** The far side is an External System on a stable key, its provider part of
+  that key, never guessed from an address range.
 
 ### Which networks are connected to the internet, and through which exit?
 
@@ -479,7 +478,7 @@ Terms: `networkRole`, `connectsTo`, `within`.
 ### What leaves the cloud over this dedicated link, and what is on the other side?
 
 Terms: Declared Resource, Deployed Resource, `declaredAs`, `connectsTo`, `within`, External
-System, `operator`, `networkRole`, `runsOn`; route reads and the provider (tool).
+System, `provider`, `networkRole`, `runsOn`; route reads and the provider (tool).
 
 - **Estate returns.** The link, a Deployed Resource `within` its Cloud Account; the External System
   it `connectsTo` on its far side, and who runs it; the gateways and networks joined to the link by
@@ -552,15 +551,15 @@ Terms: `networkRole`, `connectsTo`, `within`; the placement walk; route reads (t
 
 ### Which services depend on on-premises systems, and through which hybrid connector?
 
-Terms: `connectsTo`, External System, `operator`, `instantiatedFrom`; the placement walk; route
+Terms: `connectsTo`, External System, `provider`, `instantiatedFrom`; the placement walk; route
 reads (tool).
 
-- **Estate returns.** The Instances that `connectsTo` an External System whose `operator` is
-  `organization`, each with its Service; the hybrid connectors attached to each Instance's networks.
+- **Estate returns.** The Instances that `connectsTo` an External System whose provider is
+  `on-premises`, each with its Service; the hybrid connectors attached to each Instance's networks.
 - **Last mile.** Which of those connectors carries a dependency: one read of the cited routes for
   the system's address.
-- **Same for everyone.** The dependency is read from the Instance's configuration, and who runs the
-  system is confirmed once on the External System.
+- **Same for everyone.** The dependency is read from the Instance's configuration, and the system
+  is on-premises by its key, the same for every reader.
 
 ## Network ownership and confirmation
 

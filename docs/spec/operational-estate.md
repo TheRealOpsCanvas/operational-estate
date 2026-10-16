@@ -212,11 +212,10 @@ External System: a role is an Identity; a cluster, registry repository, or bucke
 Resource; an account is a Cloud Account; a fabric connection the estate declares is a Declared
 Resource; an API another Application in the estate serves is that Service Instance.
 
-Its `operator` says who runs it, where that is confirmed: `organization` for a site the
-organization runs outside every Cloud Account, such as its own data center or the router a tunnel
-ends at; `third-party` for something another party runs, such as a hosted API, a tool, or an
-interconnection fabric. It is not part of the key, because who runs a system does not change what
-kind of system it is, and no file the estate points at states it.
+A system the organization runs outside every Cloud Account, such as a database in its own data
+center or the router a tunnel ends at, has the provider `on-premises`. Its kind says what it is,
+as for any External System, so an on-premises database is keyed `on-premises`, `database`, and its
+name.
 
 ### Team
 
@@ -434,7 +433,7 @@ direction, such as a transit attachment and its hub, form a chain. Two networks 
 a chain of connectors joins them without passing through a third network. A path through a third
 network is a candidate, because whether that network passes traffic on is a reading of its routes.
 A hub is not a role: it is a connector many networks are attached to, counted. A connector whose
-chain ends at an External System with `operator` `organization` is a hybrid connector. Whether
+chain ends at an External System whose provider is `on-premises` is a hybrid connector. Whether
 routes and rules let traffic take a connection is effective reachability, which the estate does
 not hold: it is a read of the cited routes and rules, or one query to the provider for routes it
 propagates.
@@ -561,7 +560,7 @@ SPARQL 1.2 queries, until SHACL 1.2 is published:
 - A Deployed Resource has at most one `declaredAs` with no `prov:invalidatedAtTime`.
 - No individual `prov:Person` appears in an estate graph.
 - Only a Declared or Deployed Resource carries `networkRole`, `region`, `zone`, or `accountZone`,
-  and at most one of each; only an External System carries `operator`, and at most one.
+  and at most one of each.
 - A Deployed Resource and the Declared Resource it is `declaredAs` agree on each of those four they
   both carry.
 - A resource whose role is `subnet` is `within` at most one resource whose role is `network`.
@@ -768,7 +767,9 @@ guessing which form it holds. A Zone class is rejected for the reason a Region c
 stored mapping from an account's zone names to stable identifiers is rejected because it is the
 provider's, one query per account.
 
-**Who runs an External System is a value beside its kind, not a kind.** The kind is part of the
-key, and a database the organization runs in its own data center is still a database: as a kind,
-`on-premises` would give one system two keys. A subclass for systems the organization runs would
-make a fact that is confirmed, not read, into a class.
+**On-premises is a provider, not a kind or a value of its own.** The kind is part of the key, and
+a database the organization runs in its own data center is still a database: as a kind,
+`on-premises` would give one system two keys. As the provider, it fills the part of the key that a
+system no cloud provides would otherwise leave empty, and it already says who runs the system, so a
+separate value for who runs it would repeat the key. A subclass for on-premises systems would
+repeat it as a class.

@@ -52,18 +52,6 @@ shape:NetworkValueShape
         sh:datatype xsd:string ;
     ] .
 
-shape:OperatorShape
-    a sh:NodeShape ;
-    rdfs:comment "Only an External System carries operator, at most one, from its listed values."@en ;
-    sh:targetSubjectsOf estate:operator ;
-    sh:class estate:ExternalSystem ;
-    sh:property [
-        sh:path estate:operator ;
-        sh:maxCount 1 ;
-        sh:datatype xsd:string ;
-        sh:in ( "organization" "third-party" ) ;
-    ] .
-
 shape:DeclaredAgreementShape
     a sh:NodeShape ;
     rdfs:comment "A Deployed Resource and the Declared Resource it is declaredAs agree on each of networkRole, region, zone, and accountZone they both carry."@en ;
