@@ -215,7 +215,15 @@ Resource; an API another Application in the estate serves is that Service Instan
 A system the organization runs outside every Cloud Account, such as a database in its own data
 center or the router a tunnel ends at, has the provider `on-premises`. Its kind says what it is,
 as for any External System, so an on-premises database is keyed `on-premises`, `database`, and its
-name.
+name. `on-premises` covers whatever the organization runs outside every Cloud Account, in its own
+building or in a colocation facility: the provider names who runs a system, never the facility it
+sits in. A system in a cloud no source the estate reads reports is not `on-premises`: it is an
+External System whose provider is that cloud's.
+
+What is first referenced as an External System may later be reported as a Deployed Resource, once
+a source the estate reads covers its provider. The External System is then invalidated with
+`prov:invalidatedAtTime`, never rewritten, and the references to it are read again against the
+Deployed Resource.
 
 ### Team
 
