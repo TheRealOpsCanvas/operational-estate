@@ -95,6 +95,19 @@ Terms: Team, `ownedBy`.
 - **Same for everyone.** A Team carries no personal data; who is on it is outside the estate.
   A thing whose only owners are individuals has no Team owner, which is a gap.
 
+### Which Environments are production, and what runs in them?
+
+Terms: Environment, `environmentTier`, `inScope`, `provisionedFor`, `runsOn`.
+
+- **Estate returns.** Every Environment whose confirmed `environmentTier` is `production`, with the
+  agent that confirmed it; each one's Service Instances, the Declared Resources provisioned for it,
+  and the resources its Instances run on; and, apart from them, the Environments with no confirmed
+  tier.
+- **Last mile.** None.
+- **Same for everyone.** The tier is confirmed once and attributed, never read from a name, so an
+  Environment called `live` and one called `prod` answer the same way for every reader. One with no
+  confirmed tier is reported as unconfirmed, never as not production.
+
 ## Deployments and pipelines
 
 ### What commit of the service is in prod, and does it include my fix?

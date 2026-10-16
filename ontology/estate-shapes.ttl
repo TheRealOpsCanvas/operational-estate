@@ -101,3 +101,19 @@ shape:AccountZoneShape
                 }
             }""" ;
     ] .
+
+#################################################################
+# Environments
+#################################################################
+
+shape:EnvironmentTierShape
+    a sh:NodeShape ;
+    rdfs:comment "Only an Environment carries environmentTier, at most one, from its listed values."@en ;
+    sh:targetSubjectsOf estate:environmentTier ;
+    sh:class estate:Environment ;
+    sh:property [
+        sh:path estate:environmentTier ;
+        sh:maxCount 1 ;
+        sh:datatype xsd:string ;
+        sh:in ( "production" "staging" "development" "sandbox" ) ;
+    ] .
