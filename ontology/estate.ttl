@@ -186,8 +186,8 @@ estate:ExternalSystem
     rdfs:subClassOf estate:Entity ;
     rdfs:label "External System"@en ;
     skos:definition "Something the estate references and nothing in it provisions: a tool a thing is observed by, a hosted destination a Pipeline delivers to, or something a runtime thing reaches beyond the estate, such as a hosted API or an interconnection fabric."@en ;
-    skos:scopeNote "Anything with a class of its own is not an External System: a role is an Identity; a cluster, registry repository, or bucket is a Declared Resource; an account is a Cloud Account; a fabric connection the estate declares is a Declared Resource; an API another Application in the estate serves is that Service Instance."@en ;
-    estate:keyRule "Its provider, kind, and name."@en ;
+    skos:scopeNote "Anything with a class of its own is not an External System: a role is an Identity; a cluster, registry repository, or bucket is a Declared Resource; an account is a Cloud Account; a fabric connection the estate declares is a Declared Resource; an API another Application in the estate serves is that Service Instance. Once a source the estate reads reports it as a Deployed Resource, the External System is invalidated, never rewritten."@en ;
+    estate:keyRule "Its provider, kind, and name. A system the organization runs outside every Cloud Account, in its own building or a colocation facility, has the provider on-premises: the provider names who runs a system, never the facility it sits in."@en ;
     estate:maturity "draft" .
 
 estate:Team
@@ -371,7 +371,8 @@ estate:within
     rdfs:domain [ a owl:Class ; owl:unionOf ( estate:DeclaredResource estate:DeployedResource estate:Identity estate:CloudAccount ) ] ;
     rdfs:range [ a owl:Class ; owl:unionOf ( estate:CloudAccount estate:DeclaredResource estate:DeployedResource ) ] ;
     owl:inverseOf estate:contains ;
-    skos:definition "The Cloud Account, Declared Resource, or Deployed Resource a thing sits within: a resource in an account, a namespace in a cluster, a member account in its organization."@en ;
+    skos:definition "The Cloud Account, Declared Resource, or Deployed Resource a thing sits within: a resource in an account, a namespace in a cluster, a member account in its organization, a subnet, route table, or security group in its network."@en ;
+    skos:scopeNote "Not what a resource attaches to, which can change while the resource stays the same: a cluster, machine, or load balancer connectsTo its subnets."@en ;
     estate:maturity "draft" .
 
 estate:contains
@@ -947,4 +948,40 @@ estate:identifierValue
     rdfs:domain estate:Identifier ;
     rdfs:range xsd:string ;
     skos:definition "The identifier's value as the tool spells it."@en ;
+    estate:maturity "draft" .
+
+estate:networkRole
+    a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:label "network role"@en ;
+    rdfs:domain [ a owl:Class ; owl:unionOf ( estate:DeclaredResource estate:DeployedResource ) ] ;
+    rdfs:range [ a rdfs:Datatype ; owl:oneOf ( "network" "subnet" "connector" "exit" "entry" ) ] ;
+    skos:definition "The part a resource plays in how networks are laid out and joined, read from its declared or reported type: \"network\", an isolated address space; \"subnet\", an address range within one network that resources attach to; \"connector\", what joins a network to another network or to something beyond the estate, such as a peering, a transit attachment or its hub, a tunnel, or a dedicated link; \"exit\", what traffic from inside a network reaches the internet through; \"entry\", what the internet reaches inside a network through, such as an internet-facing load balancer or a public address."@en ;
+    skos:scopeNote "Not what a resource joins, which is its connectsTo. Not a hub, which is a connector many networks attach to, counted. Not the kind of connector, which is a read of its cited declaration. Absent on most resources, and on a module call declared as resources with different roles."@en ;
+    estate:maturity "draft" .
+
+estate:region
+    a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:label "region"@en ;
+    rdfs:domain [ a owl:Class ; owl:unionOf ( estate:DeclaredResource estate:DeployedResource ) ] ;
+    rdfs:range xsd:string ;
+    skos:definition "The provider's region for a resource, copied verbatim from the declaration, the provider's report, or its billing export."@en ;
+    skos:scopeNote "Not part of any key, and never read from a name or a provider id. Absent on a Declared Resource whose declaration places it in several regions."@en ;
+    estate:maturity "draft" .
+
+estate:zone
+    a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:label "zone"@en ;
+    rdfs:domain [ a owl:Class ; owl:unionOf ( estate:DeclaredResource estate:DeployedResource ) ] ;
+    rdfs:range xsd:string ;
+    skos:definition "The provider's stable identifier for the zone a resource is placed in, the same in every account, copied verbatim from whichever source states it. Where a provider's zone names are the same in every account, the name is this identifier."@en ;
+    skos:scopeNote "Not the zone's name in one account, which is accountZone. Not part of any key."@en ;
+    estate:maturity "draft" .
+
+estate:accountZone
+    a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:label "account zone"@en ;
+    rdfs:domain [ a owl:Class ; owl:unionOf ( estate:DeclaredResource estate:DeployedResource ) ] ;
+    rdfs:range xsd:string ;
+    skos:definition "The name of the zone a resource is placed in, as it reads in the Cloud Account the resource is within, for a provider that names zones differently in each account, copied verbatim from whichever source states it."@en ;
+    skos:scopeNote "Comparable only with another resource within the same Cloud Account; across accounts, comparing is one query per account for the stable identifiers of its zone names. Not part of any key."@en ;
     estate:maturity "draft" .

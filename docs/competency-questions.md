@@ -352,17 +352,139 @@ Terms: Pipeline, Identity, `runsAs`, `within`, Cloud Account; policy reads (tool
   names a variable no cited file sets is not in the answer, and the answer does not claim it acts
   nowhere: it says that role is unread.
 
-## Connectivity
+## Network placement
+
+Network questions use the walks the specification defines under Networks: placement, from an
+Instance through the resource it `runsOn` or is `providedAs` to a subnet and the network it is
+`within`; and attachment, from a network to the connectors, exits, and entries joined to it. Every
+walk follows `declaredAs` both ways.
+
+### Which networks does `checkout` in prod run in?
+
+Terms: `runsOn`, `providedAs`, `connectsTo`, `within`, `networkRole`, `declaredAs`.
+
+- **Estate returns.** The Instance; the resource it `runsOn` or is `providedAs`; the subnets that
+  resource `connectsTo` and the network each is `within`, or the network it `connectsTo` directly;
+  each step with its citation.
+- **Last mile.** None.
+- **Same for everyone.** Placement is a walk over cited references that ends at resources whose
+  role is `network`, never a guess from a name or an address range.
+
+### Which Service Instances run in this network?
+
+Terms: `within`, `connectsTo`, `runsOn`, `providedAs`, `networkRole`, `inScope`.
+
+- **Estate returns.** The subnets `within` the network; the resources that `connectsTo` them or the
+  network itself; the Instances that `runsOn` or are `providedAs` those resources, each with its
+  Scope.
+- **Last mile.** None for what is declared. What is running in the network now is a query to the
+  provider.
+- **Same for everyone.** It is the placement walk read backwards, so the two directions agree.
+
+### Which networks are prod's own, and which hold Instances of more than one Environment?
+
+Terms: `networkRole`, `provisionedFor`, `declaredAs`, `inScope`; the placement walk.
+
+- **Estate returns.** The networks `provisionedFor` prod, through `declaredAs` for those reported
+  by the provider; for each network prod's Instances are placed in, its owner, and the Scopes of
+  every Instance placed in it.
+- **Last mile.** None.
+- **Same for everyone.** Ownership is read from the declaration's boundary and use from placement,
+  and the two are reported apart. A Core Infrastructure network only prod uses is not shared; an
+  Environment's network that another Environment's Instances are placed in is use across
+  Environments, a gap worth surfacing.
+
+### Which account and region is this network in?
+
+Terms: `within`, Cloud Account, `provider`, `region`, `declaredAs`.
+
+- **Estate returns.** The network; the Cloud Account it is `within`, directly or through
+  `declaredAs`, with that account's `provider`, which is the cloud; its `region` as the provider
+  writes it.
+- **Last mile.** None. Where no region is recorded, the answer says so, and it is one read of the
+  cited declaration or one query to the provider by provider id.
+- **Same for everyone.** The region is copied verbatim from a source, never read from a name or a
+  provider id.
+
+## Network connectivity
+
+### Which networks is this network directly connected to, and through what?
+
+Terms: `networkRole`, `connectsTo`, `within`, `declaredAs`; one read per connector (tool).
+
+- **Estate returns.** The connectors attached to the network; the connectors chained to them; the
+  networks at the other end of each chain; each connector with its declared address or provider id
+  and its citation.
+- **Last mile.** Whether each connector is a peering, a transit attachment, a tunnel, or a dedicated
+  link: one read of its cited declaration.
+- **Same for everyone.** Connectors are picked out by role, so a workload that reaches a database in
+  another network is never counted as a connection between networks.
+
+### Is network A connected to network B, and through which connectors?
+
+Terms: `networkRole`, `connectsTo`, `within`, `declaredAs`; route reads and the provider (tool).
+
+- **Estate returns.** Every chain of connectors that joins A and B without passing through a third
+  network; apart from them, the paths that pass through a third network, as candidates.
+- **Last mile.** None for "connected". Whether traffic takes a chain, or passes on through a third
+  network, is a read of the cited routes, and routes the provider propagates are a query to it.
+- **Same for everyone.** "Connected" means joined by cited references. Effective reachability is
+  never stored, so the estate's answer is the same for everyone and never claims that traffic flows.
+
+### Which networks are connected to on-premises, and through which hybrid connector?
+
+Terms: `networkRole`, `connectsTo`, External System, `provider`.
+
+- **Estate returns.** Every chain of connectors that ends at an External System whose provider is
+  `on-premises`, and the networks attached to it; apart from them, every connector whose chain ends
+  only at another External System, such as an interconnection fabric.
+- **Last mile.** None. For a link that ends at a fabric, what is beyond the fabric is outside the
+  estate, and the answer says the link reaches a fabric.
+- **Same for everyone.** The far side is an External System on a stable key, its provider part of
+  that key, never guessed from an address range.
+
+### Which networks are connected to the internet, and through which exit?
+
+Terms: `networkRole`, `connectsTo`, `within`; route reads (tool).
+
+- **Estate returns.** Each network's attached resources whose role is `exit`, with their citations.
+- **Last mile.** Which subnets route through which exit: one read of the cited routes.
+- **Same for everyone.** An exit is a resource cited where it is declared or reported, never
+  inferred from a subnet's name.
+
+### Which networks accept connections from the internet, and through which entry?
+
+Terms: `networkRole`, `connectsTo`, `within`, `runsOn`; rule reads (tool).
+
+- **Estate returns.** Each network's attached resources whose role is `entry`; what each
+  `connectsTo` behind it, and the Instances that `runsOn` or are `providedAs` those resources; the
+  network's exits, which an entry may depend on.
+- **Last mile.** Whether the cited security rules admit the traffic: one read of each. A machine
+  given a public address by a setting on its subnet, rather than by a resource of its own, is found
+  by one read of each cited subnet declaration in the network.
+- **Same for everyone.** An entry is recorded where its declaration makes it internet-facing, cited,
+  so the set of ways in does not depend on who searched for them.
+
+### Which connectors are hubs?
+
+Terms: `networkRole`, `connectsTo`, `within`.
+
+- **Estate returns.** Every connector, with the number of networks attached to it directly or
+  through the connectors chained to it.
+- **Last mile.** None. How many makes a hub is the asker's threshold.
+- **Same for everyone.** The count is over cited attachments; no threshold is stored on the
+  estate's behalf.
 
 ### What leaves the cloud over this dedicated link, and what is on the other side?
 
 Terms: Declared Resource, Deployed Resource, `declaredAs`, `connectsTo`, `within`, External
-System, `runsOn`; route reads and the provider (tool).
+System, `provider`, `networkRole`, `runsOn`; route reads and the provider (tool).
 
 - **Estate returns.** The link, a Deployed Resource `within` its Cloud Account; the External System
-  it `connectsTo` on its far side; the gateways and networks joined to the link by `connectsTo` in
-  either direction, and those joined to them in turn, as candidates; the clusters and machines
-  among them, the Declared Resources they are `declaredAs`, and the Instances that `runsOn` them.
+  it `connectsTo` on its far side, and who runs it; the gateways and networks joined to the link by
+  `connectsTo` in either direction, and those joined to them in turn, as candidates; the clusters
+  and machines among them, the Declared Resources they are `declaredAs`, and the Instances that
+  `runsOn` them.
 - **Last mile.** One read of the cited routes, for which candidates route over the link; routes
   learned over the link from its far side are a query to the provider.
 - **Same for everyone.** Every link that lands on the same far side reaches the same External
@@ -372,13 +494,13 @@ System, `runsOn`; route reads and the provider (tool).
 ### Which networks in different accounts or clouds are connected, and through what?
 
 Terms: Declared Resource, Deployed Resource, `declaredAs`, `connectsTo`, `within`, Cloud Account,
-External System.
+External System, `networkRole`.
 
-- **Estate returns.** The networks, each `within` its Cloud Account; the peerings, transit
-  attachments, tunnels, and dedicated links joined to them by `connectsTo`, including those whose
-  references reach a network in another account or cloud directly; and every External System that
-  resources in more than one account or cloud `connectsTo`, each a place where those networks
-  meet. A Declared Resource and the Deployed Resources `declaredAs` it are walked as one.
+- **Estate returns.** The resources whose role is `network`, each `within` its Cloud Account; the
+  connectors attached to them, including those whose references reach a network in another account
+  or cloud directly; and every External System that resources in more than one account or cloud
+  `connectsTo`, each a place where those networks meet. A Declared Resource and the Deployed
+  Resources `declaredAs` it are walked as one.
 - **Last mile.** None for which networks are connected and through what. Whether traffic between
   two of them takes a given path is a separate question, answered from the routes each side cites.
 - **Same for everyone.** The paths are walks over declared and reported references. Two clouds are
@@ -396,6 +518,135 @@ observing tool (tool).
 - **Last mile.** One query to the tool with those identifiers.
 - **Same for everyone.** The identifiers are the same strings for everyone, and the estate never
   holds a traffic volume, only the join to the tool that measures it.
+
+## Cross-boundary dependencies
+
+### Does `checkout`'s connection to `user-svc` cross a network, account, region, zone, or cloud?
+
+Terms: `connectsTo`, `within`, Cloud Account, `provider`, `region`, `zone`, `accountZone`,
+`networkRole`; the placement walk; route reads and the provider (tool).
+
+- **Estate returns.** The `connectsTo` between the two Instances; the placement of each, and of a
+  target that is a Declared or Deployed Resource placed the same way; each side's network, Cloud
+  Account and its `provider`, `region`, and `zone` or `accountZone`; the chains of connectors that
+  join the two networks.
+- **Last mile.** Which chain the traffic takes: one read of the cited routes. Two `accountZone`
+  values in different accounts are compared by one query per account for the stable identifiers
+  of its zone names.
+- **Same for everyone.** Each boundary is a comparison of recorded values: the cloud is the
+  provider of the Cloud Account, and zones are compared only in a form that means the same thing on
+  both sides.
+
+### If the `hub` connector is removed, which Instances lose a connection, and to what?
+
+Terms: `networkRole`, `connectsTo`, `within`; the placement walk; route reads (tool).
+
+- **Estate returns.** The networks joined through `hub`; every `connectsTo` from an Instance placed
+  in one of them to a target placed in another; for each, the other chains of connectors that join
+  the same two networks without passing through `hub`.
+- **Last mile.** For a pair with another chain, whether its routes would take it: one read of the
+  cited routes. A pair with none loses its connection as far as the estate records.
+- **Same for everyone.** The pairs are a walk over cited references, and no effective route is
+  computed on the estate's behalf.
+
+### Which services depend on on-premises systems, and through which hybrid connector?
+
+Terms: `connectsTo`, External System, `provider`, `instantiatedFrom`; the placement walk; route
+reads (tool).
+
+- **Estate returns.** The Instances that `connectsTo` an External System whose provider is
+  `on-premises`, each with its Service; the hybrid connectors attached to each Instance's networks.
+- **Last mile.** Which of those connectors carries a dependency: one read of the cited routes for
+  the system's address.
+- **Same for everyone.** The dependency is read from the Instance's configuration, and the system
+  is on-premises by its key, the same for every reader.
+
+## Network ownership and confirmation
+
+### Which declaration declares this network or connector, and which pipeline deploys it?
+
+Terms: `declaredAs`, `declaredIn`, `provisionedFor`, `deploys`.
+
+- **Estate returns.** The Declared Resource it is, or is `declaredAs`, with its Repository, address,
+  and applied configuration; the owner it is `provisionedFor`; the Pipeline and job that `deploys`
+  that owner.
+- **Last mile.** None.
+- **Same for everyone.** The Pipeline is one join through the owner, never a search for which job
+  applies a directory.
+
+### Which agent recorded this network fact, and is it older than its declaration's last change?
+
+Terms: `prov:wasDerivedFrom`, `prov:wasGeneratedBy`, `prov:wasAttributedTo`,
+`prov:generatedAtTime`; git history (tool).
+
+- **Estate returns.** The fact's citation, pinned to a commit, or for a fact a provider reported,
+  the report's as-of; the scan that generated it; the agent it is attributed to where an agent
+  confirmed it; when it was generated.
+- **Last mile.** One query to the git host for commits to the cited path since the pinned commit.
+- **Same for everyone.** The answer names an agent, never a person, and the pinned commit is the
+  same for every reader.
+
+### Which networks and connectors are Core Infrastructure's rather than one Environment's?
+
+Terms: `networkRole`, `declaredAs`, `provisionedFor`.
+
+- **Estate returns.** Each resource whose role is `network` or `connector`, with the owner it is
+  `provisionedFor`, through `declaredAs` for one the provider reported: an Environment, a Core
+  Infrastructure, an Application, a Service, or a Service Instance; and those `declaredAs` nothing,
+  which have no owner.
+- **Last mile.** None.
+- **Same for everyone.** The owner is read from the declaration's boundary. One with no declaration
+  is listed as a gap, never counted as shared.
+
+## Network migration
+
+### If `checkout` moves network, what needs a new connection, and which connectors does it leave?
+
+Terms: `connectsTo`, `networkRole`, `within`; the placement walk.
+
+- **Estate returns.** What `checkout`'s Instance `connectsTo`, and the network each target is placed
+  in; the chains of connectors between its current network and each target's network; the chains
+  between the network it would move to and each target's network.
+- **Last mile.** None for which. Whether an existing chain would carry the traffic is a read of the
+  cited routes.
+- **Same for everyone.** A move is a question over the graph as it stands, and no future state is
+  stored. The network it would move to is one the estate holds: for a move to a network not yet
+  declared, every dependency outside it needs a connection, and the answer says so.
+
+### Which connectors would carry no dependency after that move?
+
+Terms: `connectsTo`, `networkRole`; the placement walk.
+
+- **Estate returns.** Every connector in the chains `checkout` would stop using, with every other
+  `connectsTo` between Instances and targets placed in the networks it joins.
+- **Last mile.** None.
+- **Same for everyone.** A connector with no other dependency across it is a count over cited
+  references; what crosses it at runtime is a query to the tool that observes it.
+
+## Network gaps
+
+### Which Service Instances have no recorded network placement?
+
+Terms: `runsOn`, `providedAs`, `connectsTo`, `within`, `networkRole`; the sources a scan read.
+
+- **Estate returns.** Every Instance with no placement path; for each, the resource it `runsOn` or
+  is `providedAs`, if any, with its citation; the sources the scan read.
+- **Last mile.** Whether each resource attaches to a network at all: one read of its cited
+  declaration.
+- **Same for everyone.** "Attaches to no network" and "not recorded" are told apart by what was
+  read, never assumed.
+
+### Which connectors are reported deployed but declared nowhere?
+
+Terms: Deployed Resource, `networkRole`, `declaredAs`, `within`, Cloud Account; cost store (tool).
+
+- **Estate returns.** Every Deployed Resource whose role is `connector`, `exit`, or `entry` and that
+  has no current `declaredAs`, by provider id, with the source that reported it, as of when, and the
+  Cloud Account it is `within`.
+- **Last mile.** None for what a source reported. A cost row that matches no Deployed Resource is
+  from something no source the estate read reported; whether it is a connector is the row's own
+  type, read in the cost store.
+- **Same for everyone.** The set is a query over the graph, never a search of the cloud.
 
 ## Retiring infrastructure
 

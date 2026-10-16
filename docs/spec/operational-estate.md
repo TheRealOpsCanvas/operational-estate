@@ -72,7 +72,8 @@ the Core Infrastructure a platform declares. Every other class sits directly und
 role. What a workload reads secrets from may be a Service Instance (a self-hosted Vault), a Declared
 Resource (a cloud secrets manager), or an External System (a hosted secrets service), so there is no
 Secret Store class: the secret stores in an estate are the targets of `readsSecretsFrom`. An
-observability tool is the same, through `observedBy`.
+observability tool is the same, through `observedBy`. The part a resource plays in a network is
+not a class either: it is the resource's `networkRole` (section 5, Networks).
 
 ## 4. Classes
 
@@ -210,6 +211,19 @@ the interconnection fabric a dedicated link lands on. Anything with a class of i
 External System: a role is an Identity; a cluster, registry repository, or bucket is a Declared
 Resource; an account is a Cloud Account; a fabric connection the estate declares is a Declared
 Resource; an API another Application in the estate serves is that Service Instance.
+
+A system the organization runs outside every Cloud Account, such as a database in its own data
+center or the router a tunnel ends at, has the provider `on-premises`. Its kind says what it is,
+as for any External System, so an on-premises database is keyed `on-premises`, `database`, and its
+name. `on-premises` covers whatever the organization runs outside every Cloud Account, in its own
+building or in a colocation facility: the provider names who runs a system, never the facility it
+sits in. A system in a cloud no source the estate reads reports is not `on-premises`: it is an
+External System whose provider is that cloud's.
+
+What is first referenced as an External System may later be reported as a Deployed Resource, once
+a source the estate reads covers its provider. The External System is then invalidated with
+`prov:invalidatedAtTime`, never rewritten, and the references to it are read again against the
+Deployed Resource.
 
 ### Team
 
@@ -388,6 +402,63 @@ describe, so `connectsTo` never runs from one.
 declared, the relation targets that Declared Resource; otherwise it targets the store, with the path
 on the relation. What a self-hosted store's outage reaches is a walk back along these relations.
 
+### Networks
+
+A network is not a class. A Declared or Deployed Resource that plays a part in how networks are laid
+out and joined carries a `networkRole`, one of:
+
+- `network`: an isolated address space that other resources are placed in.
+- `subnet`: an address range within one network, which workloads and network resources attach to.
+- `connector`: what joins a network to another network or to something beyond the estate, such as a
+  peering, a transit attachment and the hub it attaches to, a tunnel and the gateway at each end,
+  or a dedicated link.
+- `exit`: what traffic from inside a network reaches the internet through, such as an internet
+  gateway or a NAT gateway.
+- `entry`: what the internet reaches inside a network through, such as an internet-facing load
+  balancer or a public address.
+
+The role is read from the resource's declared or reported type, and for a load balancer from
+whether its declaration makes it internet-facing, and is cited like any fact. Most resources have
+none: a database, a cluster, a route table, a security group. A module call declared as several
+resources with different roles carries none, and its Deployed Resources carry their own. The role
+says what part a resource plays, never what it joins: which networks a connector joins is its
+`connectsTo`.
+
+A resource that cannot exist outside one network is `within` it: a subnet, a route table, or a
+security group in its network. What attaches to a subnet or a network, a cluster, a machine, a
+function, a load balancer, or a connector, `connectsTo` it, because an attachment can change while
+the resource stays the same.
+
+**Placement.** A Service Instance is placed in a network when the resource it `runsOn` or is
+`providedAs` `connectsTo` a subnet `within` that network, or `connectsTo` the network itself where a
+resource attaches to a network as a whole. A walk follows `declaredAs` both ways at every step. An
+Instance with no such path has no recorded placement: its resource attaches to no network, which
+is one read of the resource's cited declaration, or the path has not been read.
+
+**Attachment and connection.** A connector, exit, or entry is attached to a network when either
+`connectsTo` the other or something `within` it. Connectors joined by `connectsTo` in either
+direction, such as a transit attachment and its hub, form a chain. Two networks are connected when
+a chain of connectors joins them without passing through a third network. A path through a third
+network is a candidate, because whether that network passes traffic on is a reading of its routes.
+A hub is not a role: it is a connector many networks are attached to, counted. A connector whose
+chain ends at an External System whose provider is `on-premises` is a hybrid connector. Whether
+routes and rules let traffic take a connection is effective reachability, which the estate does
+not hold: it is a read of the cited routes and rules, or one query to the provider for routes it
+propagates.
+
+**Region and zone.** `region` is the provider's region for a resource. `zone` is the provider's
+stable identifier for the zone a resource is placed in, the same in every account. `accountZone`
+is the zone's name as it reads in the Cloud Account the resource is `within`, for a provider that
+names zones differently in each account. Each is copied verbatim from whichever source states it,
+a declaration, the provider's report, or its billing export read by provider id, and any of them may
+be absent. Where a provider's zone names are the same in every account, the name is the stable
+identifier and is recorded as `zone`. Two resources are in the same zone when their `zone` values
+match, or their `accountZone` values match and they are `within` the same Cloud Account; any other
+comparison is one query per account for the stable identifiers of its zone names. A Declared
+Resource whose declaration places it in several regions or zones carries none of them, and its
+Deployed Resources carry their own. None of the three is part of a key. The cloud a resource is in
+is the `provider` of the Cloud Account it is `within`, never a value of its own.
+
 ### Observation
 
 `observedBy` carries the tool's identifiers exactly as the tool spells them, `service` and `env` for
@@ -496,6 +567,16 @@ SPARQL 1.2 queries, until SHACL 1.2 is published:
 - A `readsSecretsFrom` carries no secret value.
 - A Deployed Resource has at most one `declaredAs` with no `prov:invalidatedAtTime`.
 - No individual `prov:Person` appears in an estate graph.
+- Only a Declared or Deployed Resource carries `networkRole`, `region`, `zone`, or `accountZone`,
+  and at most one of each.
+- A Deployed Resource and the Declared Resource it is `declaredAs` agree on each of those four they
+  both carry.
+- A resource whose role is `subnet` is `within` at most one resource whose role is `network`.
+- A resource that carries an `accountZone` is `within` a Cloud Account, directly or through
+  `declaredAs`; one that is not is a warning, because its zone cannot be compared.
+
+The constraints on networks are stated as SHACL shapes in
+[`ontology/estate-shapes.ttl`](../../ontology/estate-shapes.ttl).
 
 ## 8. Provenance
 
@@ -642,3 +723,61 @@ is Core Infrastructure, which the model already has.
 
 **Nothing infrastructural in a key.** A key derived from the deploy boundary would put "cluster" in
 every identifier read by people who think "prod".
+
+**A network is a role on a resource, not a class.** A network has the key, the single owner, the
+declaration, the provider id, and the relations of any other resource, and one module call deploys
+the network, its subnets, and its gateways together. A Network class would need a declared and a
+deployed form, as resources do, and a rule for which a network module call is. Rejected for the
+same reason: classes for subnets, connectors, exits, or entries.
+
+**The network role is a listed value, not subclasses or a concept scheme.** Subclasses would put a
+role in the class hierarchy, against the rule that a role is not a class, and would have to be
+repeated under Declared and Deployed Resource. A SKOS concept scheme allows hierarchy and extension
+that five values do not need. A listed value is what `sourceKind` and `repositoryRole` already are.
+
+**The network role is stored, though one file shows it.** A resource's type is in the declaration
+or report the resource cites, so its role could be read there. A question about networks has to
+know the role of every resource along every path before it reads anything, because `connectsTo`
+also carries what workloads reach: without the role, a workload's connection to a database in
+another network reads as a connection between the networks, and telling them apart is a read of
+every cited file along every path, which is a search. The role is a classification of a resource's
+type, as `sourceKind` is of a declaration's grammar, and a resource of another type is another
+resource.
+
+**No `placedIn` relation from a workload to a network.** Placement is the resource an Instance
+`runsOn` or is `providedAs`, `connectsTo` a subnet, `within` a network: each step is a cited
+reference the estate already holds, and a stored shortcut would go stale whenever one of them
+changed. The name would also be read beside `placedUnder`, which says what Application an
+Environment belongs to.
+
+**No `connects` relation from a network to a network through a connector.** A connector is a
+resource that `connectsTo` both sides, which says the same thing with a node of its own, so a cost
+row, an owner, and a declaration can land on it. A `connects` edge would repeat `connectsTo` under
+another name.
+
+**No `exitsThrough` relation from a network to its way out.** Which exit a network's traffic takes
+is computed across a subnet, its route table, and a gateway, each a cited reference. The result is
+a routing reading true at one moment, which belongs in the query that reads the cited routes.
+
+**A hub is counted, and a connector's kind is read.** A hub is a connector many networks attach to;
+storing it would store a threshold. Whether a connector is a peering, a transit attachment, a
+tunnel, or a dedicated link is its type, one read of its cited declaration, and no walk turns on it.
+
+**Region is a value on a resource, not part of a key, a class, or a reading of the provider id.**
+Nothing infrastructural is in a key. Some providers write the region into a resource's id and
+others do not, so reading it from the id gives two readers two answers. A Region class would be an
+entity with a name and nothing else. A resource does not change region without being replaced, so
+a copied value does not go stale.
+
+**Two zone values, not one.** At least one provider names zones differently in each account, so a
+zone name compared across accounts can match two different zones. One value would leave a reader
+guessing which form it holds. A Zone class is rejected for the reason a Region class is, and a
+stored mapping from an account's zone names to stable identifiers is rejected because it is the
+provider's, one query per account.
+
+**On-premises is a provider, not a kind or a value of its own.** The kind is part of the key, and
+a database the organization runs in its own data center is still a database: as a kind,
+`on-premises` would give one system two keys. As the provider, it fills the part of the key that a
+system no cloud provides would otherwise leave empty, and it already says who runs the system, so a
+separate value for who runs it would repeat the key. A subclass for on-premises systems would
+repeat it as a class.
