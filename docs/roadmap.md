@@ -15,7 +15,7 @@ tests it against estates other than the one it was first drawn from.
   scan, `prov:wasAttributedTo` a `prov:Agent` for a confirmation, `prov:generatedAtTime` for the
   as-of.
 - Started: [`ontology/estate-shapes.ttl`](../ontology/estate-shapes.ttl), with the constraints on
-  networks: which classes carry a network role, region, or zone, at most one of each, from its
+  networks and Environments: which classes carry a network role, region, or zone, at most one of each, from its
   listed values; a Deployed Resource agreeing with its Declared Resource on them; a subnet
   within at most one network; and a warning for an account zone with no Cloud Account. `check.py`
   checks that the shapes name only declared terms and the values the vocabulary lists.

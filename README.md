@@ -23,7 +23,7 @@ on the [roadmap](docs/roadmap.md).
 | [docs/spec/operational-estate.md](docs/spec/operational-estate.md) | The model: principles, classes, relations, keys, constraints |
 | [docs/competency-questions.md](docs/competency-questions.md) | The questions the model must answer, and how each is answered |
 | [ontology/estate.ttl](ontology/estate.ttl) | The vocabulary in OWL: every class and relation, with definitions and inverses |
-| [ontology/estate-shapes.ttl](ontology/estate-shapes.ttl) | The constraints in SHACL, so far those on networks |
+| [ontology/estate-shapes.ttl](ontology/estate-shapes.ttl) | The constraints in SHACL, so far those on networks and Environments |
 | [docs/roadmap.md](docs/roadmap.md) | What comes next |
 
 ## Identifiers

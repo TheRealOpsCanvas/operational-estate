@@ -882,7 +882,7 @@ estate:declaredValue
     rdfs:domain estate:Deployment ;
     rdfs:range xsd:string ;
     skos:definition "The value in a Deployment's written field, read verbatim at the commit it was read at, such as an image tag."@en ;
-    skos:scopeNote "What is declared, never what is running, which is live and held by a tool."@en ;
+    skos:scopeNote "What is declared, never what is running, which is live and held by a tool. An implementation may hold it as data refreshed at each reading of the pinned location rather than as part of the fact it asks a person to review."@en ;
     estate:maturity "draft" .
 
 estate:tagScheme
@@ -984,4 +984,14 @@ estate:accountZone
     rdfs:range xsd:string ;
     skos:definition "The name of the zone a resource is placed in, as it reads in the Cloud Account the resource is within, for a provider that names zones differently in each account, copied verbatim from whichever source states it."@en ;
     skos:scopeNote "Comparable only with another resource within the same Cloud Account; across accounts, comparing is one query per account for the stable identifiers of its zone names. Not part of any key."@en ;
+    estate:maturity "draft" .
+
+estate:environmentTier
+    a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:label "environment tier"@en ;
+    skos:altLabel "environment type"@en ;
+    rdfs:domain estate:Environment ;
+    rdfs:range [ a rdfs:Datatype ; owl:oneOf ( "production" "staging" "development" "sandbox" ) ] ;
+    skos:definition "What kind of context an Environment is, where an agent has confirmed it: \"production\", \"staging\", \"development\", or \"sandbox\"."@en ;
+    skos:scopeNote "Never read from the Environment's name. A proposal is not in the graph until it is confirmed. Not a criticality, which is computed from connections when asked and never stored. Not on a Core Infrastructure or a resource: they reach their Environment through their key or their owner."@en ;
     estate:maturity "draft" .

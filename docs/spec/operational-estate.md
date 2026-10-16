@@ -115,6 +115,13 @@ Instance deployed into it has the Environment in its key; a file name, a pipelin
 an account name is the evidence for which Environment that is, confirmed where that evidence is only
 a naming convention.
 
+Its `environmentTier` says what kind of context it is, one of `production`, `staging`,
+`development`, or `sandbox`, where an agent has confirmed it. It is never read from the
+Environment's name: an Environment called `live` may be production and one called `prod-copy` may
+not, and no file the estate points at states which. Discovery may propose a tier, and a proposal is
+not in the graph until it is confirmed. A Core Infrastructure has none: what it serves is the
+Environments that use it.
+
 *Aliases:* "app-env", "the environment", "stage".
 
 ### Service Instance
@@ -320,6 +327,10 @@ applies. So the Pipeline and job that change a Declared Resource are one join fr
 owner. `deploys` carries the job, the variables the job sets, such as one that selects which
 component it deploys, and, where the deploy writes a version, the pinned write location: the
 repository, path, and field it writes, at the commit it was read at, with the value declared there.
+The declared value is the one fact on a relation that changes with every deploy, so an
+implementation may hold it as data refreshed at each reading of the pinned location rather than as
+part of the fact it asks a person to review, provided it is the value at the commit the location
+was read at.
 `builds` carries the job and the tag scheme, `$CI_COMMIT_SHA` or a version scheme, which links what
 is declared in an Environment to the commit it came from; the artifact itself is not modeled.
 `triggers` carries the variables one Pipeline sends another. Neither `triggers` nor `deploys` says
@@ -574,6 +585,7 @@ SPARQL 1.2 queries, until SHACL 1.2 is published:
 - A resource whose role is `subnet` is `within` at most one resource whose role is `network`.
 - A resource that carries an `accountZone` is `within` a Cloud Account, directly or through
   `declaredAs`; one that is not is a warning, because its zone cannot be compared.
+- Only an Environment carries `environmentTier`, at most one, from its listed values.
 
 The constraints on networks are stated as SHACL shapes in
 [`ontology/estate-shapes.ttl`](../../ontology/estate-shapes.ttl).
@@ -672,7 +684,9 @@ whose Environments would be a fiction.
 **A declared value is stored with its pin.** Reading the field at the pinned commit gives the value,
 so storing it was once excluded. But a value copied at a pinned commit never goes stale, it survives
 the commit being lost, and a reader without it tends to substitute the repository's latest commit
-for what was declared.
+for what was declared. It changes with every deploy, which is why it may be held outside what a
+person reviews: a value that would otherwise ask for a review on every scan is refreshed instead,
+and it is still the value at its pin.
 
 **Software, Scope, Runtime rather than Logical and Deployed.** Environment is not something that
 runs, and Core Infrastructure is not something deployed. A grouping named for meaning but populated
@@ -781,3 +795,17 @@ a database the organization runs in its own data center is still a database: as 
 system no cloud provides would otherwise leave empty, and it already says who runs the system, so a
 separate value for who runs it would repeat the key. A subclass for on-premises systems would
 repeat it as a class.
+
+**An Environment's tier is confirmed, never inferred.** Production is what a practitioner means by
+it, and names disagree: `live`, `prd`, and `main` are production in some estates and not in
+others. A tier read from the name would be a reading true until someone named an Environment
+differently, so a tier is held only where an agent confirmed it, attributed to that agent. It is on
+the Environment, not on each resource, because every runtime thing reaches its Environment through
+its key or its owner. Rejected: a free-text tier, which two estates spell two ways.
+
+**No criticality term.** How much breaking a thing matters is a judgement over connections the
+estate already holds: the Environment's tier, what depends on the thing, whether it is shared Core
+Infrastructure. Stored, it would be a verdict computed once and true until any of those changed;
+whoever needs it computes it from them when asked. A tier a catalog file declares is a value
+copied verbatim from a pinned file, and the estate may carry it as one, cited; it never ranks
+anything itself.
