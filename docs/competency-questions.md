@@ -453,8 +453,9 @@ Terms: `networkRole`, `connectsTo`, External System, `provider`.
   only at another External System, such as an interconnection fabric.
 - **Last mile.** None. For a link that ends at a fabric, what is beyond the fabric is outside the
   estate, and the answer says the link reaches a fabric.
-- **Same for everyone.** The far side is an External System on a stable key, its provider part of
-  that key, never guessed from an address range.
+- **Same for everyone.** The far side is an External System on a stable key, its address where it
+  has one and its provider where it has none, its provider recorded as stated or confirmed and
+  never guessed from an address range.
 
 ### Which networks are connected to the internet, and through which exit?
 
@@ -572,7 +573,8 @@ reads (tool).
 - **Last mile.** Which of those connectors carries a dependency: one read of the cited routes for
   the system's address.
 - **Same for everyone.** The dependency is read from the Instance's configuration, and the system
-  is on-premises by its key, the same for every reader.
+  is on-premises by its provider, as stated or confirmed, the same for every reader that records
+  it.
 
 ## Network ownership and confirmation
 
