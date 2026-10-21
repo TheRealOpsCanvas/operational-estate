@@ -334,14 +334,29 @@ Terms: Deployed Resource, `declaredAs`, `connectsTo`, `runsOn`; route reads (too
 
 ### How do I reach prod's state, or prod's cluster, from this workstation?
 
-Terms: Cloud Account, Identity, `within`, `accessedAs`; a local credential
+Terms: Cloud Account, Identity, `within`, `accessedAs`, `usedIn`; a local credential
 (outside the estate).
 
 - **Estate returns.** The Cloud Account holding the state bucket, or the cluster; the Identities
-  `within` it; and the credential name prod's repositories declare on `accessedAs`.
+  `within` it; and, on each `accessedAs` prod's repositories declare, the credential name and the
+  Cloud Account it is `usedIn`.
 - **Last mile.** Use the local profile or kube context that maps to one of those Identities.
 - **Same for everyone.** Every workstation maps its own credentials to the same Identities; the
   estate never holds a credential or a person.
+
+### Which account does each of prod's credentials sign in to, and what can it do there?
+
+Terms: Environment, Identity, `accessedAs`, `usedIn`, `within`, Cloud Account; a local credential
+and the provider's reads (tool).
+
+- **Estate returns.** Each Identity prod is `accessedAs`, with the credential name and the Cloud
+  Account each Access is `usedIn`, and the Cloud Account each Identity is `within`, each cited to
+  the line it is read from, pinned to a commit.
+- **Last mile.** Sign in with the local credential that maps to one, and ask the provider what it
+  can do in that account now.
+- **Same for everyone.** The accounts are read from the repositories at a commit, and an Identity
+  used in two accounts is two Accesses, so no reader guesses which account a credential is for.
+  What a credential grants is the provider's, read live, never a value the estate holds.
 
 ### If this repository is compromised, what can it reach?
 

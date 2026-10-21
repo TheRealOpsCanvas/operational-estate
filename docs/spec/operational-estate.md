@@ -188,10 +188,10 @@ role trusts. Never a human principal: a user account named after a person stays 
 ### Cloud Account
 
 An AWS account, a GCP project, an Azure subscription: the provider-defined unit that Declared
-Resources, Deployed Resources, Identities, and credentials sit `within`, and that charges belonging
-to no resource land on. A place things live, not a thing that runs, so it is not a Declared or
-Deployed Resource, and not in Scope, which holds the units a practitioner defines. Member accounts
-are `within` the payer or organization they bill to.
+Resources, Deployed Resources, and Identities sit `within`, that credentials are `usedIn`, and that
+charges belonging to no resource land on. A place things live, not a thing that runs, so it is not
+a Declared or Deployed Resource, and not in Scope, which holds the units a practitioner defines.
+Member accounts are `within` the payer or organization they bill to.
 
 *Aliases:* "account", "project", "subscription".
 
@@ -289,7 +289,7 @@ asserted too; the annotation syntax does this, and section 7 requires it of ever
 | `connectsTo` | Runtime | Runtime, External System | |
 | `readsSecretsFrom` | Service Instance, Pipeline | Service Instance, Declared Resource, Deployed Resource, External System | path or name |
 | `observedBy` | Service Instance, Environment, Pipeline, Declared Resource, Deployed Resource | Service Instance, Declared Resource, Deployed Resource, External System | the tool's identifiers |
-| `accessedAs` | Environment | Identity | declared credential name |
+| `accessedAs` | Environment | Identity | declared credential name, account used in |
 | `runsAs` | Service Instance, Pipeline | Identity | job |
 | `trusts` | Identity | Pipeline, Repository, Identity, Declared Resource, Deployed Resource | |
 | `ownedBy` | Application, Service, Repository, Core Infrastructure, Cloud Account, Declared Resource, Identity | Team | |
@@ -379,6 +379,18 @@ the repository's own configuration. An Environment spanning accounts has one per
 declared role is an Identity; a declared profile name is not an estate thing but the team's agreed
 name for a credential, carried on the relation so that whoever holds a local credential by that
 name can match it to the Identity.
+
+An Access carries the Cloud Account its credential is `usedIn`, where a repository states it: the
+account a profile's checked-in configuration names, or the one a runbook signs operators in to. It
+is not the Cloud Account the Identity is `within`, which the Identity states itself: an Identity
+`within` a central account `identity-host`, assumed to operate `shop-prod` and `shop-data`, is
+accessed as twice, once used in each, and stays `within` `identity-host`. It is not an account the
+Environment is in, because an Environment is in none: the credential is used in the account. What
+the credential grants there is a read of the provider, never a value on the Access.
+
+An Access describes an `accessedAs`, so it exists only once the Identity is known. A profile name or
+an account a repository names, with no Identity it maps to, is not in the graph: as with an
+identifier that still names a variable, the fact waits until the Identity is read or confirmed.
 
 `runsAs` is the Identity a workload or a pipeline acts as. A Pipeline's carries the job that acts
 as it, one detail per job, because the jobs of one definition file commonly assume different roles,
@@ -562,7 +574,8 @@ Environment and Team also carry alternate names.
 **A detail is keyed by the relation it reifies**, meaning its source's key, the relation, and its
 target's key, and, where one relation can have several details, by what tells them apart: the job
 for a `triggers`, `deploys`, `builds`, `deliversTo`, or `runsAs`, the secret path for a
-`readsSecretsFrom`. An `observedBy`, `accessedAs`, or `pullsFrom` has at most one detail. A detail
+`readsSecretsFrom`, the Cloud Account an `accessedAs` is `usedIn`, where it has one. An `observedBy`
+or `pullsFrom` has at most one detail. A detail
 is named by an identifier derived from its key, never a blank node, so two graphs that say the same
 thing about one relation merge into one detail.
 
@@ -724,6 +737,20 @@ on, or a hosted API a workload calls, is referenced and provisioned by nothing i
 is what External System already means. A class for interconnection points would describe someone
 else's network, which is outside the estate. For the same reason `connectsTo` ends at an External
 System and never runs from one.
+
+**The account a credential is used in is on its Access, not a `within`.** `within` says where a
+thing sits, and an Access is a detail, not a thing: a property's domain holds details or entities,
+never both. It is a second fact beside the Identity's own `within`, because one Identity is commonly
+used to operate accounts other than the one it lives in, and the account it is used in is the one a
+model acts in. What the credential grants there, its policies and role assignments, is not
+recorded: it changes outside any repository, and the account is the handle a reader lists it from.
+
+**An Access waits for its Identity.** A repository more often names the profile or the account
+operators sign in with than the Identity behind it. Rejected: letting `accessedAs` end at the Cloud
+Account where no Identity is known, which links an Environment to an account and reads as where it
+runs; and an Access reifying no relation, which is not a detail. A name or an account with no
+Identity is treated as an identifier that still names a variable: it is not in the graph, and what
+an implementation holds while it waits is its own.
 
 **Cloud Account is not a resource, declared or deployed.** Nothing runs in it; what makes it matter
 is what it holds.
