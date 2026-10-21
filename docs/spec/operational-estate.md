@@ -227,6 +227,11 @@ building or in a colocation facility: the provider names who runs a system, neve
 sits in. A system in a cloud no source the estate reads reports is not `on-premises`: it is an
 External System whose provider is that cloud's.
 
+An External System reached at an address, such as the host a Pipeline publishes to or the host a
+workload calls, is keyed by its kind and that address, and its provider is a value on it: the
+address is what every reference to the system reduces to, whoever reads it. A system with no
+address of its own, such as a database known by its name, is keyed by its provider, kind, and name.
+
 What is first referenced as an External System may later be reported as a Deployed Resource, once
 a source the estate reads covers its provider. The External System is then invalidated with
 `prov:invalidatedAtTime`, never rewritten, and the references to it are read again against the
@@ -506,7 +511,7 @@ or account name would put "cluster" in identifiers read by people who think "pro
 | Deployed Resource | its provider and the provider's id for it |
 | Identity | its provider and the provider's identifier for it |
 | Cloud Account | its provider and the provider's id |
-| External System | its provider, kind, and name |
+| External System | its kind and its address, where it is reached at one; otherwise its provider, kind, and name |
 | Team | its name |
 
 **A Declared Resource is keyed by where it is declared.** The source kind names the address grammar,
@@ -532,6 +537,19 @@ anything is applied: an account id is issued when the account exists, and a role
 from its account and name. A declaration is cited when one exists. A value that still names a
 variable, a secret, or a command whose value no cited file sets is not an identifier: the fact
 waits until the value is read or confirmed, and is not in the graph until then.
+
+**An External System with an address is keyed by its kind and that address.** The address is the
+host, or the host and the part of the path that names the system itself, in the one form every
+reference to it reduces to: lowercased, without the scheme, credentials, a default port, or the
+part that names something within the system, such as an artifact, a tag, or an object. A name a
+provider issues in a namespace it keeps unique across all of its customers, such as a storage
+bucket's, is an address in this sense. Its provider, who runs it, is a value on the External
+System, recorded where a source states it or an agent confirms it and absent otherwise, so two
+readers that disagree about who runs a system, or where one does not know, still key it the same
+way. An address that still names a variable, a secret, or a command whose value no cited file sets
+is not an address: the reference waits until it is read. A system with no address, such as a
+database or a tool known only by its name, is keyed by its provider, kind, and name, because there
+the provider is what tells two of them apart.
 
 **A Deployed Resource is keyed by its provider id**: the identifier the provider gives it that is
 unique across the provider, in the one form the provider uses in its own references, so that two
@@ -794,7 +812,20 @@ a database the organization runs in its own data center is still a database: as 
 `on-premises` would give one system two keys. As the provider, it fills the part of the key that a
 system no cloud provides would otherwise leave empty, and it already says who runs the system, so a
 separate value for who runs it would repeat the key. A subclass for on-premises systems would
-repeat it as a class.
+repeat it as a class. Where the system has an address, its provider is a value rather than part of
+its key, and `on-premises` is that value.
+
+**An External System with an address is keyed by the address, not by who runs it.** A key is what
+independent readings agree on. Every reader of a reference to a host agrees on the host; they do
+not all agree on who runs it, since a self-hosted service on rented machines reads as
+`on-premises` to one reader, as that cloud's to another, and as unknown to a third. With the
+provider in the key, each reading is a different system, and two graphs of one estate cannot merge
+it. The address names one system whoever runs it, so the provider moves to a value, where readers
+that disagree, or one that does not know, leave the system one entity. Rejected: a provider read
+from a list of known hosts, because two readers holding different lists key one system two ways,
+and a list that grows rekeys every system it newly covers; and kind and name alone for every
+External System, because a system known only by its name, such as a database, needs its provider
+to tell it from another of the same kind and name.
 
 **An Environment's tier is confirmed, never inferred.** Production is what a practitioner means by
 it, and names disagree: `live`, `prd`, and `main` are production in some estates and not in
