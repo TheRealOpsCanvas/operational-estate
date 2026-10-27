@@ -157,7 +157,7 @@ estate:CloudAccount
     rdfs:subClassOf estate:Entity ;
     rdfs:label "Cloud Account"@en ;
     skos:altLabel "account"@en, "project"@en, "subscription"@en ;
-    skos:definition "An AWS account, a GCP project, an Azure subscription: the provider-defined unit that Declared Resources, Deployed Resources, Identities, and credentials sit within, and that charges belonging to no resource land on."@en ;
+    skos:definition "An AWS account, a GCP project, an Azure subscription: the provider-defined unit that Declared Resources, Deployed Resources, and Identities sit within, that credentials are used in, and that charges belonging to no resource land on."@en ;
     skos:scopeNote "A place things live, not a thing that runs: not a Declared or Deployed Resource, and not a unit a practitioner defines."@en ;
     estate:keyRule "Its provider and the provider's id."@en ;
     estate:maturity "draft" .
@@ -706,9 +706,9 @@ estate:Access
     rdfs:subClassOf estate:Detail ;
     rdfs:label "Access"@en ;
     estate:detailOf estate:accessedAs ;
-    skos:definition "The details of an accessedAs: the profile name the repository's scripts pass, if any."@en ;
-    skos:scopeNote "Not where the Environment runs."@en ;
-    estate:keyRule "The relation it reifies."@en ;
+    skos:definition "The details of an accessedAs: the profile name the repository's scripts pass, and the Cloud Account the credential is used in, each where a repository states it."@en ;
+    skos:scopeNote "Not where the Environment runs, and not the Cloud Account its Identity is within. It exists only once the Identity is known."@en ;
+    estate:keyRule "The relation it reifies, and the Cloud Account it is used in, where it has one."@en ;
     estate:maturity "draft" .
 
 #################################################################
@@ -924,6 +924,15 @@ estate:credentialName
     rdfs:domain estate:Access ;
     rdfs:range xsd:string ;
     skos:definition "The profile name a repository's scripts pass for an Access: the team's agreed name for a credential, matched to local credentials by whoever holds them."@en ;
+    estate:maturity "draft" .
+
+estate:usedIn
+    a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:label "used in"@en ;
+    rdfs:domain estate:Access ;
+    rdfs:range estate:CloudAccount ;
+    skos:definition "The Cloud Account an Access's credential is used in, where a repository states it."@en ;
+    skos:scopeNote "Not the Cloud Account its Identity is within, which the Identity states, and not an account the Environment is in. Never what the credential grants there."@en ;
     estate:maturity "draft" .
 
 estate:identifier
