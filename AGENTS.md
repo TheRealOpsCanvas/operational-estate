@@ -48,5 +48,5 @@ changing anything, and [docs/competency-questions.md](docs/competency-questions.
 - Plain declarative prose that states what is true. No narrative of how a decision was reached;
   alternatives considered go in the rationale appendix.
 - Wrap Markdown at 100 columns.
-- Class names are Title Case in prose (Service Instance) and PascalCase in the vocabulary
-  (`estate:ServiceInstance`); relations are camelCase (`runsOn`).
+- Class names are Title Case in prose (Declared Resource) and PascalCase in the vocabulary
+  (`estate:DeclaredResource`); relations are camelCase (`runsOn`).

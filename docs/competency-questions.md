@@ -75,22 +75,23 @@ Terms: Pipeline, `triggers`, `deploys`; one file read (tool).
 
 ### What software owns this cloud resource?
 
-Terms: Declared Resource, Deployed Resource, `declaredAs`, `provisionedFor`; `instantiatedFrom`.
+Terms: Declared Resource, Deployed Resource, `realizes`, `provisionedFor`; `implementedIn`.
 
-- **Estate returns.** The resource by declared address, or by provider id and the Declared
-  Resource its Deployed Resource is `declaredAs`; `provisionedFor` the Instance,
-  Environment, Application, Service, or Core Infrastructure whose declaration creates it; from an
-  Instance, `instantiatedFrom` Service, and from a Service, `memberOf` Application.
+- **Estate returns.** The resource by declared address, or by provider id and the declaration its
+  Deployed Resource `realizes`; `provisionedFor` the Instance, Environment, Application, or Core
+  Infrastructure whose declaration creates it, or the Instance it `realizes` where no Declared
+  Resource declares it; from an Instance, each Repository it is `implementedIn`, at its code path.
 - **Last mile.** None. At most four hops.
 - **Same for everyone.** Ownership is read from the module or chart boundary the declaration
   sits inside, never a name match.
 
 ### What team owns this service or application?
 
-Terms: Team, `ownedBy`.
+Terms: Team, `ownedBy`; `implementedIn` and its code path.
 
 - **Estate returns.** `ownedBy` Team, from `CODEOWNERS`, a catalog file's `owner:`, or a
-  `team=` tag, cited.
+  `team=` tag, cited. For a service, which is an Instance, the Team that owns each Repository it is
+  `implementedIn`, from the `CODEOWNERS` entry for its code path where there is one.
 - **Last mile.** None.
 - **Same for everyone.** A Team carries no personal data; who is on it is outside the estate.
   A thing whose only owners are individuals has no Team owner, which is a gap.
@@ -100,7 +101,7 @@ Terms: Team, `ownedBy`.
 Terms: Environment, `environmentTier`, `inScope`, `provisionedFor`, `runsOn`.
 
 - **Estate returns.** Every Environment whose confirmed `environmentTier` is `production`, with the
-  agent that confirmed it; each one's Service Instances, the Declared Resources provisioned for it,
+  agent that confirmed it; each one's Instances, the Declared Resources provisioned for it,
   and the resources its Instances run on; and, apart from them, the Environments with no confirmed
   tier.
 - **Last mile.** None.
@@ -112,11 +113,14 @@ Terms: Environment, `environmentTier`, `inScope`, `provisionedFor`, `runsOn`.
 
 ### What commit of the service is in prod, and does it include my fix?
 
-Terms: the `deploys` write location and declared value, `builds`; git history (tool).
+Terms: the `deploys` write location and declared value, `pullsFrom`, `deliversTo` and its tag
+scheme; git history (tool).
 
 - **Estate returns.** The deploy edge's write location, `services/user-svc/values-prod.yaml`
   at commit `abc123`, field `userServiceImageTag`, and the value declared there,
-  `main-851dfd9c`; the build edge's tag scheme, `$CI_COMMIT_SHA`.
+  `main-851dfd9c`; the image repository the Instance `pullsFrom`, and the tag scheme,
+  `$CI_COMMIT_SHA`, of the Delivery that pushes to it, whose Pipeline's Repository is the one to
+  ask.
 - **Last mile.** Apply the scheme to the value to get the commit; ask the git host whether that
   commit contains the fix, starting from the merge commit of the fix's pull request, since a
   squash merge leaves the fix's own commits out of the default branch.
@@ -149,8 +153,8 @@ logs (tool).
 Terms: `implementedIn`; Pipeline; `observedBy` a CI system; git
 and CI system (tool).
 
-- **Estate returns.** Application to Services to the Repositories that implement them; each
-  Repository's Pipelines with their CI identifiers.
+- **Estate returns.** Application to its Environments, their Instances, and each Repository those
+  are `implementedIn`; each Repository's Pipelines with their CI identifiers.
 - **Last mile.** `git log` per repository since yesterday; run links from the CI system by
   identifier.
 - **Same for everyone.** The set of repositories is the estate's; the links are the CI
@@ -171,11 +175,11 @@ diff (tool).
 
 ### Who triggered the last rollout of a service? What commit, pipeline, and resources changed?
 
-Terms: `deploys` and its write location, `builds`; `observedBy` a CI system; CI
-system and git (tool).
+Terms: `deploys` and its write location, `deliversTo` and its tag scheme; `observedBy` a CI
+system; CI system and git (tool).
 
 - **Estate returns.** The Instance, its deploy edge and pinned write path, the Pipeline with CI
-  identifiers, the build's tag scheme.
+  identifiers, the tag scheme of the Delivery it pulls from.
 - **Last mile.** The CI system says who and when; git says the commit; the diff at the pinned
   paths says the resources.
 - **Same for everyone.** "Who" never enters the estate. The CI system answers it to someone
@@ -232,11 +236,11 @@ Terms: `connectsTo`, `readsSecretsFrom`, `runsOn`; git diff and cluster events
 
 ### How much does prod cost per month, and what are the most expensive resources?
 
-Terms: Deployed Resource, `declaredAs`, `provisionedFor`, Cloud Account; cost store (tool).
+Terms: Deployed Resource, `realizes`, `provisionedFor`, Cloud Account; cost store (tool).
 
 - **Estate returns.** Prod's resources by owner, Instance-owned and Environment-owned; the
   shared resources of the Core Infrastructure prod's Instances run on; the Deployed Resources
-  `declaredAs` each, by provider id; the Cloud Accounts billed, for charges that belong to no
+  that `realize` each, by provider id; the Cloud Accounts billed, for charges that belong to no
   resource.
 - **Last mile.** Sum the rows those provider ids match and sort; report shared Core
   Infrastructure cost as shared.
@@ -246,32 +250,32 @@ Terms: Deployed Resource, `declaredAs`, `provisionedFor`, Cloud Account; cost st
 
 ### What does a service cost across every environment?
 
-Terms: Declared Resource, `declaredAs`, `provisionedFor`; `instantiatedFrom`; cost store
-(tool).
+Terms: Declared Resource, `realizes`, `provisionedFor`; `implementedIn` and its code path; cost
+store (tool).
 
-- **Estate returns.** The climb by software: Deployed Resource, `declaredAs` its Declared
-  Resource, `provisionedFor` Instance,
-  `instantiatedFrom` Service, `memberOf` Application; a resource `provisionedFor` the Service
-  itself joins the climb at the Service.
+- **Estate returns.** The climb by code: Deployed Resource, `realizes` its Declared Resource or its
+  Instance, `provisionedFor` Instance, `implementedIn` the Repository at the service's code path;
+  every Instance in every Scope that runs that code.
 - **Last mile.** Sum along that climb.
-- **Same for everyone.** The question names which climb it takes, by place or by software.
-  They agree for a service in one Application and disagree, correctly, for a shared one.
+- **Same for everyone.** The service is named by its code, a Repository and a path, never by a
+  name two estates spell two ways. An Instance other Applications reach is counted once, in its
+  own Scope; how it is split between those that reach it is decided downstream.
 
 ### Show me the resources whose cost went up the most in the last 30 days.
 
-Terms: Deployed Resource, `declaredAs`; cost store (tool).
+Terms: Deployed Resource, `realizes`; cost store (tool).
 
-- **Estate returns.** Every Deployed Resource by provider id, with the Declared Resource it is
-  `declaredAs` and that resource's owner.
+- **Estate returns.** Every Deployed Resource by provider id, with the Declared Resource it
+  `realizes` and that resource's owner.
 - **Last mile.** Two periods from the cost store, diff, rank, climb to owners.
 - **Same for everyone.** Rows land by provider id, the same string the cost store carries. A
-  Deployed Resource `declaredAs` nothing is a gap, cost with no declaration, never "other".
+  Deployed Resource `realizes` nothing is a gap, cost with no declaration, never "other".
 
 ### What is deployed that no declaration accounts for, and what does it cost?
 
-Terms: Deployed Resource, `declaredAs`, `within`, Cloud Account; cost store (tool).
+Terms: Deployed Resource, `realizes`, `within`, Cloud Account; cost store (tool).
 
-- **Estate returns.** Every Deployed Resource with no current `declaredAs`, by provider id, with
+- **Estate returns.** Every Deployed Resource with no current `realizes`, by provider id, with
   the source that reported it and as of when, and the Cloud Account it is `within`; and the
   sources the scan read, so a resource whose declaration sits somewhere the scan never read is
   told apart from one nothing the scan read declares.
@@ -307,9 +311,9 @@ Terms: `connectsTo`; `deploys`; manifest reads (tool).
 
 ### Which workloads depend on the Redis cluster, and what happens if it is restarted?
 
-Terms: `connectsTo`, Declared Resource, Deployed Resource, `declaredAs`; manifest reads (tool).
+Terms: `connectsTo`, Declared Resource, Deployed Resource, `realizes`; manifest reads (tool).
 
-- **Estate returns.** The Redis Declared Resource and the Deployed Resources `declaredAs` it;
+- **Estate returns.** The Redis Declared Resource and the Deployed Resources that `realize` it;
   everything that `connectsTo` any of them; their Instances and Environments.
 - **Last mile.** One walk for "which". The model reasons about restart behavior from the
   manifests.
@@ -318,12 +322,12 @@ Terms: `connectsTo`, Declared Resource, Deployed Resource, `declaredAs`; manifes
 
 ### Which workloads lose their route out if this NAT gateway is removed?
 
-Terms: Deployed Resource, `declaredAs`, `connectsTo`, `runsOn`; route reads (tool).
+Terms: Deployed Resource, `realizes`, `connectsTo`, `runsOn`; route reads (tool).
 
-- **Estate returns.** The NAT gateway, a Deployed Resource `declaredAs` the network module call that
-  declares it; the Deployed Resources joined to it by `connectsTo` in either direction, its route
-  tables, routes, and subnets, and those joined to them in turn, as candidates; the clusters and
-  machines among them, the Declared Resources they are `declaredAs`, and the Instances that `runsOn`
+- **Estate returns.** The NAT gateway, a Deployed Resource that `realizes` the network module call
+  that declares it; the Deployed Resources joined to it by `connectsTo` in either direction, its
+  route tables, routes, and subnets, and those joined to them in turn, as candidates; the clusters
+  and machines among them, the Declared Resources they `realize`, and the Instances that `runsOn`
   them.
 - **Last mile.** One read of the cited routes, for which of those candidates route through this
   gateway rather than merely sharing a network with it; routes the provider propagates from
@@ -385,11 +389,11 @@ Terms: Pipeline, Identity, `runsAs`, `within`, Cloud Account; policy reads (tool
 Network questions use the walks the specification defines under Networks: placement, from an
 Instance through the resource it `runsOn` or is `providedAs` to a subnet and the network it is
 `within`; and attachment, from a network to the connectors, exits, and entries joined to it. Every
-walk follows `declaredAs` both ways.
+walk follows `realizes` both ways.
 
 ### Which networks does `checkout` in prod run in?
 
-Terms: `runsOn`, `providedAs`, `connectsTo`, `within`, `networkRole`, `declaredAs`.
+Terms: `runsOn`, `providedAs`, `connectsTo`, `within`, `networkRole`, `realizes`.
 
 - **Estate returns.** The Instance; the resource it `runsOn` or is `providedAs`; the subnets that
   resource `connectsTo` and the network each is `within`, or the network it `connectsTo` directly;
@@ -398,7 +402,7 @@ Terms: `runsOn`, `providedAs`, `connectsTo`, `within`, `networkRole`, `declaredA
 - **Same for everyone.** Placement is a walk over cited references that ends at resources whose
   role is `network`, never a guess from a name or an address range.
 
-### Which Service Instances run in this network?
+### Which Instances run in this network?
 
 Terms: `within`, `connectsTo`, `runsOn`, `providedAs`, `networkRole`, `inScope`.
 
@@ -411,9 +415,9 @@ Terms: `within`, `connectsTo`, `runsOn`, `providedAs`, `networkRole`, `inScope`.
 
 ### Which networks are prod's own, and which hold Instances of more than one Environment?
 
-Terms: `networkRole`, `provisionedFor`, `declaredAs`, `inScope`; the placement walk.
+Terms: `networkRole`, `provisionedFor`, `realizes`, `inScope`; the placement walk.
 
-- **Estate returns.** The networks `provisionedFor` prod, through `declaredAs` for those reported
+- **Estate returns.** The networks `provisionedFor` prod, through `realizes` for those reported
   by the provider; for each network prod's Instances are placed in, its owner, and the Scopes of
   every Instance placed in it.
 - **Last mile.** None.
@@ -424,10 +428,10 @@ Terms: `networkRole`, `provisionedFor`, `declaredAs`, `inScope`; the placement w
 
 ### Which account and region is this network in?
 
-Terms: `within`, Cloud Account, `provider`, `region`, `declaredAs`.
+Terms: `within`, Cloud Account, `provider`, `region`, `realizes`.
 
 - **Estate returns.** The network; the Cloud Account it is `within`, directly or through
-  `declaredAs`, with that account's `provider`, which is the cloud; its `region` as the provider
+  `realizes`, with that account's `provider`, which is the cloud; its `region` as the provider
   writes it.
 - **Last mile.** None. Where no region is recorded, the answer says so, and it is one read of the
   cited declaration or one query to the provider by provider id.
@@ -438,7 +442,7 @@ Terms: `within`, Cloud Account, `provider`, `region`, `declaredAs`.
 
 ### Which networks is this network directly connected to, and through what?
 
-Terms: `networkRole`, `connectsTo`, `within`, `declaredAs`; one read per connector (tool).
+Terms: `networkRole`, `connectsTo`, `within`, `realizes`; one read per connector (tool).
 
 - **Estate returns.** The connectors attached to the network; the connectors chained to them; the
   networks at the other end of each chain; each connector with its declared address or provider id
@@ -450,7 +454,7 @@ Terms: `networkRole`, `connectsTo`, `within`, `declaredAs`; one read per connect
 
 ### Is network A connected to network B, and through which connectors?
 
-Terms: `networkRole`, `connectsTo`, `within`, `declaredAs`; route reads and the provider (tool).
+Terms: `networkRole`, `connectsTo`, `within`, `realizes`; route reads and the provider (tool).
 
 - **Estate returns.** Every chain of connectors that joins A and B without passing through a third
   network; apart from them, the paths that pass through a third network, as candidates.
@@ -506,13 +510,13 @@ Terms: `networkRole`, `connectsTo`, `within`.
 
 ### What leaves the cloud over this dedicated link, and what is on the other side?
 
-Terms: Declared Resource, Deployed Resource, `declaredAs`, `connectsTo`, `within`, External
+Terms: Declared Resource, Deployed Resource, `realizes`, `connectsTo`, `within`, External
 System, `provider`, `networkRole`, `runsOn`; route reads and the provider (tool).
 
 - **Estate returns.** The link, a Deployed Resource `within` its Cloud Account; the External System
   it `connectsTo` on its far side, and who runs it; the gateways and networks joined to the link by
   `connectsTo` in either direction, and those joined to them in turn, as candidates; the clusters
-  and machines among them, the Declared Resources they are `declaredAs`, and the Instances that
+  and machines among them, the Declared Resources they `realize`, and the Instances that
   `runsOn` them.
 - **Last mile.** One read of the cited routes, for which candidates route over the link; routes
   learned over the link from its far side are a query to the provider.
@@ -522,14 +526,14 @@ System, `provider`, `networkRole`, `runsOn`; route reads and the provider (tool)
 
 ### Which networks in different accounts or clouds are connected, and through what?
 
-Terms: Declared Resource, Deployed Resource, `declaredAs`, `connectsTo`, `within`, Cloud Account,
+Terms: Declared Resource, Deployed Resource, `realizes`, `connectsTo`, `within`, Cloud Account,
 External System, `networkRole`.
 
 - **Estate returns.** The resources whose role is `network`, each `within` its Cloud Account; the
   connectors attached to them, including those whose references reach a network in another account
   or cloud directly; and every External System that resources in more than one account or cloud
   `connectsTo`, each a place where those networks meet. A Declared Resource and the Deployed
-  Resources `declaredAs` it are walked as one.
+  Resources that `realize` it are walked as one.
 - **Last mile.** None for which networks are connected and through what. Whether traffic between
   two of them takes a given path is a separate question, answered from the routes each side cites.
 - **Same for everyone.** The paths are walks over declared and reported references. Two clouds are
@@ -538,12 +542,12 @@ External System, `networkRole`.
 
 ### How much traffic crossed this link or gateway last week?
 
-Terms: `observedBy` and its identifiers, Deployed Resource, `declaredAs`, `provisionedFor`; the
+Terms: `observedBy` and its identifiers, Deployed Resource, `realizes`, `provisionedFor`; the
 observing tool (tool).
 
 - **Estate returns.** The link or gateway, a Deployed Resource; the tool it is `observedBy` and the
   identifiers the tool knows it by, as the tool spells them; the owner it takes through
-  `declaredAs` and `provisionedFor`.
+  `realizes` and `provisionedFor`.
 - **Last mile.** One query to the tool with those identifiers.
 - **Same for everyone.** The identifiers are the same strings for everyone, and the estate never
   holds a traffic volume, only the join to the tool that measures it.
@@ -580,11 +584,12 @@ Terms: `networkRole`, `connectsTo`, `within`; the placement walk; route reads (t
 
 ### Which services depend on on-premises systems, and through which hybrid connector?
 
-Terms: `connectsTo`, External System, `provider`, `instantiatedFrom`; the placement walk; route
+Terms: `connectsTo`, External System, `provider`, `implementedIn`; the placement walk; route
 reads (tool).
 
 - **Estate returns.** The Instances that `connectsTo` an External System whose provider is
-  `on-premises`, each with its Service; the hybrid connectors attached to each Instance's networks.
+  `on-premises`, each with the Repository it is `implementedIn`; the hybrid connectors attached to
+  each Instance's networks.
 - **Last mile.** Which of those connectors carries a dependency: one read of the cited routes for
   the system's address.
 - **Same for everyone.** The dependency is read from the Instance's configuration, and the system
@@ -595,11 +600,11 @@ reads (tool).
 
 ### Which declaration declares this network or connector, and which pipeline deploys it?
 
-Terms: `declaredAs`, `declaredIn`, `provisionedFor`, `deploys`.
+Terms: `realizes`, `declaredIn`, `provisionedFor`, `deploys`.
 
-- **Estate returns.** The Declared Resource it is, or is `declaredAs`, with its Repository, address,
-  and applied configuration; the owner it is `provisionedFor`; the Pipeline and job that `deploys`
-  that owner.
+- **Estate returns.** The Declared Resource it is, or the one it `realizes`, with its Repository,
+  address, and applied configuration; the owner it is `provisionedFor`; the Pipeline and job that
+  `deploys` that owner.
 - **Last mile.** None.
 - **Same for everyone.** The Pipeline is one join through the owner, never a search for which job
   applies a directory.
@@ -618,11 +623,11 @@ Terms: `prov:wasDerivedFrom`, `prov:wasGeneratedBy`, `prov:wasAttributedTo`,
 
 ### Which networks and connectors are Core Infrastructure's rather than one Environment's?
 
-Terms: `networkRole`, `declaredAs`, `provisionedFor`.
+Terms: `networkRole`, `realizes`, `provisionedFor`.
 
 - **Estate returns.** Each resource whose role is `network` or `connector`, with the owner it is
-  `provisionedFor`, through `declaredAs` for one the provider reported: an Environment, a Core
-  Infrastructure, an Application, a Service, or a Service Instance; and those `declaredAs` nothing,
+  `provisionedFor`, through `realizes` for one the provider reported: an Environment, a Core
+  Infrastructure, an Application, or an Instance; and those that `realize` nothing,
   which have no owner.
 - **Last mile.** None.
 - **Same for everyone.** The owner is read from the declaration's boundary. One with no declaration
@@ -655,7 +660,7 @@ Terms: `connectsTo`, `networkRole`; the placement walk.
 
 ## Network gaps
 
-### Which Service Instances have no recorded network placement?
+### Which Instances have no recorded network placement?
 
 Terms: `runsOn`, `providedAs`, `connectsTo`, `within`, `networkRole`; the sources a scan read.
 
@@ -668,10 +673,10 @@ Terms: `runsOn`, `providedAs`, `connectsTo`, `within`, `networkRole`; the source
 
 ### Which connectors are reported deployed but declared nowhere?
 
-Terms: Deployed Resource, `networkRole`, `declaredAs`, `within`, Cloud Account; cost store (tool).
+Terms: Deployed Resource, `networkRole`, `realizes`, `within`, Cloud Account; cost store (tool).
 
 - **Estate returns.** Every Deployed Resource whose role is `connector`, `exit`, or `entry` and that
-  has no current `declaredAs`, by provider id, with the source that reported it, as of when, and the
+  has no current `realizes`, by provider id, with the source that reported it, as of when, and the
   Cloud Account it is `within`.
 - **Last mile.** None for what a source reported. A cost row that matches no Deployed Resource is
   from something no source the estate read reported; whether it is a connector is the row's own
@@ -684,9 +689,9 @@ Terms: Deployed Resource, `networkRole`, `declaredAs`, `within`, Cloud Account; 
 
 Terms: `deliversTo`, `pullsFrom`, `connectsTo`; `within`.
 
-- **Estate returns.** The registry, a managed Declared Resource or the Service Instance serving a
+- **Estate returns.** The registry, a managed Declared Resource or the Instance serving a
   self-hosted one, and its image repositories `within` it; every Pipeline that `deliversTo` them
-  with its job; every Service Instance that `pullsFrom` them with its image reference and pull
+  with its job; every Instance that `pullsFrom` them with its image reference and pull
   secret name; everything that `connectsTo` the registry's hostname.
 - **Last mile.** None for what is declared. Whether anything pulled recently is a query to the
   registry, and a workload whose image is cached on its node may not have pulled for weeks.
@@ -695,23 +700,23 @@ Terms: `deliversTo`, `pullsFrom`, `connectsTo`; `within`.
 
 ### What runs on this cluster, including what the platform installs?
 
-Terms: `runsOn`, `inScope`, Core Infrastructure; `instantiatedFrom`.
+Terms: `runsOn`, `inScope`, Core Infrastructure; `implementedIn`.
 
-- **Estate returns.** Every Service Instance that `runsOn` the cluster, each with its Scope: an
+- **Estate returns.** Every Instance that `runsOn` the cluster, each with its Scope: an
   Application's Environment, or the Core Infrastructure whose declaration installs it, such as an
-  ingress controller or a CI runner; each Instance's Service.
+  ingress controller or a CI runner; each Instance's `implementedIn`, or its `upstreamPackage`.
 - **Last mile.** None for what is declared. What is running now is a query to the cluster.
 - **Same for everyone.** Platform software has a Scope like any other, so it is never left out
   for lacking an Application.
 
 ### What breaks if this cluster is deleted?
 
-Terms: `connectsTo`, `provisionedFor`, `trusts`, `runsOn`; Deployed Resource, `declaredAs`.
+Terms: `connectsTo`, `provisionedFor`, `trusts`, `runsOn`; Deployed Resource, `realizes`.
 
 - **Estate returns.** The Instances that `runsOn` it; what it `connectsTo`, its subnets and security
   groups, and whatever else `connectsTo` those; the Declared Resources provisioned for the same Core
   Infrastructure, which share its declaration; every Identity that `trusts` its OIDC provider; the
-  Deployed Resources `declaredAs` each, with their as-of; the Core Infrastructure it is
+  Deployed Resources that `realize` each, with their as-of; the Core Infrastructure it is
   provisioned for, the Pipeline job that `deploys` it, and the commit its declaration was read at.
 - **Last mile.** Read the cited declarations for what a shared resource would lose; whether each
   still exists is a query to the cloud. Before any plan or destroy from the declaring job, compare

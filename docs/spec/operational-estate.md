@@ -61,15 +61,14 @@ A grouping is a class only where a relation needs exactly that set of classes.
 
 | Grouping | Members | Needed by |
 |---|---|---|
-| **Software** | Application, Service | domain of `implementedIn`, range of `provisionedFor` |
-| **Runtime** | Service Instance, Declared Resource, Deployed Resource | domain of `connectsTo` |
+| **Runtime** | Instance, Declared Resource, Deployed Resource | domain of `connectsTo` |
 | **Scope** | Environment, Core Infrastructure | range of `inScope` |
 
 Scope is the named unit runtime things are placed in and owned by: an Application's Environment, or
 the Core Infrastructure a platform declares. Every other class sits directly under `estate:Entity`.
 
 **A role is not a class.** Where what a relation points at crosses classes, the relation carries the
-role. What a workload reads secrets from may be a Service Instance (a self-hosted Vault), a Declared
+role. What a workload reads secrets from may be an Instance (a self-hosted Vault), a Declared
 Resource (a cloud secrets manager), or an External System (a hosted secrets service), so there is no
 Secret Store class: the secret stores in an estate are the targets of `readsSecretsFrom`. An
 observability tool is the same, through `observedBy`. The part a resource plays in a network is
@@ -79,38 +78,29 @@ not a class either: it is the resource's `networkRole` (section 5, Networks).
 
 ### Application
 
-A product or capability that delivers value to its users: a set of Services and the Environments
-they are deployed into. Not a single deployable (a Service), and not what it runs on: its Service
-Instances run on Declared Resources, provisioned by its own Environments, by Core Infrastructure, by
-the Application itself or one of its Services across every Environment, such as the Application's
-DNS zone or a Service's image registry, or by one Service Instance, when the deployment code
-declares a resource for that Instance alone, such as its queue, or its chart creates one, such as a
-load balancer. An Application needs no repository of its own: in an estate of services, it is named
-where it is composed and deployed.
+A product or capability that delivers value to its users: its Environments and the Instances
+deployed into them. Not a single deployment (an Instance), and not what it runs on: its Instances
+run on Declared Resources, provisioned by its own Environments, by Core Infrastructure, by the
+Application itself across every Environment, such as its DNS zone or an image repository its
+Instances pull from, or by one Instance, when the deployment code declares a resource for that
+Instance alone, such as its queue, or its chart creates one, such as a load balancer. An Application
+needs no repository of its own: in an estate of services, it is named where it is composed and
+deployed.
 
-### Service
-
-A deployable unit of software that implements all or part of an Application. The unit itself,
-never a running copy of one, so it is the same Service in every Environment. A monolith is an
-Application with one Service; a presentation may show the Application alone when it has exactly
-one. A Service may be `memberOf` several Applications.
-
-A Service may be **upstream**: deployed from a chart or image nobody in the estate builds, such as
-Superset from `apache/superset`. An upstream Service has no `implementedIn` and no `builds`, and is
-not incomplete for lacking them. The version of it in an Environment is the chart or image version
-read at a pinned commit.
-
-*Aliases:* "the service" (with the contrast that a running copy is a Service Instance).
+Which code makes up an Application is read through its Instances: the Repositories each is
+`implementedIn`. An Instance one Application's Environment holds and another Application's Instances
+reach is shared through `connectsTo`, not through a membership: code is not shared at runtime, and
+an Instance is in one Scope.
 
 ### Environment
 
 A named set of runtime things belonging to one Application, as a practitioner means it: "shop prod"
 across whatever clouds, accounts, and clusters it spans. Nothing structural defines it, and each
 Application has its own, so shop dev and checkout dev are two Environments. An Environment does not
-run; its Service Instances do.
+run; its Instances do.
 
 A runtime thing is in an Environment in one of two ways. A Declared Resource whose declaration is in
-the Environment's own code, such as a database in `envs/dev/`, is `provisionedFor` it. A Service
+the Environment's own code, such as a database in `envs/dev/`, is `provisionedFor` it. An
 Instance deployed into it has the Environment in its key; a file name, a pipeline stage, a tag, or
 an account name is the evidence for which Environment that is, confirmed where that evidence is only
 a naming convention.
@@ -124,25 +114,35 @@ Environments that use it.
 
 *Aliases:* "app-env", "the environment", "stage".
 
-### Service Instance
+### Instance
 
-One deployment of one Service into one Scope: an Environment, or a Core Infrastructure for software
+One deployment of software into one Scope: an Environment, or a Core Infrastructure for software
 the platform installs, such as an ingress controller or a CI runner its cluster declaration deploys.
-It is `instantiatedFrom` exactly one Service, never an Application, so every question about software
-takes one path, from an Instance through its Service to its Application.
+It is `deployedFrom` the Repository whose files deploy it, and `implementedIn` each Repository whose
+code it runs, where a Repository in the estate holds that code. The Repository holds the code; the
+Instance runs it.
 
-*Draft rename:* **Deployed Instance**. "Service Instance" reads wrong for a monolith, and
-"Instance" alone collides with a virtual machine instance and with OpenTelemetry's
-`service.instance.id`, which is one replica. "Deployed" is what the evidence shows, where "running"
-is a live fact the estate never holds.
+Whether practitioners call what an Instance runs an application, a service, or a function is not
+part of the model, and nothing classifies it: a monolith is one Instance in each Environment it is
+deployed into, and so is each of many services. Software no Repository in the estate holds, such as
+Superset from the chart `apache/superset`, is an Instance with no `implementedIn`, its chart or
+image its `upstreamPackage`, and is not incomplete for lacking one.
+
+An Instance is a declaration, not a version or a build. The version it runs is read live: from the
+pinned location its deployment writes, or from the Deployed Resource that `realizes` it.
+
+Not one replica, pod, or task, which are live and the provider's. "Instance" also names a virtual
+machine instance and, in OpenTelemetry's `service.instance.id`, one replica; neither is this class.
+
+*Aliases:* "Service Instance", "workload".
 
 ### Core Infrastructure
 
-Infrastructure declared outside the declarations of any single Environment, Application, or Service:
-a platform team's repository, stack, or module. The test is where the declaration lives, not how
+Infrastructure declared outside the declarations of any single Environment or Application: a
+platform team's repository, stack, or module. The test is where the declaration lives, not how
 many Environments use it today, so a cluster a shared infrastructure repository declares is Core
 Infrastructure while only dev uses it. It is an owner, not a place: Declared Resources and
-Identities are provisioned for it, the Service Instances of the software it installs are in it, and
+Identities are provisioned for it, the Instances of the software it installs are in it, and
 it is not the cluster provisioned for it.
 
 *Aliases:* "landing zone".
@@ -153,25 +153,28 @@ A thing in a cloud or cluster as a declaration states it: a database, a bucket, 
 cluster, a function, a registry repository, a secret. It has exactly one owner. It is what the
 declaration says practitioners expect to exist, not a confirmation that it exists or is running:
 whether it does is a query to the provider. What a provider reports was made of it is a Deployed
-Resource `declaredAs` it.
+Resource that `realizes` it.
 
 ### Deployed Resource
 
 A thing in a cloud or cluster as it is reported to exist, by a provisioning tool's record of what
-it made or by the provider itself, as of when it was reported. It is `declaredAs` the Declared
-Resource whose declaration produced it, and one declaration may be deployed as many: a module call
-as every resource inside the module, such as the subnets, route tables, and NAT gateways of a
-network module, and a repeated declaration as one per element. It is not a confirmation that the
-thing is running now, which is a query to the provider.
+it made or by the provider itself, as of when it was reported. It `realizes` the Declared Resource
+whose declaration produced it, and one declaration may be deployed as many: a module call as every
+resource inside the module, such as the subnets, route tables, and NAT gateways of a network module,
+and a repeated declaration as one per element. Where no Declared Resource declares it, it `realizes`
+the Instance whose deployment made it, such as a function a pipeline created or a Kubernetes
+workload object a chart renders. It is not a confirmation that the thing is running now, which is a
+query to the provider.
 
-It owns nothing and has no owner of its own: it takes its Declared Resource's. One `declaredAs`
-nothing is a gap, something deployed that no declaration the estate has read accounts for, because
-its cost and its failures belong to nobody the estate can name.
+It owns nothing and has no owner of its own: it takes the owner of what it `realizes`. One that
+`realizes` nothing is a gap, something deployed that no declaration the estate has read accounts
+for, because its cost and its failures belong to nobody the estate can name.
 
-Not a replica, pod, or task a Service Instance's deployment makes, nor the workload object it
-deploys: those are live and the provider's, and the Service Instance stands for them. Not an
-Identity and not a Cloud Account, even where a module creates one: those are keyed by their own
-classes.
+Not a replica, pod, or task an Instance's deployment makes: those are live and the provider's, and
+the Instance stands for them. The workload object a deployment makes, such as a Kubernetes
+`Deployment` or `StatefulSet`, keeps one identity across releases, and is a Deployed Resource where
+a source the estate reads reports it. Not an Identity and not a Cloud Account, even where a module
+creates one: those are keyed by their own classes.
 
 *Aliases:* "cloud resource".
 
@@ -198,7 +201,8 @@ Member accounts are `within` the payer or organization they bill to.
 ### Repository
 
 A version-controlled store of files, such as a Git repository, whose role is `app`, `iac`, or
-`mixed`. Where things are declared; neither software nor runtime.
+`mixed`. Where code is held and things are declared; it does not run. An Instance runs its code
+through `implementedIn`, and a path within it names which code where it holds several.
 
 *Aliases:* "repo".
 
@@ -217,7 +221,7 @@ or something a runtime thing reaches beyond the estate, such as a hosted API a w
 the interconnection fabric a dedicated link lands on. Anything with a class of its own is not an
 External System: a role is an Identity; a cluster, registry repository, or bucket is a Declared
 Resource; an account is a Cloud Account; a fabric connection the estate declares is a Declared
-Resource; an API another Application in the estate serves is that Service Instance.
+Resource; an API another Application in the estate serves is that Instance.
 
 A system the organization runs outside every Cloud Account, such as a database in its own data
 center or the router a tunnel ends at, has the provider `on-premises`. Its kind says what it is,
@@ -269,104 +273,116 @@ asserted too; the annotation syntax does this, and section 7 requires it of ever
 
 | Relation | From | To | Carries |
 |---|---|---|---|
-| `declaredIn` | Service, Pipeline, Core Infrastructure, Declared Resource | Repository | |
-| `declaredAs` | Deployed Resource | Declared Resource | |
-| `inScope` | Service Instance | Scope | |
-| `memberOf` | Service | Application | |
-| `implementedIn` | Software | Repository | |
+| `declaredIn` | Pipeline, Core Infrastructure, Declared Resource | Repository | |
+| `realizes` | Deployed Resource | Declared Resource, Instance | |
+| `inScope` | Instance | Scope | |
+| `implementedIn` | Instance | Repository | code path |
 | `placedUnder` | Environment | Application | |
-| `instantiatedFrom` | Service Instance | Service | |
-| `deployedFrom` | Environment, Service Instance | Repository | |
+| `deployedFrom` | Environment, Instance | Repository | |
 | `triggers` | Pipeline | Pipeline | job, variables sent |
-| `deploys` | Pipeline | Environment, Core Infrastructure, Software, Service Instance | job, pinned write location |
-| `builds` | Pipeline | Service | job, tag scheme |
-| `deliversTo` | Pipeline | Service Instance, Declared Resource, Deployed Resource, External System | job |
-| `pullsFrom` | Service Instance | Service Instance, Declared Resource, Deployed Resource, External System | image reference, pull secret name |
-| `provisionedFor` | Declared Resource, Identity | Environment, Core Infrastructure, Software, Service Instance | |
-| `runsOn` | Service Instance | Declared Resource, Deployed Resource | |
-| `providedAs` | Service Instance | Declared Resource, Deployed Resource | |
+| `deploys` | Pipeline | Environment, Core Infrastructure, Application, Instance | job, pinned write location |
+| `deliversTo` | Pipeline | Instance, Declared Resource, Deployed Resource, External System | job, code path, tag scheme |
+| `pullsFrom` | Instance | Instance, Declared Resource, Deployed Resource, External System | image reference, pull secret name |
+| `provisionedFor` | Declared Resource, Identity | Environment, Core Infrastructure, Application, Instance | |
+| `runsOn` | Instance | Declared Resource, Deployed Resource | |
+| `providedAs` | Instance | Declared Resource | |
 | `within` | Declared Resource, Deployed Resource, Identity, Cloud Account | Cloud Account, Declared Resource, Deployed Resource | |
 | `connectsTo` | Runtime | Runtime, External System | |
-| `readsSecretsFrom` | Service Instance, Pipeline | Service Instance, Declared Resource, Deployed Resource, External System | path or name |
-| `observedBy` | Service Instance, Environment, Pipeline, Declared Resource, Deployed Resource | Service Instance, Declared Resource, Deployed Resource, External System | the tool's identifiers |
+| `readsSecretsFrom` | Instance, Pipeline | Instance, Declared Resource, Deployed Resource, External System | path or name |
+| `observedBy` | Instance, Environment, Pipeline, Declared Resource, Deployed Resource | Instance, Declared Resource, Deployed Resource, External System | the tool's identifiers |
 | `accessedAs` | Environment | Identity | declared credential name, account used in |
-| `runsAs` | Service Instance, Pipeline | Identity | job |
+| `runsAs` | Instance, Pipeline | Identity | job |
 | `trusts` | Identity | Pipeline, Repository, Identity, Declared Resource, Deployed Resource | |
-| `ownedBy` | Application, Service, Repository, Core Infrastructure, Cloud Account, Declared Resource, Identity | Team | |
+| `ownedBy` | Application, Repository, Core Infrastructure, Cloud Account, Declared Resource, Identity | Team | |
 
 ### Containment
 
 `declaredIn` and `inScope` are containment: the parent is part of the child's key, so each has
-exactly one. `declaredIn` is the Repository whose files declare a Service, Pipeline, Core
-Infrastructure, or Declared Resource; it is not `implementedIn`, the Repository whose code
-implements software, and an upstream Service has the first and never the second. `inScope` is the
-one Scope a Service Instance is deployed into: an Environment, or the Core Infrastructure whose
-declaration installs it.
+exactly one. `declaredIn` is the Repository whose files declare a Pipeline, Core Infrastructure, or
+Declared Resource. `inScope` is the one Scope an Instance is deployed into: an Environment, or the
+Core Infrastructure whose declaration installs it. Neither is `implementedIn`, the Repository whose
+code an Instance runs, nor `deployedFrom`, the one whose files deploy it; those are one Repository
+where a repository deploys its own code.
 
 ### Declaration and deployment
 
-`declaredAs` runs from a Deployed Resource to the Declared Resource whose declaration produced it,
-as whatever reported the Deployed Resource says. It is not `declaredIn`, the Repository whose files
-hold a declaration. A Deployed Resource has at most one current `declaredAs`.
+`realizes` runs from a Deployed Resource to the declaration it is the reported form of, as whatever
+reported the Deployed Resource says: the Declared Resource whose declaration produced it, or, where
+no Declared Resource declares it, the Instance whose deployment made it. It is not `declaredIn`, the
+Repository whose files hold a declaration. A Deployed Resource has at most one current `realizes`,
+and it `realizes` the Declared Resource where one declares it: a function a Terraform root declares
+and a pipeline ships code to `realizes` that Declared Resource, which the Instance is `providedAs`.
 
 A relation that may end at a Declared or a Deployed Resource ends at the one its evidence names. A
 reference from one declaration to another, such as an output of a module call, ends at the Declared
 Resource. A reference to what was made, such as a hostname or provider id in configuration, or a
-reference reported for a Deployed Resource, ends at that Deployed Resource. A walk treats a Declared
-Resource and the Deployed Resources `declaredAs` it as one thing, following `declaredAs` both ways,
-so an answer does not depend on which kind of evidence an estate holds.
+reference reported for a Deployed Resource, ends at that Deployed Resource. A walk treats a
+declaration and the Deployed Resources that `realize` it as one thing, following `realizes` both
+ways, so an answer does not depend on which kind of evidence an estate holds.
 
 ### Placement
 
-`placedUnder` and `instantiatedFrom` attach a parent the practitioner's picture has but the evidence
-that produced the entity did not assert. Each is resolved by name when either side arrives, or
-chosen where names do not settle it. How it was resolved is provenance, as for any fact (section 8):
-a match is generated by the activity that made it, and a choice is attributed to the agent that
+`placedUnder` attaches the Application the practitioner's picture has but the evidence that
+produced an Environment did not assert. It is resolved by name when either side arrives, or chosen
+where names do not settle it. How it was resolved is provenance, as for any fact (section 8): a
+match is generated by the activity that made it, and a choice is attributed to the agent that
 confirmed it.
 
 ### Delivery
 
-`deploys` runs from a Pipeline to any owner `provisionedFor` names: an Environment or Service
-Instance it deploys into, or the Core Infrastructure, Application, or Service whose declarations it
-applies. So the Pipeline and job that change a Declared Resource are one join from it, through its
-owner. `deploys` carries the job, the variables the job sets, such as one that selects which
-component it deploys, and, where the deploy writes a version, the pinned write location: the
-repository, path, and field it writes, at the commit it was read at, with the value declared there.
-The declared value is the one fact on a relation that changes with every deploy, so an
-implementation may hold it as data refreshed at each reading of the pinned location rather than as
-part of the fact it asks a person to review, provided it is the value at the commit the location
-was read at.
-`builds` carries the job and the tag scheme, `$CI_COMMIT_SHA` or a version scheme, which links what
-is declared in an Environment to the commit it came from; the artifact itself is not modeled.
-`triggers` carries the variables one Pipeline sends another. Neither `triggers` nor `deploys` says
-whether it runs automatically or on which branch: that is the job's rule, read in the cited file.
+`deploys` runs from a Pipeline to any owner `provisionedFor` names: an Environment or Instance it
+deploys into, or the Core Infrastructure or Application whose declarations it applies. So the
+Pipeline and job that change a Declared Resource are one join from it, through its owner. `deploys`
+carries the job, the variables the job sets, such as one that selects which component it deploys,
+and, where the deploy writes a version, the pinned write location: the repository, path, and field
+it writes, at the commit it was read at, with the value declared there. The declared value is the
+one fact on a relation that changes with every deploy, so an implementation may hold it as data
+refreshed at each reading of the pinned location rather than as part of the fact it asks a person to
+review, provided it is the value at the commit the location was read at. `triggers` carries the
+variables one Pipeline sends another. Neither `triggers` nor `deploys` says whether it runs
+automatically or on which branch: that is the job's rule, read in the cited file.
 
 A registry is where build meets runtime. A Pipeline `deliversTo` the image repository it pushes to,
-and a Service Instance `pullsFrom` the one its manifest's image reference names, with that
+and an Instance `pullsFrom` the one its manifest's image reference names, with that
 reference and the name of any pull secret on the relation. Push and pull meet at the image
-repository, a Declared Resource `within` its registry, or at the Service Instance that serves a
+repository, a Declared Resource `within` its registry, or at the Instance that serves a
 self-hosted registry. As with secret stores, a registry is a role: the registries in an estate are
 the targets of these two relations. Tags, digests, and what was pushed or pulled when are live and
 the registry's.
 
-### Where a Service Instance runs, and what it is
+A Delivery carries what links what is built to the code and the commit it came from: the job, the
+code path in the Pipeline's Repository the artifact is built from, such as the build context
+`services/worker/`, and the tag scheme, `$CI_COMMIT_SHA` or a version scheme. The artifact itself
+is not modeled.
+
+`implementedIn` is read where push and pull meet. An Instance that pulls from what a Pipeline
+delivers to is `implementedIn` that Pipeline's Repository, at the Delivery's code path. Where an
+Instance's code reaches it some other way, such as a function package or a site a repository
+deploys itself, the Repository that builds what it deploys is the one it is `implementedIn`. It is
+read by address, never by a name: an Instance whose image reference names a variable no cited file
+sets has no `implementedIn` until the reference is read. Which commit an Instance runs is then the
+declared value its `deploys` writes, read through the tag scheme of the Delivery it pulls from.
+
+### Where an Instance runs, and what it is
 
 `runsOn` is the resource an Instance runs on: a cluster, a virtual machine, a function runtime.
-`providedAs` is the resource an Instance is, such as a serverless function. A
-Kubernetes workload `runsOn` its cluster; a serverless deployment is `providedAs` its function. An
-Instance's Cloud Account is derived through them, never stored beside them.
+`providedAs` is the Declared Resource an Instance is, such as a serverless function a declaration
+creates. A Kubernetes workload `runsOn` its cluster; a serverless deployment is `providedAs` its
+function. What a provider reports an Instance as is the Deployed Resource that `realizes` it or its
+Declared Resource. An Instance's Cloud Account is derived through them, never stored beside them.
 
 ### Ownership
 
 `provisionedFor` is read from the module or chart boundary a declaration sits inside, a structural
-fact rather than a path token. A module for one Application or one Service outside any Environment,
-such as a deploy repository's `app/` declaring the Application's DNS zone or its
-`services/user-svc/` declaring that Service's image registry, is the Application's or the Service's;
-the same Service's module inside an Environment's declarations is its Instance's there. `ownedBy`
-names a Team and only a Team. An Environment's owner and a Pipeline's are derived from their
-Application and Repository. Evidence that names only individuals, `@jane` in `CODEOWNERS`,
-establishes no owner. Membership is not ownership: `memberOf` says which Application a Service is
-part of, `ownedBy` says whose it is.
+fact rather than a path token. A module for one Application outside any Environment, such as a
+deploy repository's `app/` declaring the Application's DNS zone or the image repository its
+Instances pull from, is the Application's; a module inside an Environment's declarations for one
+Instance is that Instance's. `ownedBy` names a Team and only a Team. An Environment's owner and a
+Pipeline's are derived from their Application and Repository, and an Instance's from each
+Repository it is `implementedIn`, through `CODEOWNERS` for the code path where it names one.
+Evidence that names only individuals, `@jane` in `CODEOWNERS`, establishes no owner. Placement is
+not ownership: `placedUnder` says which Application an Environment belongs to, `ownedBy` says whose
+a thing is.
 
 ### Access
 
@@ -457,9 +473,9 @@ security group in its network. What attaches to a subnet or a network, a cluster
 function, a load balancer, or a connector, `connectsTo` it, because an attachment can change while
 the resource stays the same.
 
-**Placement.** A Service Instance is placed in a network when the resource it `runsOn` or is
+**Placement.** An Instance is placed in a network when the resource it `runsOn` or is
 `providedAs` `connectsTo` a subnet `within` that network, or `connectsTo` the network itself where a
-resource attaches to a network as a whole. A walk follows `declaredAs` both ways at every step. An
+resource attaches to a network as a whole. A walk follows `realizes` both ways at every step. An
 Instance with no such path has no recorded placement: its resource attaches to no network, which
 is one read of the resource's cited declaration, or the path has not been read.
 
@@ -514,13 +530,12 @@ or account name would put "cluster" in identifiers read by people who think "pro
 |---|---|
 | Application | its name |
 | Environment | its asserted Application name and its name |
-| Service | the Repository that declares it and its name |
-| Service Instance | its Scope's key and its deployed name |
+| Instance | its Scope's key and its deployed name |
 | Repository | its canonical remote |
 | Pipeline | its Repository and its definition path |
 | Core Infrastructure | the Repository, the stack, module, or root that declares it, and its applied configuration |
 | Declared Resource | the Repository that declares it, a source kind, the declared address, and its root's applied configuration |
-| Deployed Resource | its provider and the provider's id for it |
+| Deployed Resource | its provider and the provider's id for it; for a Kubernetes object, its cluster, namespace, kind, and name |
 | Identity | its provider and the provider's identifier for it |
 | Cloud Account | its provider and the provider's id |
 | External System | its kind and its address, where it is reached at one; otherwise its provider, kind, and name |
@@ -537,8 +552,8 @@ managed resource anything.
 **A declaration may be a module call, and one root may be applied more than once.** A resource
 declared through a module, such as a cluster created by a call to a registry module, is declared by
 that call: its address is the module call's address in the root, and each resource inside the
-module, which the repository does not contain, is a Deployed Resource `declaredAs` that call. A root
-applied once per environment, with a var file, a workspace, a stack, or an overlay, declares a
+module, which the repository does not contain, is a Deployed Resource that `realizes` that call. A
+root applied once per environment, with a var file, a workspace, a stack, or an overlay, declares a
 separate resource for each, so the applied configuration is part of the key of every Declared
 Resource and Core Infrastructure it declares: one module call applied with `prod.tfvars` and with
 `dev.tfvars` is two clusters, and two Core Infrastructures. A name computed from variables is read
@@ -567,33 +582,36 @@ the provider is what tells two of them apart.
 unique across the provider, in the one form the provider uses in its own references, so that two
 readers key one thing the same way. A thing the provider replaces under a new id is a new Deployed
 Resource. Its declaration is what lasts across replacements, so a Declared Resource is keyed by that
-instead.
+instead. A Kubernetes object's uid changes when the object is recreated, while a workload object
+keeps one identity across every release, so a Kubernetes object is keyed by the provider id of its
+cluster, its namespace, its kind, and its name: the address a cost allocation or a cluster's
+inventory reports it under.
 
 Environment and Team also carry alternate names.
 
 **A detail is keyed by the relation it reifies**, meaning its source's key, the relation, and its
 target's key, and, where one relation can have several details, by what tells them apart: the job
-for a `triggers`, `deploys`, `builds`, `deliversTo`, or `runsAs`, the secret path for a
-`readsSecretsFrom`, the Cloud Account an `accessedAs` is `usedIn`, where it has one. An `observedBy`
-or `pullsFrom` has at most one detail. A detail
-is named by an identifier derived from its key, never a blank node, so two graphs that say the same
-thing about one relation merge into one detail.
+for a `triggers`, `deploys`, `deliversTo`, or `runsAs`, the code path for an `implementedIn`, the
+secret path for a `readsSecretsFrom`, the Cloud Account an `accessedAs` is `usedIn`, where it has
+one. An `observedBy` or `pullsFrom` has at most one detail. A detail is named by an identifier
+derived from its key, never a blank node, so two graphs that say the same thing about one relation
+merge into one detail.
 
 **An individual's identifier is relative: its kind and key, resolved under a base.** For example
-`service_instance/shop/prod/user-svc`. A serialization sets `@base`, and how an implementation
+`instance/shop/prod/user-svc`. A serialization sets `@base`, and how an implementation
 chooses its base is its own. Two graphs of one estate merge by kind and key with no identifier
 rewritten, because keys are derived and the base is a prefix.
 
 ## 7. Constraints
 
-**Every Service Instance and Declared Resource has exactly one owner, so Environments never
-overlap.** A Service Instance is in exactly one Scope, by its key. A Declared Resource is
-`provisionedFor` exactly one of an Environment, a Core Infrastructure, an Application, a Service, or
-a Service Instance; one provisioned for an Application or Service is in no Environment. Use across
-Environments is `connectsTo`, never shared membership, and a `connectsTo` from one Environment into
-another is a gap worth surfacing. A Deployed Resource takes the owner of the Declared Resource it is
-`declaredAs` and has none of its own; one `declaredAs` nothing has no owner, which is a gap, not an
-error. An Identity is `provisionedFor` its declaring owner when it has one.
+**Every Instance and Declared Resource has exactly one owner, so Environments never overlap.** An
+Instance is in exactly one Scope, by its key. A Declared Resource is `provisionedFor` exactly one of
+an Environment, a Core Infrastructure, an Application, or an Instance; one provisioned for an
+Application is in no Environment. Use across Environments is `connectsTo`, never shared membership,
+and a `connectsTo` from one Environment into another is a gap worth surfacing. A Deployed Resource
+takes the owner of what it `realizes` and has none of its own; one that `realizes` nothing has no
+owner, which is a gap, not an error. An Identity is `provisionedFor` its declaring owner when it has
+one.
 
 Further constraints, each to be stated as a SHACL shape. The ones about details are checked today as
 SPARQL 1.2 queries, until SHACL 1.2 is published:
@@ -601,21 +619,23 @@ SPARQL 1.2 queries, until SHACL 1.2 is published:
 - A detail is named by an identifier derived from its key, never a blank node.
 - A detail reifies exactly one relation, that relation carries data, and it is asserted.
 - A relation's data is on a detail of that relation: a `job` is on a `triggers`, `deploys`,
-  `builds`, `deliversTo`, or `runsAs`, never on a `readsSecretsFrom`.
-- A Service Instance has at most one `instantiatedFrom`, and its target is a Service.
+  `deliversTo`, or `runsAs`, never on a `readsSecretsFrom`.
+- An `implementedIn` is read by address, through a `pullsFrom` that meets a `deliversTo`, or through
+  the Repository that builds what it deploys, never by a name.
 - An Environment has exactly one asserted Application.
 - A Pipeline that `deploys` an Environment or Instance is in the Repository it is `deployedFrom`.
 - `ownedBy` targets only a Team.
 - A `readsSecretsFrom` carries no secret value.
-- A Deployed Resource has at most one `declaredAs` with no `prov:invalidatedAtTime`.
+- A Deployed Resource has at most one `realizes` with no `prov:invalidatedAtTime`, and it ends at
+  an Instance only where no Declared Resource declares it.
 - No individual `prov:Person` appears in an estate graph.
 - Only a Declared or Deployed Resource carries `networkRole`, `region`, `zone`, or `accountZone`,
   and at most one of each.
-- A Deployed Resource and the Declared Resource it is `declaredAs` agree on each of those four they
+- A Deployed Resource and the Declared Resource it `realizes` agree on each of those four they
   both carry.
 - A resource whose role is `subnet` is `within` at most one resource whose role is `network`.
 - A resource that carries an `accountZone` is `within` a Cloud Account, directly or through
-  `declaredAs`; one that is not is a warning, because its zone cannot be compared.
+  `realizes`; one that is not is a warning, because its zone cannot be compared.
 - Only an Environment carries `environmentTier`, at most one, from its listed values.
 
 The constraints on networks are stated as SHACL shapes in
@@ -639,17 +659,18 @@ does not hold says which.
 ## 9. Cost
 
 Cost adds no terms. Cost rows are not in the estate. A row lands on a Deployed Resource by its
-provider id and climbs through `declaredAs` to its Declared Resource, or, for a charge that belongs
-to no resource (a commitment, support, a credit, tax), on the Cloud Account billed for it, and
-climbs by ownership. It climbs two ways that answer different questions: by place, Instance to
-Environment to Application, "what does checkout's prod cost", or Instance to Core Infrastructure for
-software the platform installs; by software, Instance to Service to Application, "what does
-`auth-svc` cost everywhere". A resource provisioned for an Application or Service is in no
-Environment's cost: it joins the climb at the Application or the Service. They agree for a Service
-in one Application and differ, correctly, for a shared one. A tag, or a controller's tag, is
-evidence for a relation the model already has. How cost shared through Core Infrastructure is split
-is decided downstream: the estate serves the ownership. A Deployed Resource `declaredAs` nothing is
-a gap, cost with no declaration, never "other"; a row that matches no Deployed Resource is cost from
+provider id and climbs through `realizes` to its Declared Resource, or, for a charge that belongs to
+no resource (a commitment, support, a credit, tax), on the Cloud Account billed for it, and climbs
+by ownership. It climbs two ways that answer different questions: by place, Instance to Environment
+to Application, "what does checkout's prod cost", or Instance to Core Infrastructure for software
+the platform installs; by code, Instance to each Repository it is `implementedIn`, at its code path,
+"what does `auth-svc` cost everywhere". A resource provisioned for an Application is in no
+Environment's cost: it joins the climb by place at the Application. An Instance other Applications'
+Instances reach is in its own Scope's cost; how it is split between those that reach it is decided
+downstream, from the `connectsTo` that reach it. A tag, or a controller's tag, is evidence for a
+relation the model already has. How cost shared through Core Infrastructure is split is decided
+downstream: the estate serves the ownership. A Deployed Resource that `realizes` nothing is a gap,
+cost with no declaration, never "other"; a row that matches no Deployed Resource is cost from
 something no source the estate read reported.
 
 ## 10. Testing the model
@@ -662,8 +683,8 @@ last mile, and what makes the answer the same for everyone, and will run as a qu
 estates. A question whose last mile is a search fails.
 
 **Worked estates** test the model against estates other than the one it was drawn from. The failure
-signal is a fact that has to be forced in, the sentence "a Service too, if we need it": wherever it
-is said, the model is wrong there.
+signal is a fact that has to be forced in, the sentence "an extra class too, if we need it":
+wherever it is said, the model is wrong there.
 
 ## 11. Evolution
 
@@ -691,9 +712,10 @@ model. The cost is that RDF 1.2 is newer than the tools most estates already use
 Interoperability note gives a lossless translation to RDF 1.1 for any tool that needs one.
 
 **How a placement was resolved is provenance, not a property.** An earlier draft gave `placedUnder`
-and `instantiatedFrom` a placement origin, a name match or an operator's choice. It was rejected:
-how a fact came to be is what PROV-O states for every fact, a private two-value copy of it on two
-relations would say it for those alone, and the graph holds only what has been confirmed.
+and the since-removed `instantiatedFrom` a placement origin, a name match or an operator's choice.
+It was rejected: how a fact came to be is what PROV-O states for every fact, a private two-value
+copy of it on two relations would say it for those alone, and the graph holds only what has been
+confirmed.
 
 **When a fact stopped holding is provenance, not a status.** An earlier draft gave the link from a
 declaration to its live identifier a status, `current` or `former`. It was rejected: a status goes
@@ -708,7 +730,7 @@ Compose means apply or startup order. It is kept as an alias. The credential rel
 
 **Platform software is in a Scope, not an Application.** An ingress controller or a CI runner a
 platform's cluster declaration installs is software with versions, deploys, and connections, so it
-is a Service Instance. Its Scope is the Core Infrastructure that installs it. Rejected: treating it
+is an Instance. Its Scope is the Core Infrastructure that installs it. Rejected: treating it
 as a Declared Resource, which puts software in the resource class; and a "platform" Application,
 whose Environments would be a fiction.
 
@@ -719,14 +741,27 @@ for what was declared. It changes with every deploy, which is why it may be held
 person reviews: a value that would otherwise ask for a review on every scan is refreshed instead,
 and it is still the value at its pin.
 
-**Software, Scope, Runtime rather than Logical and Deployed.** Environment is not something that
-runs, and Core Infrastructure is not something deployed. A grouping named for meaning but populated
-by whichever relation needed a union drifts from its name.
+**Scope and Runtime rather than Logical and Deployed.** Environment is not something that runs,
+and Core Infrastructure is not something deployed. A grouping named for meaning but populated by
+whichever relation needed a union drifts from its name. A Software grouping, of Application and
+Service, went with Service: Application alone needs no grouping.
 
-**A Service Instance is always of a Service.** The alternative, an Instance of the Application
-directly when it has no Services, matches how monolith teams speak, but gives every question about
-software two paths and needs a rule for which applies; and a monolith that grows a second deployable
-would move its existing Instance from Application to Service.
+**The Repository holds the code, and an Instance runs it.** An earlier draft had a Service class
+between them, the deployable unit, keyed by the Repository that declared it and its name, with each
+Instance `instantiatedFrom` one Service. It was removed. Its key was a name someone chose, so two
+readings agreed on a Service only where they agreed on what to call it, and a renamed Service had
+to carry every name it was ever known by. Deciding what was a Service was a classification no file
+states, and readers made it differently. Every fact it held has a home without it: what runs where
+is the Instance; whose code it runs is `implementedIn`, read by address where push and pull meet;
+what links a tag to a commit is on the Delivery; a component of a repository that holds several is
+a code path; and what several Applications use is an Instance they `connectsTo`, since code is not
+shared at runtime. Rejected: an Artifact class, the built image or package, because a build is a
+version, and versions are live; the image repository already joins push to pull.
+
+**Instance, despite the name's other meanings.** An earlier draft proposed Deployed Instance, since
+"Instance" also names a virtual machine instance and OpenTelemetry's one replica. It was rejected
+once Deployed Resource named what a source reports: an Instance is a declaration, and "Deployed"
+would put it on the reported side. The class's definition and its aliases carry the distinction.
 
 **Identity is not a resource, declared or deployed.** As a subclass it would need exceptions to both
 the one-owner rule and the undeclared-is-a-gap rule on the day it landed, and it could not hold
@@ -764,7 +799,9 @@ confirmed to be running, which no reading of a repository can show, and it misna
 object a manifest declares. "Cloud resource" is kept as an alias of Deployed Resource, whose
 meaning it fits, and the bare "resource", which fits both classes, is no alias of either.
 
-**Declared Resource and Deployed Resource are two classes, joined by `declaredAs`.** An earlier
+**Declared Resource and Deployed Resource are two classes, joined by `realizes`.** The relation was
+`declaredAs`, which repeated the class names: what it states is that a reported thing is the form a
+declaration takes, and it reaches an Instance too, for a workload object a chart renders. An earlier
 draft bound a declaration to its live id with an alias, a value on the Declared Resource. It was
 rejected: one declaration is deployed as many resources, such as a module call as every resource
 inside the module, so the one subnet or NAT gateway a network question turns on could not be the end

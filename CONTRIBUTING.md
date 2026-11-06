@@ -6,8 +6,8 @@ Operational Estate improves by being argued with. The most useful contributions 
   [docs/competency-questions.md](docs/competency-questions.md) uses: what the estate returns, the last mile,
   and what makes the answer the same for everyone. A question that needs a term the model lacks is
   how a term gets proposed.
-- **A fact from a real estate that has no home**, or that has to be forced in. The sentence "a
-  Service too, if we need it" is the signal that the model is wrong somewhere.
+- **A fact from a real estate that has no home**, or that has to be forced in. The sentence "an
+  extra class too, if we need it" is the signal that the model is wrong somewhere.
 - **A disagreement with a definition**, with the case that breaks it.
 
 Open an issue for any of these before a pull request that changes the model, so the argument

@@ -54,15 +54,15 @@ shape:NetworkValueShape
 
 shape:DeclaredAgreementShape
     a sh:NodeShape ;
-    rdfs:comment "A Deployed Resource and the Declared Resource it is declaredAs agree on each of networkRole, region, zone, and accountZone they both carry."@en ;
+    rdfs:comment "A Deployed Resource and the Declared Resource it realizes agree on each of networkRole, region, zone, and accountZone they both carry."@en ;
     sh:targetClass estate:DeployedResource ;
     sh:sparql [
         a sh:SPARQLConstraint ;
-        sh:message "Disagrees with the Declared Resource it is declaredAs on {?property}." ;
+        sh:message "Disagrees with the Declared Resource it realizes on {?property}." ;
         sh:prefixes <https://w3id.org/operational-estate/shapes> ;
         sh:select """
             SELECT $this ?property ?value WHERE {
-                $this estate:declaredAs ?declared ;
+                $this estate:realizes ?declared ;
                       ?property ?value .
                 ?declared ?property ?other .
                 FILTER (?property IN (estate:networkRole, estate:region, estate:zone, estate:accountZone))
@@ -86,7 +86,7 @@ shape:SubnetShape
 
 shape:AccountZoneShape
     a sh:NodeShape ;
-    rdfs:comment "A resource that carries an accountZone is within a Cloud Account, directly or through declaredAs; one that is not is a warning, because its zone cannot be compared."@en ;
+    rdfs:comment "A resource that carries an accountZone is within a Cloud Account, directly or through realizes; one that is not is a warning, because its zone cannot be compared."@en ;
     sh:targetSubjectsOf estate:accountZone ;
     sh:severity sh:Warning ;
     sh:sparql [
@@ -96,7 +96,7 @@ shape:AccountZoneShape
         sh:select """
             SELECT $this WHERE {
                 FILTER NOT EXISTS {
-                    $this (estate:declaredAs|^estate:declaredAs)?/estate:within+ ?account .
+                    $this (estate:realizes|^estate:realizes)?/estate:within+ ?account .
                     ?account a estate:CloudAccount .
                 }
             }""" ;
