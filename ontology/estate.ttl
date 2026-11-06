@@ -72,7 +72,7 @@ estate:Application
     rdfs:subClassOf estate:Entity ;
     rdfs:label "Application"@en ;
     skos:definition "A product or capability that delivers value to its users: its Environments and the Instances deployed into them. It needs no repository of its own; in an estate of services it is named where it is composed and deployed."@en ;
-    skos:scopeNote "Not a single deployment, which is an Instance, and not what it runs on: its Instances run on Declared Resources, provisioned by its own Environments, by Core Infrastructure, by the Application itself across every Environment, such as its DNS zone or an image repository its Instances pull from, or by one Instance, when the deployment code declares a resource for that Instance alone, such as its queue, or its chart creates one, such as a load balancer."@en ;
+    skos:scopeNote "Not a single deployment, which is an Instance, and not what it runs on: its Instances run on Declared Resources, provisioned by its own Environments, by Core Infrastructure, by the Application itself across every Environment, such as its DNS zone, or by one Instance, when the deployment code declares a resource for that Instance alone, such as its queue, or its chart creates one, such as a load balancer."@en ;
     estate:keyRule "Its name."@en ;
     estate:maturity "draft" .
 
@@ -167,9 +167,9 @@ estate:ExternalSystem
     a owl:Class ;
     rdfs:subClassOf estate:Entity ;
     rdfs:label "External System"@en ;
-    skos:definition "Something the estate references and nothing in it provisions: a tool a thing is observed by, a hosted destination a Pipeline delivers to, or something a runtime thing reaches beyond the estate, such as a hosted API or an interconnection fabric."@en ;
+    skos:definition "Something the estate references and nothing in it provisions: a tool a thing is observed by, a hosted destination a Pipeline delivers to, the store a deploy tool or platform keeps an artifact in where no file the estate reads gives its address, or something a runtime thing reaches beyond the estate, such as a hosted API or an interconnection fabric."@en ;
     skos:scopeNote "Anything with a class of its own is not an External System: a role is an Identity; a cluster, registry repository, or bucket is a Declared Resource; an account is a Cloud Account; a fabric connection the estate declares is a Declared Resource; an API another Application in the estate serves is that Instance. Once a source the estate reads reports it as a Deployed Resource, the External System is invalidated, never rewritten."@en ;
-    estate:keyRule "Its kind and its address, where it is reached at one: the host, or the host and the part of the path that names the system, lowercased and without what names something within it. Its provider is then a value, not part of the key. A system with no address is keyed by its provider, kind, and name. A system the organization runs outside every Cloud Account, in its own building or a colocation facility, has the provider on-premises: the provider names who runs a system, never the facility it sits in."@en ;
+    estate:keyRule "Its kind and its address, where it is reached at one: the host, or the host and the part of the path that names the system, lowercased and without what names something within it. Its provider is then a value, not part of the key. A system with no address is keyed by its provider, kind, and name; for an artifact store a deploy command uses without naming it, the kind is artifact store and the name is the target the command deploys, with the account or project it states. A system the organization runs outside every Cloud Account, in its own building or a colocation facility, has the provider on-premises: the provider names who runs a system, never the facility it sits in."@en ;
     estate:maturity "draft" .
 
 estate:Team
@@ -501,7 +501,7 @@ estate:deliversTo
     rdfs:domain estate:Pipeline ;
     rdfs:range [ a owl:Class ; owl:unionOf ( estate:Instance estate:DeclaredResource estate:DeployedResource estate:ExternalSystem ) ] ;
     owl:inverseOf estate:deliveredToBy ;
-    skos:definition "A registry, image repository, bucket, or hosted destination a Pipeline delivers an artifact to. A self-hosted registry is the Instance that serves it."@en ;
+    skos:definition "A registry, image repository, bucket, hosted destination, or the store a deploy tool or platform keeps an artifact in, that a Pipeline delivers an artifact to. A self-hosted registry is the Instance that serves it."@en ;
     estate:maturity "draft" .
 
 estate:deliveredToBy
@@ -526,8 +526,8 @@ estate:implementedIn
     rdfs:domain estate:Instance ;
     rdfs:range estate:Repository ;
     owl:inverseOf estate:implements ;
-    skos:definition "A Repository whose code an Instance runs, read by address: the image or package the Instance pulls is the one a Pipeline in that Repository delivers, or the Repository that deploys it also builds what it deploys. An Instance has one for each Repository whose code it runs, such as an application and a sidecar."@en ;
-    skos:scopeNote "Never inferred from a name. Not the Repository whose files deploy the Instance, which is deployedFrom; the two are one Repository where a repository deploys its own code. Absent for software no Repository in the estate holds, such as a chart from apache/superset, which is not a gap."@en ;
+    skos:definition "A Repository whose code an Instance runs, read through what the Instance pullsFrom: that Repository itself, where the Instance fetches its code from it, or the Repository of a Pipeline that deliversTo the place it pulls from. An Instance has one for each Repository whose code it runs, such as an application and a sidecar."@en ;
+    skos:scopeNote "Never inferred from a name, and never from a Repository deploying and building in one job: only where a pull meets a Repository or a delivery. Not the Repository whose files deploy the Instance, which is deployedFrom; the two are often one. Absent for software no Repository in the estate holds, whose pullsFrom no Pipeline in the estate delivers to, such as a published chart and its images; that is not a gap."@en ;
     estate:maturity "draft" .
 
 estate:implements
@@ -541,7 +541,7 @@ estate:Implementation
     rdfs:subClassOf estate:Detail ;
     rdfs:label "Implementation"@en ;
     estate:detailOf estate:implementedIn ;
-    skos:definition "The details of an implementedIn: the path in the Repository whose code the Instance runs, as the Delivery it was read through states it."@en ;
+    skos:definition "The details of an implementedIn: the path in the Repository whose code the Instance runs, as the Delivery or the Pull it was read through states it."@en ;
     estate:keyRule "The relation it reifies, and its code path."@en ;
     estate:maturity "draft" .
 
@@ -549,10 +549,10 @@ estate:pullsFrom
     a owl:ObjectProperty ;
     rdfs:label "pulls from"@en ;
     rdfs:domain estate:Instance ;
-    rdfs:range [ a owl:Class ; owl:unionOf ( estate:Instance estate:DeclaredResource estate:DeployedResource estate:ExternalSystem ) ] ;
+    rdfs:range [ a owl:Class ; owl:unionOf ( estate:Instance estate:DeclaredResource estate:DeployedResource estate:ExternalSystem estate:Repository ) ] ;
     owl:inverseOf estate:pulledBy ;
-    skos:definition "The image repository or registry an Instance's images are pulled from, read from the image references in its manifest, values, or task definition. A self-hosted registry is the Instance that serves it. With deliversTo, the registries in an estate are the targets of these relations."@en ;
-    skos:scopeNote "Not a pull that happened, which is live and held by the registry."@en ;
+    skos:definition "Where the artifact an Instance runs is held at rest, read from the references in its manifest, values, task definition, or the declaration of what serves it: an image or chart repository, a bucket a package or a site's files sit in, the store a deploy tool or platform keeps an artifact in, or a Repository, where the Instance fetches its code from one and the code is the artifact. A self-hosted registry is the Instance that serves it. With deliversTo, the artifact stores in an estate are the targets of these relations."@en ;
+    skos:scopeNote "Not a pull that happened, which is live and held by the store. Not where the code is held, which is implementedIn, except where the Instance fetches its code from the Repository itself. An Instance deployed from a chart has one for the chart and one for each image."@en ;
     estate:maturity "draft" .
 
 estate:pulledBy
@@ -566,7 +566,7 @@ estate:Pull
     rdfs:subClassOf estate:Detail ;
     rdfs:label "Pull"@en ;
     estate:detailOf estate:pullsFrom ;
-    skos:definition "The details of a pullsFrom: the image reference as declared, and the name of the pull secret, if one is declared."@en ;
+    skos:definition "The details of a pullsFrom: the reference as declared, the code path where it pulls from a Repository, and the name of the pull secret, if one is declared."@en ;
     skos:scopeNote "Never carries the pull secret's value."@en ;
     estate:keyRule "The relation it reifies."@en ;
     estate:maturity "draft" .
@@ -689,14 +689,6 @@ estate:deployedName
     rdfs:domain estate:Instance ;
     rdfs:range xsd:string ;
     skos:definition "The name an Instance is deployed under, which is part of its key."@en ;
-    estate:maturity "draft" .
-
-estate:upstreamPackage
-    a owl:DatatypeProperty ;
-    rdfs:label "upstream package"@en ;
-    rdfs:domain estate:Instance ;
-    rdfs:range xsd:string ;
-    skos:definition "The chart or image an Instance is deployed from where no Repository in the estate holds its code, such as apache/superset."@en ;
     estate:maturity "draft" .
 
 estate:repositoryRole
@@ -832,18 +824,18 @@ estate:tagScheme
 estate:codePath
     a owl:DatatypeProperty, owl:FunctionalProperty ;
     rdfs:label "code path"@en ;
-    rdfs:domain [ a owl:Class ; owl:unionOf ( estate:Delivery estate:Implementation ) ] ;
+    rdfs:domain [ a owl:Class ; owl:unionOf ( estate:Delivery estate:Implementation estate:Pull ) ] ;
     rdfs:range xsd:string ;
-    skos:definition "The path in a Repository whose code an artifact is built from or an Instance runs, such as the build context services/worker/, or the Repository's root where the whole Repository is built as one."@en ;
-    skos:scopeNote "Read from the job that builds: its build context, its working directory, or the path it packages. Never read from a name."@en ;
+    skos:definition "The path in a Repository whose code an artifact is built from, an Instance fetches, or an Instance runs, such as the build context services/worker/, or the Repository's root where the whole Repository is one."@en ;
+    skos:scopeNote "Read from the job that builds, its build context, its working directory, or the path it packages, or from the configuration that fetches, such as the path a sync reads. Never read from a name."@en ;
     estate:maturity "draft" .
 
-estate:imageReference
+estate:reference
     a owl:DatatypeProperty, owl:FunctionalProperty ;
-    rdfs:label "image reference"@en ;
+    rdfs:label "reference"@en ;
     rdfs:domain estate:Pull ;
     rdfs:range xsd:string ;
-    skos:definition "The image a Pull names, as its manifest declares it, such as registry.example.com/shop/user-svc:1.4.2."@en ;
+    skos:definition "The image, chart, package, or repository a Pull names, as its configuration declares it, such as registry.example.com/shop/user-svc:1.4.2 or an object key in a bucket."@en ;
     estate:maturity "draft" .
 
 estate:pullSecretName

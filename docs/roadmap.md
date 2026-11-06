@@ -22,7 +22,7 @@ tests it against estates other than the one it was first drawn from.
   vocabulary lists.
 - To come in `estate-shapes.ttl`: SHACL for the rest of what OWL cannot state. Key derivation;
   exactly one owner per Instance and Declared Resource; an `implementedIn` only where a `pullsFrom`
-  meets a `deliversTo`, or a Repository builds what it deploys; relation endpoint classes; the rules
+  ends at a Repository or meets a `deliversTo`; relation endpoint classes; the rules
   every detail keeps, moved from SPARQL once SHACL 1.2 is published and a validator reads RDF 1.2;
   no individual `prov:Person` and no relation touching one; no value on a `readsSecretsFrom`; at
   most one current `realizes` per Deployed Resource, ending at an Instance only where no Declared

@@ -173,6 +173,22 @@ diff (tool).
 - **Same for everyone.** Declared addresses are what classify a diff as infrastructure; without
   them it is a guess by directory name.
 
+### Where is the artifact each Instance runs held, and which Pipeline put it there?
+
+Terms: `pullsFrom` and its reference, `deliversTo` and its code path, External System,
+`implementedIn`.
+
+- **Estate returns.** Each Instance's `pullsFrom`, with the reference as declared: an image or
+  chart repository, a bucket, a Repository it fetches its code from, or the artifact store a deploy
+  tool keeps, keyed by the target its deploy command names; every Pipeline and job that
+  `deliversTo` the same store, with its code path; and the `implementedIn` read from them.
+- **Last mile.** None for what is declared. Which tag or object is in the store now is a query to
+  the store.
+- **Same for everyone.** Push and pull meet by address, or, for a store no file names, by the
+  target the deploy command states, never by a name two readers spell two ways. An Instance whose
+  store nothing in the estate delivers to runs software the estate does not hold, and the answer
+  says so.
+
 ### Who triggered the last rollout of a service? What commit, pipeline, and resources changed?
 
 Terms: `deploys` and its write location, `deliversTo` and its tag scheme; `observedBy` a CI
@@ -691,8 +707,8 @@ Terms: `deliversTo`, `pullsFrom`, `connectsTo`; `within`.
 
 - **Estate returns.** The registry, a managed Declared Resource or the Instance serving a
   self-hosted one, and its image repositories `within` it; every Pipeline that `deliversTo` them
-  with its job; every Instance that `pullsFrom` them with its image reference and pull
-  secret name; everything that `connectsTo` the registry's hostname.
+  with its job; every Instance that `pullsFrom` them with its reference and pull secret
+  name; everything that `connectsTo` the registry's hostname.
 - **Last mile.** None for what is declared. Whether anything pulled recently is a query to the
   registry, and a workload whose image is cached on its node may not have pulled for weeks.
 - **Same for everyone.** The set is a walk over declared references, never a search for the
@@ -704,7 +720,7 @@ Terms: `runsOn`, `inScope`, Core Infrastructure; `implementedIn`.
 
 - **Estate returns.** Every Instance that `runsOn` the cluster, each with its Scope: an
   Application's Environment, or the Core Infrastructure whose declaration installs it, such as an
-  ingress controller or a CI runner; each Instance's `implementedIn`, or its `upstreamPackage`.
+  ingress controller or a CI runner; each Instance's `implementedIn`, or the store it `pullsFrom`.
 - **Last mile.** None for what is declared. What is running now is a query to the cluster.
 - **Same for everyone.** Platform software has a Scope like any other, so it is never left out
   for lacking an Application.

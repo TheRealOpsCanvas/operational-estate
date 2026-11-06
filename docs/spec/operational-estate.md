@@ -81,11 +81,10 @@ not a class either: it is the resource's `networkRole` (section 5, Networks).
 A product or capability that delivers value to its users: its Environments and the Instances
 deployed into them. Not a single deployment (an Instance), and not what it runs on: its Instances
 run on Declared Resources, provisioned by its own Environments, by Core Infrastructure, by the
-Application itself across every Environment, such as its DNS zone or an image repository its
-Instances pull from, or by one Instance, when the deployment code declares a resource for that
-Instance alone, such as its queue, or its chart creates one, such as a load balancer. An Application
-needs no repository of its own: in an estate of services, it is named where it is composed and
-deployed.
+Application itself across every Environment, such as its DNS zone, or by one Instance, when the
+deployment code declares a resource for that Instance alone, such as its queue, or its chart creates
+one, such as a load balancer. An Application needs no repository of its own: in an estate of
+services, it is named where it is composed and deployed.
 
 Which code makes up an Application is read through its Instances: the Repositories each is
 `implementedIn`. An Instance one Application's Environment holds and another Application's Instances
@@ -125,8 +124,9 @@ Instance runs it.
 Whether practitioners call what an Instance runs an application, a service, or a function is not
 part of the model, and nothing classifies it: a monolith is one Instance in each Environment it is
 deployed into, and so is each of many services. Software no Repository in the estate holds, such as
-Superset from the chart `apache/superset`, is an Instance with no `implementedIn`, its chart or
-image its `upstreamPackage`, and is not incomplete for lacking one.
+Superset from the chart `apache/superset`, is an Instance with no `implementedIn`: it `pullsFrom`
+the chart repository and the image registry it is published to, which nothing in the estate
+delivers to, and it is not incomplete for lacking one.
 
 An Instance is a declaration, not a version or a build. The version it runs is read live: from the
 pinned location its deployment writes, or from the Deployed Resource that `realizes` it.
@@ -217,11 +217,12 @@ relations out of a Pipeline.
 
 Something the estate references and nothing in it provisions: a tool a thing is observed by, such as
 Datadog or PagerDuty; a hosted destination a Pipeline delivers to, such as npmjs.org or Docker Hub;
-or something a runtime thing reaches beyond the estate, such as a hosted API a workload calls or
-the interconnection fabric a dedicated link lands on. Anything with a class of its own is not an
-External System: a role is an Identity; a cluster, registry repository, or bucket is a Declared
-Resource; an account is a Cloud Account; a fabric connection the estate declares is a Declared
-Resource; an API another Application in the estate serves is that Instance.
+the store a deploy tool or platform keeps an artifact in, where no file the estate reads gives its
+address; or something a runtime thing reaches beyond the estate, such as a hosted API a workload
+calls or the interconnection fabric a dedicated link lands on. Anything with a class of its own is
+not an External System: a role is an Identity; a cluster, registry repository, or bucket is a
+Declared Resource; an account is a Cloud Account; a fabric connection the estate declares is a
+Declared Resource; an API another Application in the estate serves is that Instance.
 
 A system the organization runs outside every Cloud Account, such as a database in its own data
 center or the router a tunnel ends at, has the provider `on-premises`. Its kind says what it is,
@@ -235,6 +236,13 @@ An External System reached at an address, such as the host a Pipeline publishes 
 workload calls, is keyed by its kind and that address, and its provider is a value on it: the
 address is what every reference to the system reduces to, whoever reads it. A system with no
 address of its own, such as a database known by its name, is keyed by its provider, kind, and name.
+
+A deploy tool or platform that builds and stores an artifact itself, such as a command that deploys
+from a checkout and keeps the image or package in a store of its own, delivers to a store no file
+the estate reads names. That store is an External System of kind `artifact store`, keyed by its
+provider, that kind, and a name: the target the deploy command names, with the account or project
+it states, such as `reports` in `shop-prod`. The deploy job `deliversTo` it and the Instance
+`pullsFrom` it, so build and runtime meet there as at any registry.
 
 What is first referenced as an External System may later be reported as a Deployed Resource, once
 a source the estate reads covers its provider. The External System is then invalidated with
@@ -282,7 +290,7 @@ asserted too; the annotation syntax does this, and section 7 requires it of ever
 | `triggers` | Pipeline | Pipeline | job, variables sent |
 | `deploys` | Pipeline | Environment, Core Infrastructure, Application, Instance | job, pinned write location |
 | `deliversTo` | Pipeline | Instance, Declared Resource, Deployed Resource, External System | job, code path, tag scheme |
-| `pullsFrom` | Instance | Instance, Declared Resource, Deployed Resource, External System | image reference, pull secret name |
+| `pullsFrom` | Instance | Instance, Declared Resource, Deployed Resource, External System, Repository | reference, code path, pull secret name |
 | `provisionedFor` | Declared Resource, Identity | Environment, Core Infrastructure, Application, Instance | |
 | `runsOn` | Instance | Declared Resource, Deployed Resource | |
 | `providedAs` | Instance | Declared Resource | |
@@ -342,26 +350,31 @@ review, provided it is the value at the commit the location was read at. `trigge
 variables one Pipeline sends another. Neither `triggers` nor `deploys` says whether it runs
 automatically or on which branch: that is the job's rule, read in the cited file.
 
-A registry is where build meets runtime. A Pipeline `deliversTo` the image repository it pushes to,
-and an Instance `pullsFrom` the one its manifest's image reference names, with that
-reference and the name of any pull secret on the relation. Push and pull meet at the image
-repository, a Declared Resource `within` its registry, or at the Instance that serves a
-self-hosted registry. As with secret stores, a registry is a role: the registries in an estate are
-the targets of these two relations. Tags, digests, and what was pushed or pulled when are live and
-the registry's.
+An artifact store is where build meets runtime: where the artifact an Instance runs is held at
+rest. A Pipeline `deliversTo` the store it pushes to or uploads to, and an Instance `pullsFrom` the
+one its configuration references, with that reference and the name of any pull secret on the
+relation. The store is an image or chart repository, a Declared Resource `within` its registry; a
+bucket a package or a site's files sit in, read for a site from the declaration of what serves it;
+the Instance that serves a self-hosted registry; or a store a deploy tool or platform keeps, an
+External System. Where an Instance fetches its code straight from a Repository, such as a sync
+that reads a path of it, the code is the artifact and the Repository is the store. As with secret
+stores, a store is a role: the artifact stores in an estate are the targets of these two relations.
+Tags, digests, and what was pushed or pulled when are live and the store's.
 
 A Delivery carries what links what is built to the code and the commit it came from: the job, the
 code path in the Pipeline's Repository the artifact is built from, such as the build context
 `services/worker/`, and the tag scheme, `$CI_COMMIT_SHA` or a version scheme. The artifact itself
 is not modeled.
 
-`implementedIn` is read where push and pull meet. An Instance that pulls from what a Pipeline
-delivers to is `implementedIn` that Pipeline's Repository, at the Delivery's code path. Where an
-Instance's code reaches it some other way, such as a function package or a site a repository
-deploys itself, the Repository that builds what it deploys is the one it is `implementedIn`. It is
-read by address, never by a name: an Instance whose image reference names a variable no cited file
-sets has no `implementedIn` until the reference is read. Which commit an Instance runs is then the
-declared value its `deploys` writes, read through the tag scheme of the Delivery it pulls from.
+`implementedIn` is read through `pullsFrom`, and only there. An Instance that pulls from a
+Repository is `implementedIn` it, at the code path the Pull states. An Instance that pulls from a
+store a Pipeline delivers to is `implementedIn` that Pipeline's Repository, at the Delivery's code
+path. An Instance whose store receives nothing a Pipeline in the estate delivers runs software no
+Repository in the estate holds. It is read by address, never by a name. A job that both builds and
+deploys is no exception: it `deliversTo` the store its tool keeps, and the Instance it deploys
+`pullsFrom` that store. An Instance whose reference names a variable no cited file sets has no
+`implementedIn` until the reference is read. Which commit an Instance runs is then the declared
+value its `deploys` writes, read through the tag scheme of the Delivery it pulls from.
 
 ### Where an Instance runs, and what it is
 
@@ -375,14 +388,13 @@ Declared Resource. An Instance's Cloud Account is derived through them, never st
 
 `provisionedFor` is read from the module or chart boundary a declaration sits inside, a structural
 fact rather than a path token. A module for one Application outside any Environment, such as a
-deploy repository's `app/` declaring the Application's DNS zone or the image repository its
-Instances pull from, is the Application's; a module inside an Environment's declarations for one
-Instance is that Instance's. `ownedBy` names a Team and only a Team. An Environment's owner and a
-Pipeline's are derived from their Application and Repository, and an Instance's from each
-Repository it is `implementedIn`, through `CODEOWNERS` for the code path where it names one.
-Evidence that names only individuals, `@jane` in `CODEOWNERS`, establishes no owner. Placement is
-not ownership: `placedUnder` says which Application an Environment belongs to, `ownedBy` says whose
-a thing is.
+deploy repository's `app/` declaring the Application's DNS zone, is the Application's; a module
+inside an Environment's declarations for one Instance is that Instance's. `ownedBy` names a Team and
+only a Team. An Environment's owner and a Pipeline's are derived from their Application and
+Repository, and an Instance's from each Repository it is `implementedIn`, through `CODEOWNERS` for
+the code path where it names one. Evidence that names only individuals, `@jane` in `CODEOWNERS`,
+establishes no owner. Placement is not ownership: `placedUnder` says which Application an
+Environment belongs to, `ownedBy` says whose a thing is.
 
 ### Access
 
@@ -620,8 +632,8 @@ SPARQL 1.2 queries, until SHACL 1.2 is published:
 - A detail reifies exactly one relation, that relation carries data, and it is asserted.
 - A relation's data is on a detail of that relation: a `job` is on a `triggers`, `deploys`,
   `deliversTo`, or `runsAs`, never on a `readsSecretsFrom`.
-- An `implementedIn` is read by address, through a `pullsFrom` that meets a `deliversTo`, or through
-  the Repository that builds what it deploys, never by a name.
+- An `implementedIn` is read through a `pullsFrom` that ends at a Repository or at a store a
+  `deliversTo` ends at, never by a name.
 - An Environment has exactly one asserted Application.
 - A Pipeline that `deploys` an Environment or Instance is in the Repository it is `deployedFrom`.
 - `ownedBy` targets only a Team.
