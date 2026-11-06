@@ -515,9 +515,9 @@ estate:Delivery
     rdfs:subClassOf estate:Detail ;
     rdfs:label "Delivery"@en ;
     estate:detailOf estate:deliversTo ;
-    skos:definition "The details of a deliversTo: the job, the path in the Pipeline's Repository whose code the artifact is built from, and the tag scheme that links a tag to the commit it came from."@en ;
+    skos:definition "The details of a deliversTo: the job, the reference it writes, the path in the Pipeline's Repository whose code the artifact is built from, and the tag scheme that links a tag to the commit it came from."@en ;
     skos:scopeNote "The artifact itself is not modeled. A Delivery's path and an Instance that pulls what it delivers are how an implementedIn is read."@en ;
-    estate:keyRule "The relation it reifies, and its job."@en ;
+    estate:keyRule "The relation it reifies, its job, and its artifact: its reference without a tag, a digest, or an object path."@en ;
     estate:maturity "draft" .
 
 estate:implementedIn
@@ -568,7 +568,7 @@ estate:Pull
     estate:detailOf estate:pullsFrom ;
     skos:definition "The details of a pullsFrom: the reference as declared, the code path where it pulls from a Repository, and the name of the pull secret, if one is declared."@en ;
     skos:scopeNote "Never carries the pull secret's value."@en ;
-    estate:keyRule "The relation it reifies."@en ;
+    estate:keyRule "The relation it reifies, and its artifact: its reference without a tag, a digest, or an object path."@en ;
     estate:maturity "draft" .
 
 estate:readsSecretsFrom
@@ -833,9 +833,10 @@ estate:codePath
 estate:reference
     a owl:DatatypeProperty, owl:FunctionalProperty ;
     rdfs:label "reference"@en ;
-    rdfs:domain estate:Pull ;
+    rdfs:domain [ a owl:Class ; owl:unionOf ( estate:Delivery estate:Pull ) ] ;
     rdfs:range xsd:string ;
-    skos:definition "The image, chart, package, or repository a Pull names, as its configuration declares it, such as registry.example.com/shop/user-svc:1.4.2 or an object key in a bucket."@en ;
+    skos:definition "The image, chart, package, object, or repository a Delivery writes or a Pull names, as its job or configuration declares it, variables included, such as registry.example.com/shop/user-svc:1.4.2 or an object key in a bucket. Without its tag, digest, or object path it is the artifact, which is where a push and a pull of one thing meet."@en ;
+    skos:scopeNote "The artifact is read from the reference by that rule alone, never from a name. A variable in the part the rule cuts, such as a tag, decides nothing."@en ;
     estate:maturity "draft" .
 
 estate:pullSecretName

@@ -116,11 +116,10 @@ Terms: Environment, `environmentTier`, `inScope`, `provisionedFor`, `runsOn`.
 Terms: the `deploys` write location and declared value, `pullsFrom`, `deliversTo` and its tag
 scheme; git history (tool).
 
-- **Estate returns.** The deploy edge's write location, `services/user-svc/values-prod.yaml`
-  at commit `abc123`, field `userServiceImageTag`, and the value declared there,
-  `main-851dfd9c`; the image repository the Instance `pullsFrom`, and the tag scheme,
-  `$CI_COMMIT_SHA`, of the Delivery that pushes to it, whose Pipeline's Repository is the one to
-  ask.
+- **Estate returns.** The deploy edge's write location, `services/user-svc/values-prod.yaml` at
+  commit `abc123`, field `userServiceImageTag`, and the value declared there, `main-851dfd9c`; the
+  image repository the Instance `pullsFrom`, and the tag scheme, `$CI_COMMIT_SHA`, of the Delivery
+  with the same artifact, whose Pipeline's Repository is the one to ask.
 - **Last mile.** Apply the scheme to the value to get the commit; ask the git host whether that
   commit contains the fix, starting from the merge commit of the fix's pull request, since a
   squash merge leaves the fix's own commits out of the default branch.
@@ -181,7 +180,7 @@ Terms: `pullsFrom` and its reference, `deliversTo` and its code path, External S
 - **Estate returns.** Each Instance's `pullsFrom`, with the reference as declared: an image or
   chart repository, a bucket, a Repository it fetches its code from, or the artifact store a deploy
   tool keeps, keyed by the target its deploy command names; every Pipeline and job that
-  `deliversTo` the same store, with its code path; and the `implementedIn` read from them.
+  `deliversTo` the same artifact, with its code path; and the `implementedIn` read from them.
 - **Last mile.** None for what is declared. Which tag or object is in the store now is a query to
   the store.
 - **Same for everyone.** Push and pull meet by address, or, for a store no file names, by the

@@ -289,7 +289,7 @@ asserted too; the annotation syntax does this, and section 7 requires it of ever
 | `deployedFrom` | Environment, Instance | Repository | |
 | `triggers` | Pipeline | Pipeline | job, variables sent |
 | `deploys` | Pipeline | Environment, Core Infrastructure, Application, Instance | job, pinned write location |
-| `deliversTo` | Pipeline | Instance, Declared Resource, Deployed Resource, External System | job, code path, tag scheme |
+| `deliversTo` | Pipeline | Instance, Declared Resource, Deployed Resource, External System | job, reference, code path, tag scheme |
 | `pullsFrom` | Instance | Instance, Declared Resource, Deployed Resource, External System, Repository | reference, code path, pull secret name |
 | `provisionedFor` | Declared Resource, Identity | Environment, Core Infrastructure, Application, Instance | |
 | `runsOn` | Instance | Declared Resource, Deployed Resource | |
@@ -362,14 +362,20 @@ stores, a store is a role: the artifact stores in an estate are the targets of t
 Tags, digests, and what was pushed or pulled when are live and the store's.
 
 A Delivery carries what links what is built to the code and the commit it came from: the job, the
-code path in the Pipeline's Repository the artifact is built from, such as the build context
-`services/worker/`, and the tag scheme, `$CI_COMMIT_SHA` or a version scheme. The artifact itself
-is not modeled.
+reference it writes, the code path in the Pipeline's Repository the artifact is built from, such as
+the build context `services/worker/`, and the tag scheme, `$CI_COMMIT_SHA` or a version scheme.
+
+Push and pull meet at an **artifact**: a Delivery's or a Pull's reference without its tag, digest,
+or object path, such as `ghcr.io/acme/orders-api`. The store is not enough, because one store
+holds the artifacts of many Repositories: a registry such as `ghcr.io`, or one image repository
+holding several images. A Delivery and a Pull with one artifact are a push and a pull of one thing.
+The artifact is a value read from the reference by that rule, not an entity, and what was pushed
+or pulled under it is live.
 
 `implementedIn` is read through `pullsFrom`, and only there. An Instance that pulls from a
-Repository is `implementedIn` it, at the code path the Pull states. An Instance that pulls from a
-store a Pipeline delivers to is `implementedIn` that Pipeline's Repository, at the Delivery's code
-path. An Instance whose store receives nothing a Pipeline in the estate delivers runs software no
+Repository is `implementedIn` it, at the code path the Pull states. An Instance whose Pull has the
+artifact of a Delivery is `implementedIn` that Delivery's Pipeline's Repository, at the Delivery's
+code path. An Instance whose artifacts no Pipeline in the estate delivers runs software no
 Repository in the estate holds. It is read by address, never by a name. A job that both builds and
 deploys is no exception: it `deliversTo` the store its tool keeps, and the Instance it deploys
 `pullsFrom` that store. An Instance whose reference names a variable no cited file sets has no
@@ -605,9 +611,10 @@ Environment and Team also carry alternate names.
 target's key, and, where one relation can have several details, by what tells them apart: the job
 for a `triggers`, `deploys`, `deliversTo`, or `runsAs`, the code path for an `implementedIn`, the
 secret path for a `readsSecretsFrom`, the Cloud Account an `accessedAs` is `usedIn`, where it has
-one. An `observedBy` or `pullsFrom` has at most one detail. A detail is named by an identifier
-derived from its key, never a blank node, so two graphs that say the same thing about one relation
-merge into one detail.
+one, and the artifact for a `deliversTo` or `pullsFrom`, beside a `deliversTo`'s job, so one job
+pushing two images to one registry is two Deliveries. An `observedBy` has at most one detail. A
+detail is named by an identifier derived from its key, never a blank node, so two graphs that say
+the same thing about one relation merge into one detail.
 
 **An individual's identifier is relative: its kind and key, resolved under a base.** For example
 `instance/shop/prod/user-svc`. A serialization sets `@base`, and how an implementation
