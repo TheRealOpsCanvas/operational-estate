@@ -51,15 +51,15 @@ shape:NetworkValueShape
 
 shape:DeclaredAgreementShape
     a sh:NodeShape ;
-    rdfs:comment "A Deployed Resource carries only values of networkRole, region, zone, and accountZone that the Declared Resource it is declaredAs carries, where that carries any."@en ;
+    rdfs:comment "A Deployed Resource carries only values of networkRole, region, zone, and accountZone that the Declared Resource it realizes carries, where that carries any."@en ;
     sh:targetClass estate:DeployedResource ;
     sh:sparql [
         a sh:SPARQLConstraint ;
-        sh:message "Carries a {?property} the Declared Resource it is declaredAs does not." ;
+        sh:message "Carries a {?property} the Declared Resource it realizes does not." ;
         sh:prefixes <https://w3id.org/operational-estate/shapes> ;
         sh:select """
             SELECT $this ?property ?value WHERE {
-                $this estate:declaredAs ?declared ;
+                $this estate:realizes ?declared ;
                       ?property ?value .
                 FILTER (?property IN (estate:networkRole, estate:region, estate:zone, estate:accountZone))
                 FILTER EXISTS { ?declared ?property ?any }
@@ -83,7 +83,7 @@ shape:SubnetShape
 
 shape:AccountZoneShape
     a sh:NodeShape ;
-    rdfs:comment "A resource that carries an accountZone is within a Cloud Account, directly or through declaredAs; one that is not is a warning, because its zone cannot be compared."@en ;
+    rdfs:comment "A resource that carries an accountZone is within a Cloud Account, directly or through realizes; one that is not is a warning, because its zone cannot be compared."@en ;
     sh:targetSubjectsOf estate:accountZone ;
     sh:severity sh:Warning ;
     sh:sparql [
@@ -93,7 +93,7 @@ shape:AccountZoneShape
         sh:select """
             SELECT $this WHERE {
                 FILTER NOT EXISTS {
-                    $this (estate:declaredAs|^estate:declaredAs)?/estate:within+ ?account .
+                    $this (estate:realizes|^estate:realizes)?/estate:within+ ?account .
                     ?account a estate:CloudAccount .
                 }
             }""" ;
@@ -105,7 +105,7 @@ shape:AccountZoneShape
 
 shape:RestoreSourceShape
     a sh:NodeShape ;
-    rdfs:comment "What a restoresFrom ends at holds a copy: it is the target of a copiedTo, directly or through declaredAs. One that is not is a warning, because the copy it restores is not recorded."@en ;
+    rdfs:comment "What a restoresFrom ends at holds a copy: it is the target of a copiedTo, directly or through realizes. One that is not is a warning, because the copy it restores is not recorded."@en ;
     sh:targetObjectsOf estate:restoresFrom ;
     sh:severity sh:Warning ;
     sh:sparql [
@@ -114,7 +114,7 @@ shape:RestoreSourceShape
         sh:prefixes <https://w3id.org/operational-estate/shapes> ;
         sh:select """
             SELECT $this WHERE {
-                FILTER NOT EXISTS { $this (estate:declaredAs|^estate:declaredAs)*/^estate:copiedTo ?source }
+                FILTER NOT EXISTS { $this (estate:realizes|^estate:realizes)*/^estate:copiedTo ?source }
             }""" ;
     ] .
 
@@ -155,13 +155,12 @@ shape:RepositoryPropertiesShape
 
 shape:AlternateNameShape
     a sh:NodeShape ;
-    rdfs:comment "Only Application, Service, Environment, Service Instance, or Team carries alternateName, a string."@en ;
+    rdfs:comment "Only Application, Environment, Instance, or Team carries alternateName, a string."@en ;
     sh:targetSubjectsOf estate:alternateName ;
     sh:or (
         [ sh:class estate:Application ]
-        [ sh:class estate:Service ]
         [ sh:class estate:Environment ]
-        [ sh:class estate:ServiceInstance ]
+        [ sh:class estate:Instance ]
         [ sh:class estate:Team ]
     ) ;
     sh:property [
@@ -171,8 +170,8 @@ shape:AlternateNameShape
 
 shape:SharedAlternateNameShape
     a sh:NodeShape ;
-    rdfs:comment "Alternate names on Application, Service, Environment, and Service Instance are nonblank."@en ;
-    sh:targetClass estate:Application, estate:Service, estate:Environment, estate:ServiceInstance ;
+    rdfs:comment "Alternate names on Application, Environment, and Instance are nonblank."@en ;
+    sh:targetClass estate:Application, estate:Environment, estate:Instance ;
     sh:property [
         sh:path estate:alternateName ;
         sh:pattern "\\S" ;
