@@ -87,7 +87,7 @@ and result for each case. Use pass only for an exercised invariant, fail for a d
 violation, and unverified for missing evidence. Static inspection of a test is evidence of its
 intended coverage, not a successful execution. Report partial coverage at the invariant level.
 File focused implementation issues for demonstrated failures; extra implementation tests are
-separate work. [The initial investigation](rename-investigation.md) records available evidence.
+separate work.
 
 An executable conformance runner is separate tooling work. It would need adapters for loading
 fixtures, applying edits, exporting graphs, and comparing semantic identities. Neither such a
