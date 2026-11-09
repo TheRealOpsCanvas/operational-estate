@@ -117,3 +117,58 @@ shape:EnvironmentTierShape
         sh:datatype xsd:string ;
         sh:in ( "production" "staging" "development" "sandbox" ) ;
     ] .
+
+#################################################################
+# Repository properties and names
+#################################################################
+
+shape:RepositoryPropertiesShape
+    a sh:NodeShape ;
+    rdfs:comment "Only a Repository carries monorepo or hasIaC, at most one boolean value of each."@en ;
+    sh:targetSubjectsOf estate:monorepo, estate:hasIaC ;
+    sh:class estate:Repository ;
+    sh:property [
+        sh:path estate:monorepo ;
+        sh:maxCount 1 ;
+        sh:datatype xsd:boolean ;
+    ] , [
+        sh:path estate:hasIaC ;
+        sh:maxCount 1 ;
+        sh:datatype xsd:boolean ;
+    ] .
+
+shape:AlternateNameShape
+    a sh:NodeShape ;
+    rdfs:comment "Only Application, Service, Environment, Service Instance, or Team carries alternateName, a string."@en ;
+    sh:targetSubjectsOf estate:alternateName ;
+    sh:or (
+        [ sh:class estate:Application ]
+        [ sh:class estate:Service ]
+        [ sh:class estate:Environment ]
+        [ sh:class estate:ServiceInstance ]
+        [ sh:class estate:Team ]
+    ) ;
+    sh:property [
+        sh:path estate:alternateName ;
+        sh:datatype xsd:string ;
+    ] .
+
+shape:SharedAlternateNameShape
+    a sh:NodeShape ;
+    rdfs:comment "Alternate names on Application, Service, Environment, and Service Instance are nonblank."@en ;
+    sh:targetClass estate:Application, estate:Service, estate:Environment, estate:ServiceInstance ;
+    sh:property [
+        sh:path estate:alternateName ;
+        sh:pattern "\\S" ;
+    ] .
+
+shape:CoreInfrastructureNameShape
+    a sh:NodeShape ;
+    rdfs:comment "A Core Infrastructure carries at most one descriptive name, a nonblank string when known."@en ;
+    sh:targetClass estate:CoreInfrastructure ;
+    sh:property [
+        sh:path estate:name ;
+        sh:maxCount 1 ;
+        sh:datatype xsd:string ;
+        sh:pattern "\\S" ;
+    ] .

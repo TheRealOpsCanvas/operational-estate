@@ -145,6 +145,9 @@ Infrastructure while only dev uses it. It is an owner, not a place: Declared Res
 Identities are provisioned for it, the Service Instances of the software it installs are in it, and
 it is not the cluster provisioned for it.
 
+Its descriptive `name` may be unknown. Adding or changing it does not change its key, which is
+established from its declaration and applied configuration.
+
 *Aliases:* "landing zone".
 
 ### Declared Resource
@@ -197,8 +200,20 @@ Member accounts are `within` the payer or organization they bill to.
 
 ### Repository
 
-A version-controlled store of files, such as a Git repository, whose role is `app`, `iac`, or
-`mixed`. Where things are declared; neither software nor runtime.
+A version-controlled store of files. Where things are declared; neither software nor runtime.
+
+`monorepo` records whether it contains multiple software projects or deployable units. `hasIaC`
+records whether it contains infrastructure as code, independently of its software organization.
+Both are optional, single boolean values on Repository, confirmed and attributed like other facts.
+An absent value is unknown, not `false`; incomplete discovery supplies no default. Both may be
+`false`, as for one software project with no infrastructure as code. Neither is part of the key.
+They are data properties from Repository to boolean values, with no aliases or inverse.
+
+These are repository-wide facts, not interpretations of one cited file. `monorepo` says nothing
+about whether software is monolithic or independently deployed. Repository `implements`
+Application or Service (inverse `implementedIn`) identifies recorded software. Missing edges
+mean software is not recorded, not that none exists; their count does not establish `monorepo`.
+`contains` retains its infrastructure meaning as the inverse of `within`.
 
 *Aliases:* "repo".
 
@@ -512,10 +527,10 @@ or account name would put "cluster" in identifiers read by people who think "pro
 
 | Class | Key |
 |---|---|
-| Application | its name |
-| Environment | its asserted Application name and its name |
-| Service | the Repository that declares it and its name |
-| Service Instance | its Scope's key and its deployed name |
+| Application | its identifying name at key establishment |
+| Environment | its asserted Application name and its identifying name at key establishment |
+| Service | the Repository that declares it and its identifying name at key establishment |
+| Service Instance | its Scope's established key and its deployed name at key establishment |
 | Repository | its canonical remote |
 | Pipeline | its Repository and its definition path |
 | Core Infrastructure | the Repository, the stack, module, or root that declares it, and its applied configuration |
@@ -569,7 +584,39 @@ readers key one thing the same way. A thing the provider replaces under a new id
 Resource. Its declaration is what lasts across replacements, so a Declared Resource is keyed by that
 instead.
 
-Environment and Team also carry alternate names.
+### Descriptive names and rename continuity
+
+A descriptive rename preserves an entity's established key. Current `name` and `alternateName`
+values may change without changing that key, keys that incorporate it, or relationships referencing
+it. Importing an established entity preserves its identity rather than deriving a new key from its
+current name. The name inputs in the table establish identity once; they are not instructions to
+recompute it after every rename. The identifying inputs already captured in the established key
+remain fixed even when current Environment `applicationName` or Service Instance `deployedName`
+values change.
+
+Application, Service, Environment, Service Instance, and Team carry `alternateName` values. For the
+first four classes, a descriptive rename retains the former name as an alternate name, including
+through import. Existing provenance is preserved; retaining a former name does not invent a past
+asserting agent or timestamp. Core Infrastructure and Repository use `name` without adding
+alternate-name support in this amendment.
+
+Continuity applies to established identities carried through edits and imports. It does not imply
+equivalence of entities independently discovered under different identifying names, nor automatic
+merging by a matching name or alternate name. Installation-local identifiers and storage mechanisms
+are outside the contract.
+
+Changing a Repository's actual canonical location, a Core Infrastructure's declaration root or
+applied configuration, or a Service Instance's Scope is an identifying-input change, not a
+descriptive rename. Such changes require separately specified identity-transition treatment or an
+explicit refusal. They must not silently rekey or merge entities under the rename rule. Changing a
+Repository's access spelling or transport while preserving its canonical remote is not a location
+change. This specification adds no automatic migration for identifying-input changes.
+
+[Portable rename conformance scenarios](../conformance/rename-continuity.md) specify before/after
+and import/export checks for Application, Service, Environment, Service Instance, Repository, and
+Core Infrastructure.
+
+### Relation details and serialization
 
 **A detail is keyed by the relation it reifies**, meaning its source's key, the relation, and its
 target's key, and, where one relation can have several details, by what tells them apart: the job
@@ -617,8 +664,15 @@ SPARQL 1.2 queries, until SHACL 1.2 is published:
 - A resource that carries an `accountZone` is `within` a Cloud Account, directly or through
   `declaredAs`; one that is not is a warning, because its zone cannot be compared.
 - Only an Environment carries `environmentTier`, at most one, from its listed values.
+- Only a Repository carries `monorepo` or `hasIaC`, at most one boolean value of each.
+- Only Application, Service, Environment, Service Instance, or Team carries `alternateName`.
+  Alternate names are strings; on Application, Service, Environment, and Service Instance they
+  are nonblank.
+  Repeated identical values denote one RDF fact.
+- A Core Infrastructure carries at most one descriptive `name`, a nonblank string when known.
+  An unknown name is absent, not an empty string or a literal null.
 
-The constraints on networks are stated as SHACL shapes in
+The constraints on networks, environment tiers, repository properties, and names are stated in
 [`ontology/estate-shapes.ttl`](../../ontology/estate-shapes.ttl).
 
 ## 8. Provenance
@@ -664,6 +718,12 @@ estates. A question whose last mile is a search fails.
 **Worked estates** test the model against estates other than the one it was drawn from. The failure
 signal is a fact that has to be forced in, the sentence "a Service too, if we need it": wherever it
 is said, the model is wrong there.
+
+Rename continuity also requires checks across graph transitions. Two individually valid snapshots
+can still describe an incorrect rekey. The [portable scenarios](../conformance/rename-continuity.md)
+state semantic expectations without prescribing a test runner or implementation storage.
+[Shared-class wire mappings](../spec/shared-class-wire-mapping.md) state the names and aliases
+mapping and the boundary of repository-property compatibility.
 
 ## 11. Evolution
 
@@ -792,7 +852,7 @@ same reason: classes for subnets, connectors, exits, or entries.
 **The network role is a listed value, not subclasses or a concept scheme.** Subclasses would put a
 role in the class hierarchy, against the rule that a role is not a class, and would have to be
 repeated under Declared and Deployed Resource. A SKOS concept scheme allows hierarchy and extension
-that five values do not need. A listed value is what `sourceKind` and `repositoryRole` already are.
+that five values do not need. A listed value is what `sourceKind` and `environmentTier` already are.
 
 **The network role is stored, though one file shows it.** A resource's type is in the declaration
 or report the resource cites, so its role could be read there. A question about networks has to
@@ -867,3 +927,12 @@ Infrastructure. Stored, it would be a verdict computed once and true until any o
 whoever needs it computes it from them when asked. A tier a catalog file declares is a value
 copied verbatim from a pinned file, and the estate may carry it as one, cited; it never ranks
 anything itself.
+
+### Repository organization and software relationships
+
+An exclusive monolith, monorepo, service, or none classification mixes software architecture with
+repository organization. Multiple projects can include monolithic software and independent
+Services. Independent boolean properties express repository organization and infrastructure content;
+`implements` supplies software relationships without a second classification that can disagree with
+them. A structured property named `contains` would also collide with infrastructure containment.
+The draft `repositoryRole` property is replaced rather than retained as a competing classification.

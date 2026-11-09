@@ -81,7 +81,7 @@ estate:Application
     rdfs:label "Application"@en ;
     skos:definition "A product or capability that delivers value to its users: a set of Services and the Environments they are deployed into. It needs no repository of its own; in an estate of services it is named where it is composed and deployed."@en ;
     skos:scopeNote "Not a single deployable, which is a Service, and not what it runs on: its Service Instances run on Declared Resources, provisioned by its own Environments, by Core Infrastructure, by the Application itself or one of its Services across every Environment, such as the Application's DNS zone or a Service's image registry, or by one Service Instance, when the deployment code declares a resource for that Instance alone, such as its queue, or its chart creates one, such as a load balancer."@en ;
-    estate:keyRule "Its name."@en ;
+    estate:keyRule "Its identifying name when its key is first established; descriptive renames preserve the established key."@en ;
     estate:maturity "draft" .
 
 estate:Service
@@ -91,7 +91,7 @@ estate:Service
     skos:altLabel "the service"@en ;
     skos:definition "A deployable unit of software that implements all or part of an Application: the unit itself, the same Service in every Environment. A monolith is an Application with one Service. A Service may be upstream, deployed from a chart or image nobody in the estate builds; it then has no implementedIn and no Build, and is not incomplete for lacking them."@en ;
     skos:scopeNote "Never a running copy, which is a Service Instance."@en ;
-    estate:keyRule "The Repository that declares it and its name."@en ;
+    estate:keyRule "The Repository that declares it and its identifying name when its key is first established; descriptive renames preserve the established key."@en ;
     estate:maturity "draft" .
 
 estate:Environment
@@ -101,7 +101,7 @@ estate:Environment
     skos:altLabel "app-env"@en, "the environment"@en, "stage"@en ;
     skos:definition "A named set of runtime things belonging to one Application, as a practitioner means it, across whatever clouds, accounts, and clusters it spans. Each Application has its own. A Declared Resource whose declaration is in its own code is provisionedFor it; a Service Instance deployed into it is inScope it."@en ;
     skos:scopeNote "Not the cluster or account it runs in, and not shared between Applications: what several Applications' Environments share is Core Infrastructure. It does not run; its Service Instances do."@en ;
-    estate:keyRule "Its asserted Application name and its name."@en ;
+    estate:keyRule "Its asserted Application name and its identifying name when its key is first established; descriptive renames of either entity preserve this key."@en ;
     estate:maturity "draft" .
 
 estate:ServiceInstance
@@ -111,7 +111,7 @@ estate:ServiceInstance
     skos:altLabel "Deployed Instance"@en ;
     skos:definition "One deployment of one Service into one Scope: an Environment, or a Core Infrastructure for software the platform installs, such as an ingress controller. Its Service is always a Service, never an Application, so every question about software takes one path from an Instance through its Service to its Application."@en ;
     skos:scopeNote "Not one replica, and not a virtual machine instance. \"Deployed Instance\" is a draft rename."@en ;
-    estate:keyRule "Its Scope's key and its deployed name."@en ;
+    estate:keyRule "Its Scope's established key and its deployed name when its key is first established; descriptive renames preserve this key."@en ;
     estate:maturity "draft" .
 
 estate:CoreInfrastructure
@@ -167,7 +167,7 @@ estate:Repository
     rdfs:subClassOf estate:Entity ;
     rdfs:label "Repository"@en ;
     skos:altLabel "repo"@en ;
-    skos:definition "A version-controlled store of files, such as a Git repository, whose role is app, iac, or mixed. Where things are declared."@en ;
+    skos:definition "A version-controlled store of files. Where things are declared; monorepo records whether it holds multiple software projects or deployable units, and hasIaC records whether it holds infrastructure as code."@en ;
     skos:scopeNote "Neither software nor runtime."@en ;
     estate:keyRule "Its canonical remote."@en ;
     estate:maturity "draft" .
@@ -720,7 +720,7 @@ estate:key
     rdfs:label "key"@en ;
     rdfs:domain estate:Entity ;
     rdfs:range xsd:string ;
-    skos:definition "What identifies an entity, derived by its class's key rule."@en ;
+    skos:definition "What identifies an entity, established by its class's key rule and retained through descriptive renames and imports."@en ;
     estate:maturity "draft" .
 
 estate:name
@@ -728,15 +728,15 @@ estate:name
     rdfs:label "name"@en ;
     rdfs:domain estate:Entity ;
     rdfs:range xsd:string ;
-    skos:definition "An entity's name as its practitioners use it."@en ;
+    skos:definition "An entity's current descriptive name as its practitioners use it. A Core Infrastructure may have no known name; its name is not part of its key."@en ;
     estate:maturity "draft" .
 
 estate:alternateName
     a owl:DatatypeProperty ;
     rdfs:label "alternate name"@en ;
-    rdfs:domain [ a owl:Class ; owl:unionOf ( estate:Environment estate:Team ) ] ;
+    rdfs:domain [ a owl:Class ; owl:unionOf ( estate:Application estate:Service estate:Environment estate:ServiceInstance estate:Team ) ] ;
     rdfs:range xsd:string ;
-    skos:definition "Another name an Environment or Team was committed under or is known by elsewhere."@en ;
+    skos:definition "Another name an Application, Service, Environment, Service Instance, or Team was committed under or is known by elsewhere. A former descriptive name is retained through rename and import for Application, Service, Environment, and Service Instance."@en ;
     estate:maturity "draft" .
 
 estate:applicationName
@@ -744,7 +744,7 @@ estate:applicationName
     rdfs:label "application name"@en ;
     rdfs:domain estate:Environment ;
     rdfs:range xsd:string ;
-    skos:definition "The Application name the evidence for an Environment asserted, which is part of its key before placedUnder resolves it."@en ;
+    skos:definition "The Application name the evidence for an Environment asserted, whose value at key establishment contributes to its key before placedUnder resolves it. Later descriptive changes do not recompute that key."@en ;
     estate:maturity "draft" .
 
 estate:deployedName
@@ -752,7 +752,7 @@ estate:deployedName
     rdfs:label "deployed name"@en ;
     rdfs:domain estate:ServiceInstance ;
     rdfs:range xsd:string ;
-    skos:definition "The name a Service Instance is deployed under, which is part of its key."@en ;
+    skos:definition "The name a Service Instance is deployed under. Its value at key establishment contributes to the key; later descriptive changes do not recompute that key."@en ;
     estate:maturity "draft" .
 
 estate:upstreamPackage
@@ -763,12 +763,22 @@ estate:upstreamPackage
     skos:definition "The chart or image an upstream Service is deployed from, such as apache/superset."@en ;
     estate:maturity "draft" .
 
-estate:repositoryRole
+estate:monorepo
     a owl:DatatypeProperty, owl:FunctionalProperty ;
-    rdfs:label "repository role"@en ;
+    rdfs:label "monorepo"@en ;
     rdfs:domain estate:Repository ;
-    rdfs:range [ a rdfs:Datatype ; owl:oneOf ( "app" "iac" "mixed" ) ] ;
-    skos:definition "What a Repository holds: \"app\", \"iac\", or \"mixed\"."@en ;
+    rdfs:range xsd:boolean ;
+    skos:definition "Whether a Repository contains multiple software projects or deployable units, where confirmed."@en ;
+    skos:scopeNote "Repository organization, not software architecture or a count of recorded implements edges. Absent means unknown, not false. Not part of its key; no aliases or inverse."@en ;
+    estate:maturity "draft" .
+
+estate:hasIaC
+    a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:label "has infrastructure as code"@en ;
+    rdfs:domain estate:Repository ;
+    rdfs:range xsd:boolean ;
+    skos:definition "Whether a Repository contains infrastructure as code, where confirmed, independently of its software organization."@en ;
+    skos:scopeNote "Not a software classification and not inferred from missing relationships. Absent means unknown, not false. Not part of its key; no aliases or inverse."@en ;
     estate:maturity "draft" .
 
 estate:definitionPath
