@@ -108,6 +108,27 @@ Terms: Environment, `environmentTier`, `inScope`, `provisionedFor`, `runsOn`.
   Environment called `live` and one called `prod` answer the same way for every reader. One with no
   confirmed tier is reported as unconfirmed, never as not production.
 
+### Which repositories contain several software projects, and which contain infrastructure as code?
+
+Terms: Repository, `monorepo`, `hasIaC`, `implements`.
+
+- **Estate returns.** Confirmed repository-wide boolean values with their attribution, and the
+  Applications and Services each Repository implements. Missing values are listed as unknown.
+- **Last mile.** None. The question does not ask for architecture or infer completeness from edges.
+- **Same for everyone.** Each value is confirmed once against the repository's contents. Counting
+  recorded relationships is not a substitute for that confirmation, and no single pointed file
+  necessarily inventories all projects and infrastructure declarations.
+
+### What does this software's former name refer to after a rename?
+
+Terms: `key`, `name`, `alternateName`, `memberOf`, `placedUnder`, `inScope`, `instantiatedFrom`.
+
+- **Estate returns.** The established entity with its current and alternate names, its unchanged
+  key, and its existing relationships and dependents.
+- **Last mile.** None. Multiple matches are reported with their identity scopes, not merged by name.
+- **Same for everyone.** Renames and imports retain established keys and former names. A reader
+  follows the same references before and after the rename, regardless of local identifiers.
+
 ## Deployments and pipelines
 
 ### What commit of the service is in prod, and does it include my fix?
