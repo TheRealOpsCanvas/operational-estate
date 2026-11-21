@@ -314,6 +314,13 @@ DETAIL_RULES = {
             UNION
             { ?r estate:copiedTo ?o FILTER NOT EXISTS { ?c rdf:reifies <<( ?r estate:copiedTo ?o )>> } }
         }""",
+    "a source a Restore restoresCopyOf is copiedTo the holder it restores from": """
+        SELECT ?r WHERE {
+            ?r rdf:reifies <<( ?j estate:restoresFrom ?h )>> ; estate:restoresCopyOf ?source .
+            FILTER NOT EXISTS {
+                ?source (estate:declaredAs|^estate:declaredAs)?/estate:copiedTo/(estate:declaredAs|^estate:declaredAs)? ?h
+            }
+        }""",
 }
 PREFIXES = """PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
@@ -335,6 +342,8 @@ BROKEN = """
 :db1 estate:copiedTo :b1 .
 :db2 estate:copiedTo :b2 ~ :db2.b2.backup {| estate:copyKind "backup" |} .
 :db2 estate:copiedTo :b2 ~ :db2.b2.kindless {| estate:copyRegion "region-a" |} .
+:p1 estate:restoresFrom :b2 ~ :p1.b2.restore-db2 {| estate:job "restore-db2" ; estate:restoresCopyOf :db2 |} .
+:p1 estate:restoresFrom :b2 ~ :p1.b2.restore-db1 {| estate:job "restore-db1" ; estate:restoresCopyOf :db1 |} .
 """
 BROKEN_EXPECTED = {
     "a detail is named by an IRI, never a blank node": 1,
@@ -343,6 +352,7 @@ BROKEN_EXPECTED = {
     "a detail reifies a relation that carries data": 1,
     "a relation's data is on a detail of that relation": 1,
     "every copiedTo has a Copy, and every Copy carries its copyKind": 2,
+    "a source a Restore restoresCopyOf is copiedTo the holder it restores from": 1,
 }
 
 

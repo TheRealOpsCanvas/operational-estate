@@ -758,11 +758,13 @@ Terms: `copiedTo`, `copyKind`, `region`, `connectsTo`, `inScope`.
 
 ### How is `orders-db` restored, and when did its restore last succeed?
 
-Terms: `copiedTo`, `restoresFrom`, Pipeline, `job`; CI runs (tool).
+Terms: `copiedTo`, `restoresFrom`, `restoresCopyOf`, Pipeline, `job`; CI runs (tool).
 
 - **Estate returns.** Every holder `orders-db` is `copiedTo`; every Pipeline, with its job, and
   every resource or Instance that `restoresFrom` each holder, with its definition path or
-  declaration pinned to a commit.
+  declaration pinned to a commit: those whose Restore `restoresCopyOf` `orders-db`, those that
+  name only other sources left out, and those that name none listed as candidates, because the
+  holder keeps copies of more than `orders-db`.
 - **Last mile.** One query to the CI system, or the provider for a scheduled job declared as a
   resource, for the latest run of that job and whether it passed.
 - **Same for everyone.** The job is the one whose cited definition restores from the holder, and
@@ -770,11 +772,13 @@ Terms: `copiedTo`, `restoresFrom`, Pipeline, `job`; CI runs (tool).
 
 ### Which of prod's backups have no recorded restore job, and which jobs are tests?
 
-Terms: `copiedTo`, `copyKind`, `restoresFrom`, `restoredBy`.
+Terms: `copiedTo`, `copyKind`, `restoresFrom`, `restoredBy`, `restoresCopyOf`.
 
-- **Estate returns.** Every holder a resource of prod's is `copiedTo` with `copyKind` `backup`,
-  with what `restoresFrom` it, each job with its definition pinned to a commit; those restored
-  from by nothing; the repositories the estate read, each at its commit.
+- **Estate returns.** Every backup of a resource of prod's, a holder it is `copiedTo` with
+  `copyKind` `backup`, with what `restoresFrom` that holder, each job with its definition pinned to
+  a commit and the sources its Restore `restoresCopyOf`; the backups no job restores, counting a
+  job that names only other sources as not restoring this one; the repositories the estate read,
+  each at its commit.
 - **Last mile.** None for which backups have no restore job. Whether each job is a scheduled test
   or a recovery run only on demand is one read of its cited definition, because the estate does
   not tell them apart.

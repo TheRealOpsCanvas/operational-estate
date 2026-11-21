@@ -760,7 +760,7 @@ estate:Restore
     rdfs:subClassOf estate:Detail ;
     rdfs:label "Restore"@en ;
     estate:detailOf estate:restoresFrom ;
-    skos:definition "The details of a restoresFrom: the job in the source Pipeline that restores."@en ;
+    skos:definition "The details of a restoresFrom: the job in the source Pipeline that restores, and the sources whose copies it restores, where the holder keeps copies of several and the job's definition names which."@en ;
     estate:keyRule "The relation it reifies, and its job."@en ;
     estate:maturity "draft" .
 
@@ -996,6 +996,15 @@ estate:usedIn
     rdfs:range estate:CloudAccount ;
     skos:definition "The Cloud Account an Access's credential is used in, where a repository states it."@en ;
     skos:scopeNote "Not the Cloud Account its Identity is within, which the Identity states, and not an account the Environment is in. Never what the credential grants there."@en ;
+    estate:maturity "draft" .
+
+estate:restoresCopyOf
+    a owl:ObjectProperty ;
+    rdfs:label "restores copy of"@en ;
+    rdfs:domain estate:Restore ;
+    rdfs:range estate:Runtime ;
+    skos:definition "A source whose copy a restore job restores, read from the job's definition, where the holder it restores from keeps copies of several sources: the database whose export it restores from a bucket that holds several databases' exports. The source is copiedTo the holder."@en ;
+    skos:scopeNote "Absent where the job's definition does not narrow what it restores, so the job is a candidate restore for every source the holder keeps a copy of, and an answer says so. Not the scratch target the job restores into."@en ;
     estate:maturity "draft" .
 
 estate:copyKind

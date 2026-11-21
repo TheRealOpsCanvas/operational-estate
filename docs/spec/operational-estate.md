@@ -306,7 +306,7 @@ asserted too; the annotation syntax does this, and section 7 requires it of ever
 | `readsSecretsFrom` | Service Instance, Pipeline | Service Instance, Declared Resource, Deployed Resource, External System | path or name |
 | `observedBy` | Service Instance, Environment, Pipeline, Declared Resource, Deployed Resource | Service Instance, Declared Resource, Deployed Resource, External System | the tool's identifiers |
 | `copiedTo` | Runtime | Runtime, External System | copy kind, configuring resource, copy regions |
-| `restoresFrom` | Pipeline, Runtime | Runtime, External System | job |
+| `restoresFrom` | Pipeline, Runtime | Runtime, External System | job, sources restored |
 | `accessedAs` | Environment | Identity | declared credential name, account used in |
 | `runsAs` | Service Instance, Pipeline | Identity | job |
 | `trusts` | Identity | Pipeline, Repository, Identity, Declared Resource, Deployed Resource | |
@@ -491,10 +491,15 @@ no copy recorded. An answer about copies says which, and names the repositories 
 `restoresFrom` runs from what restores data to the holder it restores from: a Pipeline's restore
 job, with the job on the relation, or a scheduled job declared as a resource or deployed as a
 Service Instance. It is how the restore tests and the recovery path of a copy are found: one job is
-commonly both, and which it is reads from the file. The schedule, the scratch target restored into,
-and whether the last run passed are not recorded: the schedule is in the cited file, and runs are
-the CI system's or the provider's, queried by the pipeline and job. A restore someone ran by hand,
-or a drill run from a runbook nothing declares, is not in the estate.
+commonly both, and which it is reads from the file. `restoresFrom` ends at the holder, because the
+holder is what the job reads. Where the holder keeps copies of several sources, such as one bucket
+holding several databases' exports, the Restore carries `restoresCopyOf` for each source whose copy
+the job's definition says it restores; without it, the job is a candidate restore for every source
+the holder keeps a copy of, and an answer says so rather than crediting it to all of them. The
+schedule, the scratch target restored into, and whether the last run passed are not recorded: the
+schedule is in the cited file, and runs are the CI system's or the provider's, queried by the
+pipeline and job. A restore someone ran by hand, or a drill run from a runbook nothing declares, is
+not in the estate.
 
 ```turtle
 :orders-db estate:copiedTo :orders-db
@@ -508,7 +513,7 @@ or a drill run from a runbook nothing declares, is not in the estate.
     {| estate:copyKind "replica" |} .
 :restore-drill-yml estate:restoresFrom :orders-exports
     ~ :restore-drill-yml.restoresFrom.orders-exports.restore-orders
-    {| estate:job "restore-orders" |} .
+    {| estate:job "restore-orders" ; estate:restoresCopyOf :orders-db |} .
 ```
 
 ### Networks
@@ -728,6 +733,7 @@ SPARQL 1.2 queries, until SHACL 1.2 is published:
 - A relation's data is on a detail of that relation: a `job` is on a `triggers`, `deploys`,
   `builds`, `deliversTo`, `runsAs`, or `restoresFrom`, never on a `readsSecretsFrom`.
 - Every `copiedTo` has a Copy, and every Copy carries its `copyKind`.
+- A source a Restore `restoresCopyOf` is `copiedTo` the holder its `restoresFrom` ends at.
 - A Service Instance has at most one `instantiatedFrom`, and its target is a Service.
 - An Environment has exactly one asserted Application.
 - A Pipeline that `deploys` an Environment or Instance is in the Repository it is `deployedFrom`.
@@ -1018,7 +1024,10 @@ question of whether a copy crosses a region is one comparison.
 restore tests says where to search, and a last mile that is a search fails; it also cannot say
 which copy is tested. What runs a restore is already a Pipeline, a Declared Resource, or a Service
 Instance, and the restore job and the copy it restores are commonly declared in different
-repositories, so the link between them is a connection no one file holds. Its runs are the CI
+repositories, so the link between them is a connection no one file holds. It ends at the holder,
+with the sources restored on its detail where the holder keeps several. Rejected: ending it at the
+source with the holder on the detail, which makes "how is this database restored" one hop shorter
+but leaves the relation no longer saying what the job reads. Its runs are the CI
 system's, as a deployment's are, so the estate holds the pipeline and job they are queried by and
 never a result. Rejected: a restore as an entity or an event in the graph, which is the provider's
 or the CI system's history.
