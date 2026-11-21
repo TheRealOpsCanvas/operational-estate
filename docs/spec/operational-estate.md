@@ -495,9 +495,10 @@ no copy recorded. An answer about copies says which, and names the repositories 
 job, with the job on the relation, or a scheduled job declared as a resource or deployed as a
 Service Instance. It is how the restore tests and the recovery path of a copy are found: one job is
 commonly both, and which it is reads from the file. `restoresFrom` ends at the holder, because the
-holder is what the job reads. Where the holder keeps copies of several sources, such as one bucket
-holding several databases' exports, the Restore carries `restoresCopyOf` for each source whose copy
-the job's definition says it restores; without it, the job is a candidate restore for every source
+holder is what the job reads. The Restore carries `restoresCopyOf` for each source whose copy the
+job's definition says it restores. That tells sources apart where the holder keeps copies of
+several, such as one bucket holding several databases' exports, and keeps the restore known where
+the copy at the holder is not recorded. Without it, the job is a candidate restore for every source
 the holder keeps a copy of, and an answer says so rather than crediting it to all of them. The
 schedule, the scratch target restored into, and whether the last run passed are not recorded: the
 schedule is in the cited file, and runs are the CI system's or the provider's, queried by the
@@ -1032,7 +1033,7 @@ restore tests says where to search, and a last mile that is a search fails; it a
 which copy is tested. What runs a restore is already a Pipeline, a Declared Resource, or a Service
 Instance, and the restore job and the copy it restores are commonly declared in different
 repositories, so the link between them is a connection no one file holds. It ends at the holder,
-with the sources restored on its detail where the holder keeps several. Rejected: ending it at the
+with the sources restored on its detail wherever the job names them. Rejected: ending it at the
 source with the holder on the detail, which makes "how is this database restored" one hop shorter
 but leaves the relation no longer saying what the job reads. Its runs are the CI
 system's, as a deployment's are, so the estate holds the pipeline and job they are queried by and
