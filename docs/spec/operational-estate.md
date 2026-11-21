@@ -740,7 +740,7 @@ SPARQL 1.2 queries, until SHACL 1.2 is published:
 - A Copy carries a `job` exactly when a Pipeline is what it is `configuredBy`.
 - A source a Restore `restoresCopyOf` is `copiedTo` the holder its `restoresFrom` ends at; one that
   is not is a warning, because the job's definition is evidence of its own and the copy may be
-  configured in a repository not read.
+  configured in a repository not read. No check states this warning yet.
 - A Service Instance has at most one `instantiatedFrom`, and its target is a Service.
 - An Environment has exactly one asserted Application.
 - A Pipeline that `deploys` an Environment or Instance is in the Repository it is `deployedFrom`.

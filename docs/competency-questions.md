@@ -767,7 +767,8 @@ Terms: `copiedTo`, `restoresFrom`, `restoresCopyOf`, Pipeline, `job`; CI runs (t
   every resource or Instance that `restoresFrom` each holder, with its definition path or
   declaration pinned to a commit: those whose Restore `restoresCopyOf` `orders-db`, those that
   name only other sources left out, and those that name none listed as candidates, because the
-  holder keeps copies of more than `orders-db`.
+  holder keeps copies of more than `orders-db`; and every job whose Restore `restoresCopyOf`
+  `orders-db` at a holder with no recorded copy of it, with that copy marked not recorded.
 - **Last mile.** One query to the CI system, or the provider for a scheduled job declared as a
   resource, for the latest run of that job and whether it passed.
 - **Same for everyone.** The job is the one whose cited definition restores from the holder, and

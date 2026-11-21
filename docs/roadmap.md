@@ -27,7 +27,8 @@ tests it against estates other than the one it was first drawn from.
   moved from SPARQL once SHACL 1.2 is published and a validator reads RDF 1.2; no individual
   `prov:Person` and no relation touching one; no value on a `readsSecretsFrom`; at most one current
   `declaredAs` per Deployed Resource; a Deployed Resource's owner taken only through `declaredAs`;
-  values only from a property's listed set; `ownedBy` targeting only a Team; validating examples
+  values only from a property's listed set; `ownedBy` targeting only a Team; a warning for a
+  Restore that names a source with no recorded copy at its holder; validating examples
   against the shapes.
 
 ## Competency questions and worked estates
