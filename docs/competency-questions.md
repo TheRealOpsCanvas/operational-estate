@@ -732,11 +732,12 @@ Terms: `copiedTo`, `copyKind`, `copyRegion`, `region`, `within`; Cloud Account.
 - **Estate returns.** Prod's resources `within` the account or in the region, through `declaredAs`,
   and prod's Instances placed there, through the resource each `runsOn` or is `providedAs`; for
   each, every holder it is `copiedTo` of either kind, with each of the copy's recorded locations,
-  classed one by one as inside the lost account or region or outside it: its holder's account,
-  located the same way for an Instance, and its Copy's `copyRegion` values, or the holder's own
-  `region` where the holder is not the source, because a holder that keeps its own copies is placed
-  where the source is, not where its copies are, so a copy with a location on each side is listed on
-  both; each resource's other `region` values; the copies whose location is not recorded.
+  classed one by one as inside the lost account or region or outside it: its holder's account, and
+  its Copy's `copyRegion` values, or the holder's own `region` where the holder is not the source,
+  because a holder that keeps its own copies is placed where the source is, not where its copies
+  are; an Instance holder's account and region are those of the resource it `runsOn` or is
+  `providedAs`; so a copy with a location on each side is listed on both; each resource's other
+  `region` values; the copies whose location is not recorded.
 - **Last mile.** None for which copies have a location outside. Whether a resource placed in
   several regions keeps a complete copy in each, rather than dividing its data between them, is
   one read of its cited declaration; its placements are never read as survival on their own. A
@@ -751,9 +752,9 @@ Terms: `copiedTo`, `copyKind`, `copyRegion`, `region`, `within`; Cloud Account.
 Terms: `copiedTo`, `copyKind`, `region`, `connectsTo`, `inScope`.
 
 - **Estate returns.** `orders-db` and its Deployed Resources; every holder it is `copiedTo` with
-  `copyKind` `replica`, with its region and Cloud Account; every Instance and resource that
-  `connectsTo` `orders-db`, with its Scope and its own region, an Instance's through the resource
-  it `runsOn` or is `providedAs`.
+  `copyKind` `replica`, with its region and Cloud Account, an Instance holder's through the resource
+  it `runsOn` or is `providedAs`; every Instance and resource that `connectsTo` `orders-db`, with
+  its Scope and its own region, an Instance's through the resource it `runsOn` or is `providedAs`.
 - **Last mile.** How failover promotes the replica and repoints its clients: one read of the cited
   declarations and of the connection configuration each `connectsTo` cites.
 - **Same for everyone.** The replica is the one the declaration names, and the clients are the
