@@ -460,16 +460,18 @@ is a Service Instance and is `copiedTo` like any other source. Every `copiedTo` 
 - `backup`: point-in-time copies, which a later change to the source's data, a deletion or a
   corruption, does not reach. Whether they outlive the deletion of the source itself, as copies a
   provider keeps for a resource may not, is a read of the declaration that configures them.
-- `replica`: a continuous copy that follows the source, which a change to the source, a deletion
-  included, reaches.
+- `replica`: a continuous copy that follows the source's changes. Most replicas receive the
+  source's deletions too; whether one is configured not to is a read of its declaration, so a
+  replica is never counted as surviving a bad delete without that read.
 
-The kind is read from the declaration that makes the copy, and one relation and one walk serve
-both, because the question "where else does this data exist" needs both and the question "what
-survives a bad delete" needs them told apart. A Copy also carries `configuredBy`, what configures
-it where that is neither end: the Declared Resource of a backup plan apart from the vault it writes
-to or of a transfer job between two buckets, or the Pipeline whose scheduled job makes the copy,
-such as a nightly export, with the job on the Copy. A schedule, a retention, a lag, and whether a
-replication is synchronous are reads of the cited declaration.
+The kind is read from the declaration that makes the copy, and one relation and one walk serve both,
+because the question "where else does this data exist" needs both and the question "what survives a
+bad delete" needs them told apart. A Copy also carries `configuredBy`, what configures it where that
+is neither end: the Declared Resource of a backup plan apart from the vault it writes to or of a
+transfer job between two buckets, the Service Instance of a scheduled backup workload, or the
+Pipeline whose scheduled job makes the copy, such as a nightly export, with the job on the Copy,
+which a Copy carries exactly when a Pipeline configures it. A schedule, a retention, a lag, and
+whether a replication is synchronous are reads of the cited declaration.
 
 **A resource that keeps its own copies is `copiedTo` itself.** Where a resource's own declaration
 turns on copies the provider keeps for it, such as a managed database's automated backups or a
@@ -735,7 +737,10 @@ SPARQL 1.2 queries, until SHACL 1.2 is published:
   `builds`, `deliversTo`, `runsAs`, or `restoresFrom`, or on a `copiedTo` a Pipeline configures,
   never on a `readsSecretsFrom`.
 - Every `copiedTo` has a Copy, and every Copy carries its `copyKind`.
-- A source a Restore `restoresCopyOf` is `copiedTo` the holder its `restoresFrom` ends at.
+- A Copy carries a `job` exactly when a Pipeline is what it is `configuredBy`.
+- A source a Restore `restoresCopyOf` is `copiedTo` the holder its `restoresFrom` ends at; one that
+  is not is a warning, because the job's definition is evidence of its own and the copy may be
+  configured in a repository not read.
 - A Service Instance has at most one `instantiatedFrom`, and its target is a Service.
 - An Environment has exactly one asserted Application.
 - A Pipeline that `deploys` an Environment or Instance is in the Repository it is `deployedFrom`.

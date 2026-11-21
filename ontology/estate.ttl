@@ -734,7 +734,7 @@ estate:Copy
     rdfs:subClassOf estate:Detail ;
     rdfs:label "Copy"@en ;
     estate:detailOf estate:copiedTo ;
-    skos:definition "The details of a copiedTo: its copy kind, what configures it where that is neither end, a Declared Resource or a Pipeline and its job, and the regions its copies are held in where the configuring declaration names them."@en ;
+    skos:definition "The details of a copiedTo: its copy kind, what configures it where that is neither end, a Declared Resource, a Service Instance, or a Pipeline and its job, and the regions its copies are held in where the configuring declaration names them."@en ;
     estate:keyRule "The relation it reifies, its copy kind, and what it is configuredBy, with the job where that is a Pipeline, where it has one."@en ;
     estate:maturity "draft" .
 
@@ -1012,16 +1012,16 @@ estate:copyKind
     rdfs:label "copy kind"@en ;
     rdfs:domain estate:Copy ;
     rdfs:range [ a rdfs:Datatype ; owl:oneOf ( "backup" "replica" ) ] ;
-    skos:definition "What a copy keeps, read from the declaration that makes it: \"backup\", point-in-time copies, which a later change to the source's data, a deletion or a corruption, does not reach; \"replica\", a continuous copy that follows the source, which a change to the source's data, a deletion included, reaches."@en ;
-    skos:scopeNote "Not whether a backup outlives the deletion of the source itself, as copies a provider keeps for a resource may not, nor whether a replication is synchronous, how often a backup runs, or how long it is kept: each is a read of the declaration that configures the copy."@en ;
+    skos:definition "What a copy keeps, read from the declaration that makes it: \"backup\", point-in-time copies, which a later change to the source's data, a deletion or a corruption, does not reach; \"replica\", a continuous copy that follows the source's changes."@en ;
+    skos:scopeNote "Not whether a replica also receives the source's deletions, which most do and some are configured not to, nor whether a backup outlives the deletion of the source itself, as copies a provider keeps for a resource may not, nor whether a replication is synchronous, how often a backup runs, or how long it is kept: each is a read of the declaration that configures the copy."@en ;
     estate:maturity "draft" .
 
 estate:configuredBy
     a owl:ObjectProperty, owl:FunctionalProperty ;
     rdfs:label "configured by"@en ;
     rdfs:domain estate:Copy ;
-    rdfs:range [ a owl:Class ; owl:unionOf ( estate:DeclaredResource estate:Pipeline ) ] ;
-    skos:definition "What configures a copy, where it is neither the source nor the holder: the Declared Resource of a backup plan apart from the vault it writes to, or of a transfer job between two buckets; or the Pipeline whose scheduled job makes the copy, with the job on the Copy."@en ;
+    rdfs:range [ a owl:Class ; owl:unionOf ( estate:DeclaredResource estate:ServiceInstance estate:Pipeline ) ] ;
+    skos:definition "What configures a copy, where it is neither the source nor the holder: the Declared Resource of a backup plan apart from the vault it writes to, or of a transfer job between two buckets; the Service Instance of a scheduled backup workload; or the Pipeline whose scheduled job makes the copy, with the job on the Copy."@en ;
     skos:scopeNote "Absent where the source's or the holder's own declaration configures the copy."@en ;
     estate:maturity "draft" .
 

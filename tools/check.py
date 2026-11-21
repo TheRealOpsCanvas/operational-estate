@@ -316,11 +316,15 @@ DETAIL_RULES = {
             UNION
             { ?r estate:copiedTo ?o FILTER NOT EXISTS { ?c rdf:reifies <<( ?r estate:copiedTo ?o )>> } }
         }""",
-    "a source a Restore restoresCopyOf is copiedTo the holder it restores from": """
+    "a Copy carries a job exactly when a Pipeline configures it": """
         SELECT ?r WHERE {
-            ?r rdf:reifies <<( ?j estate:restoresFrom ?h )>> ; estate:restoresCopyOf ?source .
-            FILTER NOT EXISTS {
-                ?source (estate:declaredAs|^estate:declaredAs)*/estate:copiedTo/(estate:declaredAs|^estate:declaredAs)* ?h
+            ?r rdf:reifies <<( ?s estate:copiedTo ?o )>> .
+            {
+                ?r estate:job ?job
+                FILTER NOT EXISTS { ?r estate:configuredBy ?p . ?p a estate:Pipeline }
+            } UNION {
+                ?r estate:configuredBy ?p . ?p a estate:Pipeline
+                FILTER NOT EXISTS { ?r estate:job ?job }
             }
         }""",
 }
@@ -346,7 +350,9 @@ BROKEN = """
 :db2 estate:copiedTo :b2 ~ :db2.b2.kindless {| estate:copyRegion "region-a" |} .
 :orphan a estate:Copy .
 :p1 estate:restoresFrom :b2 ~ :p1.b2.restore-db2 {| estate:job "restore-db2" ; estate:restoresCopyOf :db2 |} .
-:p1 estate:restoresFrom :b2 ~ :p1.b2.restore-db1 {| estate:job "restore-db1" ; estate:restoresCopyOf :db1 |} .
+:pl a estate:Pipeline .
+:db3 estate:copiedTo :b3 ~ :db3.b3.nojob {| estate:copyKind "backup" ; estate:configuredBy :pl |} .
+:db3 estate:copiedTo :b3 ~ :db3.b3.nopipeline {| estate:copyKind "backup" ; estate:job "export" |} .
 """
 BROKEN_EXPECTED = {
     "a detail is named by an IRI, never a blank node": 1,
@@ -355,7 +361,7 @@ BROKEN_EXPECTED = {
     "a detail reifies a relation that carries data": 1,
     "a relation's data is on a detail of that relation": 1,
     "every copiedTo has a Copy, and every Copy carries its copyKind": 3,
-    "a source a Restore restoresCopyOf is copiedTo the holder it restores from": 1,
+    "a Copy carries a job exactly when a Pipeline configures it": 2,
 }
 
 

@@ -715,12 +715,12 @@ declaration reads (tool).
 - **Estate returns.** Prod's Instances, such as a database deployed from a chart; the Declared
   Resources `provisionedFor` prod or one of its Instances, and those prod's Instances `connectsTo`;
   for each, every holder it is `copiedTo` with `copyKind` `backup`, with the holder's Cloud Account
-  and region, the Copy's `copyRegion` and `configuredBy`, each with its citation; the resources with
-  no backup recorded, each as read or not read.
-- **Last mile.** Which of the resources with no backup hold data: one read of each one's cited
-  declaration. How long a backup is kept, and whether it outlives the deletion of the resource
-  itself, as copies a provider keeps for a resource may not, is one read of the declaration that
-  configures it.
+  and region, the Copy's `copyRegion` and `configuredBy`, each with its citation; the Instances and
+  resources with no backup recorded, each as read or not read.
+- **Last mile.** Which of the Instances and resources with no backup hold data: one read of each
+  one's cited declaration. How long a backup is kept, and whether it outlives the deletion of the
+  resource itself, as copies a provider keeps for a resource may not, is one read of the declaration
+  that configures it.
 - **Same for everyone.** A replica is never counted as surviving a deletion, because the kind is
   read from the declaration that makes the copy and is on the relation, not inferred from a name
   such as `-backup`.
@@ -779,12 +779,13 @@ Terms: `copiedTo`, `copyKind`, `restoresFrom`, `restoredBy`, `restoresCopyOf`.
 
 - **Estate returns.** Every backup of one of prod's Instances or resources, a holder it is
   `copiedTo` with `copyKind` `backup`, with what `restoresFrom` that holder, each job with its
-  definition pinned to a commit and the sources its Restore `restoresCopyOf`; the backups no job
-  restores, counting a job that names only other sources as not restoring this one; the repositories
-  the estate read, each at its commit.
-- **Last mile.** None for which backups have no restore job. Whether each job is a scheduled test
-  or a recovery run only on demand is one read of its cited definition, because the estate does
-  not tell them apart.
+  definition pinned to a commit and the sources its Restore `restoresCopyOf`, in three lists:
+  backups a job names as restoring, backups whose holder a job restores from without naming its
+  sources, which are candidates, and backups no job restores, counting a job that names only other
+  sources as not restoring this one; the repositories the estate read, each at its commit.
+- **Last mile.** None for which backups have no restore job. A candidate is settled by one read of
+  the job's cited definition, and whether each job is a scheduled test or a recovery run only on
+  demand is the same read, because the estate does not tell them apart.
 - **Same for everyone.** "No restore job" means none in the repositories the estate read, each
   pinned to a commit, so two readers draw the same boundary; a job in a repository the estate has
   not read is outside it, and the answer says so.
