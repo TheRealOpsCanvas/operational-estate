@@ -306,6 +306,27 @@ DETAIL_RULES = {
                 ?data rdfs:domain/(owl:unionOf/rdf:rest*/rdf:first)? ?d . ?d estate:detailOf ?p .
             }
         }""",
+    # Every Copy carries a kind, and a copiedTo with no detail at all has no reifier to return,
+    # so the second half returns its source instead.
+    "every copiedTo has a Copy, and every Copy carries its copyKind": """
+        SELECT ?r WHERE {
+            { ?r rdf:reifies <<( ?s estate:copiedTo ?o )>> FILTER NOT EXISTS { ?r estate:copyKind ?k } }
+            UNION
+            { ?r a estate:Copy FILTER NOT EXISTS { ?r estate:copyKind ?k } }
+            UNION
+            { ?r estate:copiedTo ?o FILTER NOT EXISTS { ?c rdf:reifies <<( ?r estate:copiedTo ?o )>> } }
+        }""",
+    "a Copy carries a job exactly when a Pipeline configures it": """
+        SELECT ?r WHERE {
+            ?r rdf:reifies <<( ?s estate:copiedTo ?o )>> .
+            {
+                ?r estate:job ?job
+                FILTER NOT EXISTS { ?r estate:configuredBy ?p . ?p a estate:Pipeline }
+            } UNION {
+                ?r estate:configuredBy ?p . ?p a estate:Pipeline
+                FILTER NOT EXISTS { ?r estate:job ?job }
+            }
+        }""",
 }
 PREFIXES = """PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
@@ -324,6 +345,14 @@ BROKEN = """
 :i1 estate:readsSecretsFrom :v1 .
 :p1 estate:builds :s1 .
 :i1 estate:inScope :e1 .
+:db1 estate:copiedTo :b1 .
+:db2 estate:copiedTo :b2 ~ :db2.b2.backup {| estate:copyKind "backup" |} .
+:db2 estate:copiedTo :b2 ~ :db2.b2.kindless {| estate:copyRegion "region-a" |} .
+:orphan a estate:Copy .
+:p1 estate:restoresFrom :b2 ~ :p1.b2.restore-db2 {| estate:job "restore-db2" ; estate:restoresCopyOf :db2 |} .
+:pl a estate:Pipeline .
+:db3 estate:copiedTo :b3 ~ :db3.b3.nojob {| estate:copyKind "backup" ; estate:configuredBy :pl |} .
+:db3 estate:copiedTo :b3 ~ :db3.b3.nopipeline {| estate:copyKind "backup" ; estate:job "export" |} .
 """
 BROKEN_EXPECTED = {
     "a detail is named by an IRI, never a blank node": 1,
@@ -331,6 +360,8 @@ BROKEN_EXPECTED = {
     "a detail reifies one relation": 1,
     "a detail reifies a relation that carries data": 1,
     "a relation's data is on a detail of that relation": 1,
+    "every copiedTo has a Copy, and every Copy carries its copyKind": 3,
+    "a Copy carries a job exactly when a Pipeline configures it": 2,
 }
 
 

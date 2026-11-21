@@ -15,10 +15,11 @@ tests it against estates other than the one it was first drawn from.
   scan, `prov:wasAttributedTo` a `prov:Agent` for a confirmation, `prov:generatedAtTime` for the
   as-of.
 - Started: [`ontology/estate-shapes.ttl`](../ontology/estate-shapes.ttl), with the constraints on
-  networks and Environments: which classes carry a network role, region, zone, or environment
-  tier, at most one of each, from its listed values; a Deployed Resource agreeing with its Declared
-  Resource on them; a subnet within at most one network; and a warning for an account zone with no
-  Cloud Account. `check.py` checks that the shapes name only declared terms and the values the
+  networks, copies, and Environments: which classes carry a network role, region, zone, or
+  environment tier, at most one network role and one tier, from its listed values; a Deployed
+  Resource carrying only the values its Declared Resource carries; a subnet within at most one
+  network; a warning for an account zone with no Cloud Account; and a warning for a restore from
+  something that holds no recorded copy. `check.py` checks that the shapes name only declared terms and the values the
   vocabulary lists.
 - To come in `estate-shapes.ttl`: SHACL for the rest of what OWL cannot state. Key derivation;
   exactly one owner per Service Instance and Declared Resource; at most one `instantiatedFrom` per
@@ -26,7 +27,8 @@ tests it against estates other than the one it was first drawn from.
   moved from SPARQL once SHACL 1.2 is published and a validator reads RDF 1.2; no individual
   `prov:Person` and no relation touching one; no value on a `readsSecretsFrom`; at most one current
   `declaredAs` per Deployed Resource; a Deployed Resource's owner taken only through `declaredAs`;
-  values only from a property's listed set; `ownedBy` targeting only a Team; validating examples
+  values only from a property's listed set; `ownedBy` targeting only a Team; a warning for a
+  Restore that names a source with no recorded copy at its holder; validating examples
   against the shapes.
 
 ## Competency questions and worked estates
@@ -36,7 +38,9 @@ tests it against estates other than the one it was first drawn from.
   from a separate deploy repository, an upstream service deployed from a public chart with the
   resources its chart provisions, a production environment spanning two cloud accounts, a cluster
   owned by core infrastructure, a deploy role and its trust, a secret read, observability
-  identifiers per instance, and a team that owns the service.
+  identifiers per instance, a database with backups the provider keeps, an export to a bucket in
+  another account, a replica in a second region and a restore job for one backup, and a team that
+  owns the service.
 - Four archetypes: a single serverless function in one account; a large Kubernetes estate with a
   platform team and a service shared across applications; serverless on managed services with no
   cluster; virtual machines deployed by scripts with no pipeline. Any fact that has to be forced in

@@ -27,7 +27,7 @@
 
 shape:NetworkValueShape
     a sh:NodeShape ;
-    rdfs:comment "Only a Declared or Deployed Resource carries networkRole, region, zone, or accountZone, and at most one of each."@en ;
+    rdfs:comment "Only a Declared or Deployed Resource carries networkRole, region, zone, or accountZone, and at most one networkRole."@en ;
     sh:targetSubjectsOf estate:networkRole, estate:region, estate:zone, estate:accountZone ;
     sh:or (
         [ sh:class estate:DeclaredResource ]
@@ -40,33 +40,30 @@ shape:NetworkValueShape
         sh:in ( "network" "subnet" "connector" "exit" "entry" ) ;
     ] , [
         sh:path estate:region ;
-        sh:maxCount 1 ;
         sh:datatype xsd:string ;
     ] , [
         sh:path estate:zone ;
-        sh:maxCount 1 ;
         sh:datatype xsd:string ;
     ] , [
         sh:path estate:accountZone ;
-        sh:maxCount 1 ;
         sh:datatype xsd:string ;
     ] .
 
 shape:DeclaredAgreementShape
     a sh:NodeShape ;
-    rdfs:comment "A Deployed Resource and the Declared Resource it is declaredAs agree on each of networkRole, region, zone, and accountZone they both carry."@en ;
+    rdfs:comment "A Deployed Resource carries only values of networkRole, region, zone, and accountZone that the Declared Resource it is declaredAs carries, where that carries any."@en ;
     sh:targetClass estate:DeployedResource ;
     sh:sparql [
         a sh:SPARQLConstraint ;
-        sh:message "Disagrees with the Declared Resource it is declaredAs on {?property}." ;
+        sh:message "Carries a {?property} the Declared Resource it is declaredAs does not." ;
         sh:prefixes <https://w3id.org/operational-estate/shapes> ;
         sh:select """
             SELECT $this ?property ?value WHERE {
                 $this estate:declaredAs ?declared ;
                       ?property ?value .
-                ?declared ?property ?other .
                 FILTER (?property IN (estate:networkRole, estate:region, estate:zone, estate:accountZone))
-                FILTER (?value != ?other)
+                FILTER EXISTS { ?declared ?property ?any }
+                FILTER NOT EXISTS { ?declared ?property ?value }
             }""" ;
     ] .
 
@@ -99,6 +96,25 @@ shape:AccountZoneShape
                     $this (estate:declaredAs|^estate:declaredAs)?/estate:within+ ?account .
                     ?account a estate:CloudAccount .
                 }
+            }""" ;
+    ] .
+
+#################################################################
+# Copies
+#################################################################
+
+shape:RestoreSourceShape
+    a sh:NodeShape ;
+    rdfs:comment "What a restoresFrom ends at holds a copy: it is the target of a copiedTo, directly or through declaredAs. One that is not is a warning, because the copy it restores is not recorded."@en ;
+    sh:targetObjectsOf estate:restoresFrom ;
+    sh:severity sh:Warning ;
+    sh:sparql [
+        a sh:SPARQLConstraint ;
+        sh:message "Is restored from but holds no recorded copy." ;
+        sh:prefixes <https://w3id.org/operational-estate/shapes> ;
+        sh:select """
+            SELECT $this WHERE {
+                FILTER NOT EXISTS { $this (estate:declaredAs|^estate:declaredAs)*/^estate:copiedTo ?source }
             }""" ;
     ] .
 
