@@ -306,11 +306,13 @@ DETAIL_RULES = {
                 ?data rdfs:domain/(owl:unionOf/rdf:rest*/rdf:first)? ?d . ?d estate:detailOf ?p .
             }
         }""",
-    # A relation with no detail has no reifier to return, so this rule returns its source.
-    "every copiedTo has a Copy that carries its copyKind": """
+    # Every Copy carries a kind, and a copiedTo with no detail at all has no reifier to return,
+    # so the second half returns its source instead.
+    "every copiedTo has a Copy, and every Copy carries its copyKind": """
         SELECT ?r WHERE {
-            ?r estate:copiedTo ?o .
-            FILTER NOT EXISTS { ?c rdf:reifies <<( ?r estate:copiedTo ?o )>> ; estate:copyKind ?k }
+            { ?r rdf:reifies <<( ?s estate:copiedTo ?o )>> FILTER NOT EXISTS { ?r estate:copyKind ?k } }
+            UNION
+            { ?r estate:copiedTo ?o FILTER NOT EXISTS { ?c rdf:reifies <<( ?r estate:copiedTo ?o )>> } }
         }""",
 }
 PREFIXES = """PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
@@ -331,6 +333,8 @@ BROKEN = """
 :p1 estate:builds :s1 .
 :i1 estate:inScope :e1 .
 :db1 estate:copiedTo :b1 .
+:db2 estate:copiedTo :b2 ~ :db2.b2.backup {| estate:copyKind "backup" |} .
+:db2 estate:copiedTo :b2 ~ :db2.b2.kindless {| estate:copyRegion "region-a" |} .
 """
 BROKEN_EXPECTED = {
     "a detail is named by an IRI, never a blank node": 1,
@@ -338,7 +342,7 @@ BROKEN_EXPECTED = {
     "a detail reifies one relation": 1,
     "a detail reifies a relation that carries data": 1,
     "a relation's data is on a detail of that relation": 1,
-    "every copiedTo has a Copy that carries its copyKind": 1,
+    "every copiedTo has a Copy, and every Copy carries its copyKind": 2,
 }
 
 

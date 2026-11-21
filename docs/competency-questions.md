@@ -704,19 +704,23 @@ Terms: Deployed Resource, `networkRole`, `declaredAs`, `within`, Cloud Account; 
 Copy questions walk `copiedTo`, following `declaredAs` both ways, and filter by the Copy's
 `copyKind`. Which of the resources they reach hold data is a read of each one's cited declaration:
 the estate records copies, not which resources are data stores. A resource with no copy recorded
-is reported apart, as looked at and keeping none, or not read (specification, section 8).
+is reported apart, as keeping none in the repositories the estate read, or not read
+(specification, section 8).
 
 ### If prod's data is deleted or corrupted, which copies survive it, and where are they?
 
 Terms: `copiedTo`, `copyKind`, `copyRegion`, `region`, `within`, `provisionedFor`, `connectsTo`;
 declaration reads (tool).
 
-- **Estate returns.** The Declared Resources `provisionedFor` prod, and those prod's Instances
-  `connectsTo`; for each, every holder it is `copiedTo` with `copyKind` `backup`, with the holder's
-  Cloud Account and region, the Copy's `copyRegion` and `configuredBy`, each with its citation; the
-  resources with no backup recorded, each as read or not read.
+- **Estate returns.** The Declared Resources `provisionedFor` prod or one of the Instances `inScope`
+  prod, and those prod's Instances `connectsTo`; for each, every holder it is `copiedTo` with
+  `copyKind` `backup`, with the holder's Cloud Account and region, the Copy's `copyRegion` and
+  `configuredBy`, each with its citation; the resources with no backup recorded, each as read or
+  not read.
 - **Last mile.** Which of the resources with no backup hold data: one read of each one's cited
-  declaration. How long a backup is kept is one read of the declaration that configures it.
+  declaration. How long a backup is kept, and whether it outlives the deletion of the resource
+  itself, as copies a provider keeps for a resource may not, is one read of the declaration that
+  configures it.
 - **Same for everyone.** A replica is never counted as surviving a deletion, because the kind is
   read from the declaration that makes the copy and is on the relation, not inferred from a name
   such as `-backup`.
@@ -726,13 +730,16 @@ declaration reads (tool).
 Terms: `copiedTo`, `copyKind`, `copyRegion`, `region`, `within`; Cloud Account.
 
 - **Estate returns.** Prod's resources `within` the account or in the region, through
-  `declaredAs`; for each, every holder it is `copiedTo` of either kind, split into those outside
-  the account or region and those inside it, which are lost with it; a resource whose `region`
-  values include another region, which survives the loss of one; the copies whose location is not
+  `declaredAs`; for each, every holder it is `copiedTo` of either kind, with each of the copy's
+  recorded locations, its holder's account and every `copyRegion` or holder `region`, classed one
+  by one as inside the lost account or region or outside it, so a copy with a location on each
+  side is listed on both; each resource's other `region` values; the copies whose location is not
   recorded.
-- **Last mile.** None for which data has a copy elsewhere. A copy whose region is not recorded is
-  one read of its configuring declaration, and where that names none, the provider's default
-  location is a question to the provider.
+- **Last mile.** None for which copies have a location outside. Whether a resource placed in
+  several regions keeps a complete copy in each, rather than dividing its data between them, is
+  one read of its cited declaration; its placements are never read as survival on their own. A
+  copy whose region is not recorded is one read of its configuring declaration, and where that
+  names none, the provider's default location is a question to the provider.
 - **Same for everyone.** Inside and outside are `within` and the region overlap rule over values
   copied verbatim; a copy the provider keeps for a resource is held by that resource, so it is never
   read as outside an account it is lost with.
@@ -761,15 +768,17 @@ Terms: `copiedTo`, `restoresFrom`, Pipeline, `job`; CI runs (tool).
 - **Same for everyone.** The job is the one whose cited definition restores from the holder, and
   the run is the CI system's, queried by the pipeline and job, never a recollection.
 
-### Which of prod's backups have no recorded restore test?
+### Which of prod's backups have no recorded restore job, and which jobs are tests?
 
 Terms: `copiedTo`, `copyKind`, `restoresFrom`, `restoredBy`.
 
 - **Estate returns.** Every holder a resource of prod's is `copiedTo` with `copyKind` `backup`,
-  with what `restoresFrom` it; those restored from by nothing; the repositories the estate read,
-  each at its commit.
-- **Last mile.** None.
-- **Same for everyone.** "No restore test" means none in the repositories the estate read, each
+  with what `restoresFrom` it, each job with its definition pinned to a commit; those restored
+  from by nothing; the repositories the estate read, each at its commit.
+- **Last mile.** None for which backups have no restore job. Whether each job is a scheduled test
+  or a recovery run only on demand is one read of its cited definition, because the estate does
+  not tell them apart.
+- **Same for everyone.** "No restore job" means none in the repositories the estate read, each
   pinned to a commit, so two readers draw the same boundary; a job in a repository the estate has
   not read is outside it, and the answer says so.
 

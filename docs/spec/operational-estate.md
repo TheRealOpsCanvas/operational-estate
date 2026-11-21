@@ -62,7 +62,7 @@ A grouping is a class only where a relation needs exactly that set of classes.
 | Grouping | Members | Needed by |
 |---|---|---|
 | **Software** | Application, Service | domain of `implementedIn`, range of `provisionedFor` |
-| **Runtime** | Service Instance, Declared Resource, Deployed Resource | domain of `connectsTo` |
+| **Runtime** | Service Instance, Declared Resource, Deployed Resource | domain of `connectsTo` and `copiedTo` |
 | **Scope** | Environment, Core Infrastructure | range of `inScope` |
 
 Scope is the named unit runtime things are placed in and owned by: an Application's Environment, or
@@ -305,8 +305,8 @@ asserted too; the annotation syntax does this, and section 7 requires it of ever
 | `connectsTo` | Runtime | Runtime, External System | |
 | `readsSecretsFrom` | Service Instance, Pipeline | Service Instance, Declared Resource, Deployed Resource, External System | path or name |
 | `observedBy` | Service Instance, Environment, Pipeline, Declared Resource, Deployed Resource | Service Instance, Declared Resource, Deployed Resource, External System | the tool's identifiers |
-| `copiedTo` | Declared Resource, Deployed Resource | Declared Resource, Deployed Resource, External System | copy kind, configuring resource, copy regions |
-| `restoresFrom` | Pipeline, Runtime | Declared Resource, Deployed Resource, External System | job |
+| `copiedTo` | Runtime | Runtime, External System | copy kind, configuring resource, copy regions |
+| `restoresFrom` | Pipeline, Runtime | Runtime, External System | job |
 | `accessedAs` | Environment | Identity | declared credential name, account used in |
 | `runsAs` | Service Instance, Pipeline | Identity | job |
 | `trusts` | Identity | Pipeline, Repository, Identity, Declared Resource, Deployed Resource | |
@@ -450,13 +450,16 @@ on the relation. What a self-hosted store's outage reaches is a walk back along 
 
 ### Copies and restores
 
-`copiedTo` runs from a resource to what holds a copy of its data, as a declaration names it: the
-bucket a database is exported to, the vault or backup plan that holds a volume's or a cluster's
-backups, a replica in another region, or a hosted backup service, an External System. Every
-`copiedTo` has a Copy whose `copyKind` says what the copy keeps:
+`copiedTo` runs from a runtime thing to what holds a copy of its data, as a declaration names it:
+the bucket a database is exported to, the vault or backup plan that holds a volume's or a cluster's
+backups, a replica in another region, a self-hosted backup store, which is the Service Instance
+that serves it, or a hosted backup service, an External System. A database deployed from a chart
+is a Service Instance and is `copiedTo` like any other source. Every `copiedTo` has a Copy whose
+`copyKind` says what the copy keeps:
 
-- `backup`: point-in-time copies kept apart from the source, which a deletion or corruption of the
-  source does not reach.
+- `backup`: point-in-time copies, which a later change to the source's data, a deletion or a
+  corruption, does not reach. Whether they outlive the deletion of the source itself, as copies a
+  provider keeps for a resource may not, is a read of the declaration that configures them.
 - `replica`: a continuous copy that follows the source, which a change to the source, a deletion
   included, reaches.
 
@@ -479,9 +482,11 @@ resource that its declaration places in several regions is not a `copiedTo` at a
 resource's several `region` values.
 
 **A missing copy is "not recorded" or "looked and not found", never assumed.** A scan records what
-it read (section 8). A resource whose cited declaration was read, with no `copiedTo` from it, was
-looked at and keeps no copy anything declares; one whose declaration was not read has no copy
-recorded. An answer about copies says which.
+it read (section 8). A copy may be configured outside the source's own declaration, by a backup
+plan or a transfer job in another repository, so "looked and not found" holds only for the
+repositories read: a resource whose cited declaration was read, with no `copiedTo` from it, keeps
+no copy that any repository the estate read declares, and one whose declaration was not read has
+no copy recorded. An answer about copies says which, and names the repositories it read.
 
 `restoresFrom` runs from what restores data to the holder it restores from: a Pipeline's restore
 job, with the job on the relation, or a scheduled job declared as a resource or deployed as a
@@ -563,12 +568,15 @@ Resources carries the ones it is reported in. A provider's group of locations, s
 multi-region name, is not a region: it is not recorded as one and is not expanded into the regions
 it covers, because which regions a group covers is the provider's to say.
 
-Two resources **share a region** when their `region` values overlap, and a connection or a copy
-**crosses a region** when the values on its two sides share none; where either side has none, the
-comparison has no answer, never "the same". A Copy's `copyRegion` is compared with a resource's
-`region` by the same rule. Two resources share a zone when their `zone` values overlap, or their
-`accountZone` values overlap and they are `within` the same Cloud Account; any other comparison is
-one query per account for the stable identifiers of its zone names. None of the three is part of a
+Two resources **share a region** when they are `within` Cloud Accounts of the same `provider` and
+their `region` values overlap, and a connection or a copy **crosses a region** when the values on
+its two sides share none; regions are the provider's names, so resources of different providers
+never share one, and where either side has no region, or its provider is not known, the comparison
+has no answer, never "the same". A Copy's `copyRegion` is compared with a resource's `region` by
+the same rule, under the provider of the copy's holder. Two resources share a zone when, under the
+same provider, their `zone` values overlap, or their `accountZone` values overlap and they are
+`within` the same Cloud Account; any other comparison is one query per account for the stable
+identifiers of its zone names. None of the three is part of a
 key. The cloud a resource is in is the `provider` of the Cloud Account it is `within`, never a value
 of its own.
 
@@ -692,9 +700,9 @@ Core Infrastructure.
 target's key, and, where one relation can have several details, by what tells them apart: the job
 for a `triggers`, `deploys`, `builds`, `deliversTo`, `runsAs`, or `restoresFrom`, the secret path
 for a `readsSecretsFrom`, the Cloud Account an `accessedAs` is `usedIn`, where it has one, and the
-copy kind for a `copiedTo`. An `observedBy` or `pullsFrom` has at most one detail. A detail
-is named by an identifier derived from its key, never a blank node, so two graphs that say the same
-thing about one relation merge into one detail.
+copy kind and the configuring resource, where it has one, for a `copiedTo`. An `observedBy` or
+`pullsFrom` has at most one detail. A detail is named by an identifier derived from its key, never a
+blank node, so two graphs that say the same thing about one relation merge into one detail.
 
 **An individual's identifier is relative: its kind and key, resolved under a base.** For example
 `service_instance/shop/prod/user-svc`. A serialization sets `@base`, and how an implementation
@@ -719,7 +727,7 @@ SPARQL 1.2 queries, until SHACL 1.2 is published:
 - A detail reifies exactly one relation, that relation carries data, and it is asserted.
 - A relation's data is on a detail of that relation: a `job` is on a `triggers`, `deploys`,
   `builds`, `deliversTo`, `runsAs`, or `restoresFrom`, never on a `readsSecretsFrom`.
-- Every `copiedTo` has a Copy that carries its `copyKind`.
+- Every `copiedTo` has a Copy, and every Copy carries its `copyKind`.
 - A Service Instance has at most one `instantiatedFrom`, and its target is a Service.
 - An Environment has exactly one asserted Application.
 - A Pipeline that `deploys` an Environment or Instance is in the Repository it is `deployedFrom`.
