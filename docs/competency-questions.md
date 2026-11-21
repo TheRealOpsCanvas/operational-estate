@@ -123,7 +123,7 @@ Terms: Repository, `monorepo`, `hasIaC`, `implements`.
 
 ### What does this software's former name refer to after a rename?
 
-Terms: `key`, `name`, `alternateName`, `memberOf`, `placedUnder`, `inScope`, `instantiatedFrom`.
+Terms: `key`, `name`, `alternateName`, `placedUnder`, `inScope`, `implementedIn`.
 
 - **Estate returns.** The established entity with its current and alternate names, its unchanged
   key, and its existing relationships and dependents.

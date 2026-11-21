@@ -1,8 +1,13 @@
 # Shared-class wire mapping
 
-This mapping covers Application, Service, Environment, Service Instance, Repository, and Core
-Infrastructure. It maps existing vocabulary into a JSON profile; it adds no classes or RDF terms.
-Team retains its ontology support for alternate names without joining this six-class profile.
+This mapping covers Application, Environment, Instance, Repository, and Core Infrastructure. It
+maps existing vocabulary into a JSON profile; it adds no classes or RDF terms. Team retains its
+ontology support for alternate names without joining this five-class profile.
+
+A profile built on an earlier six-class mapping, which carried Service, `memberOf`, and
+`instantiatedFrom`, is not this one. A consuming profile moves to this mapping under a new profile
+version, or rejects it explicitly: a Service record has no class to import into, and an Instance's
+code is its `implementedIn`, not a Service reference.
 
 ## Names and alternate names
 
@@ -11,7 +16,7 @@ Team retains its ontology support for alternate names without joining this six-c
 `estate:name` assertion. An omitted required JSON member, an empty string, and a literal string
 `"null"` do not represent that unknown value.
 
-For Application, Service, Environment, and Service Instance, each `estate:alternateName` value maps
+For Application, Environment, and Instance, each `estate:alternateName` value maps
 to an entry in required, non-null `properties.aliases`. Entries are unique nonblank strings, and
 `[]` is valid. On import each entry becomes an alternate-name value; order has no meaning. There is
 no `estate:aliases` predicate. Former names retained on rename survive this mapping and import.
@@ -21,10 +26,11 @@ and key, even when an installation uses different local identifiers or serializa
 
 ## Repository properties and compatibility
 
-`estate:monorepo` and `estate:hasIaC` are independent boolean properties. The ontology permits either
-to be absent when unknown, and permits every combination of confirmed boolean values. In particular,
-`false, false` can mean a single software project without infrastructure as code. Recorded software
-is expressed through `implements` / `implementedIn`; missing edges do not prove absence.
+`estate:monorepo` and `estate:hasIaC` are independent boolean properties. The ontology permits
+either to be absent when unknown, and permits every combination of confirmed boolean values. In
+particular, `false, false` can mean a single software project without infrastructure as code.
+Recorded software is expressed through `implements` / `implementedIn`; missing edges do not prove
+absence.
 
 The removed draft `repositoryRole` and the proposed nested `contains.software` enum are not this
 mapping. No general lossless conversion exists: an application role does not tell how many projects

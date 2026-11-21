@@ -1,24 +1,25 @@
 # Rename continuity conformance scenarios
 
 These scenarios exercise the [identity contract](../spec/operational-estate.md#6-identity-and-keys)
-for six classes. They specify fixtures, operations, and semantic invariants for any implementation.
+for five classes. They specify fixtures, operations, and semantic invariants for any implementation.
 A valid snapshot alone cannot prove continuity: both an original and an incorrectly rekeyed graph
 can satisfy structural constraints.
 
 ## Fixture and comparison
 
 Load two Repositories, `shop-code` and `platform-code`, with distinct canonical remotes. Load
-Application `shop`; Service `user-svc` declared and implemented in `shop-code`, a member of `shop`;
-Environment `prod` placed under `shop`; and Instance `user-svc-prod` in `prod`, instantiated from
-`user-svc`. Load Core Infrastructure declared in `platform-code`, root `platform`, configuration
-`shared`, initially with no descriptive name. Add a Service `gateway` declared in `platform-code`
-and an Instance `gateway-shared` in that Core Infrastructure, instantiated from `gateway`.
+Application `shop`; Environment `prod` placed under `shop`; and Instance `user-svc-prod` in `prod`,
+implemented in `shop-code` at the code path `services/user-svc/` and deployed from `shop-code`.
+Load Core Infrastructure declared in `platform-code`, root `platform`, configuration `shared`,
+initially with no descriptive name, and an Instance `gateway-shared` in that Core Infrastructure,
+implemented in `platform-code`.
 Record every established class/key pair and every relationship endpoint before editing.
 
 These labels describe fixture entities, not a prescribed key encoding. Include the forward edges
-`declaredIn`, `implementedIn`, `memberOf`, `placedUnder`, `inScope`, and `instantiatedFrom` just
+`declaredIn`, `implementedIn` with its code path, `deployedFrom`, `placedUnder`, and `inScope` just
 specified. Implementations may materialize inverses; comparison treats those as the same relations.
-Use a fresh baseline for each case, then repeat with successive renames to check accumulated aliases.
+Use a fresh baseline for each case, then repeat with successive renames to check accumulated
+aliases.
 
 Compare established identities, descriptive values, and relationship endpoints. Ignore ordering,
 installation-local IDs and base URI prefixes. Do not ignore changes to keys embedded in dependent
@@ -42,14 +43,13 @@ For each case below:
 
 ## Class cases
 
-- **Application:** rename `shop` to `store`. Preserve Service memberships, Environment placements,
-  and the established keys of the Environment and its Instance.
-- **Service:** rename `user-svc` to `account-svc`. Preserve its Repository-scoped key, declaration,
-  implementation, membership, and the Instance's Service reference.
+- **Application:** rename `shop` to `store`. Preserve Environment placements and the established
+  keys of the Environment and its Instance.
 - **Environment:** rename `prod` to `live`. Preserve placement under the Application and the scope
   key embedded in `user-svc-prod`'s established key.
-- **Service Instance:** rename `user-svc-prod` to `account-live`. Preserve Scope and Service
-  references. Repeat independently for `gateway-shared` in the Core Infrastructure scope.
+- **Instance:** rename `user-svc-prod` to `account-live`. Preserve its Scope, its `implementedIn`
+  with its code path, and its `deployedFrom`. Repeat independently for `gateway-shared` in the Core
+  Infrastructure scope.
 - **Core Infrastructure:** add the name `foundation` to the unnamed entity, then rename it to
   `shared-platform`. Preserve Repository/root/applied-configuration identity and scoped Instance
   keys. No alternate name is required for this class. The wire profile maps the initial unknown
@@ -60,7 +60,7 @@ For each case below:
 
 ## Collisions and identifying-input changes
 
-Add a second Service with the same descriptive name in a different Repository, and a second
+Add a second Instance with the same deployed name in a different Environment, and a second
 Environment with the same name under a different Application. Both identities remain distinct
 through export/import. Reusing names in these different scopes is permitted.
 
