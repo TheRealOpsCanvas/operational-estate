@@ -305,7 +305,7 @@ asserted too; the annotation syntax does this, and section 7 requires it of ever
 | `connectsTo` | Runtime | Runtime, External System | |
 | `readsSecretsFrom` | Service Instance, Pipeline | Service Instance, Declared Resource, Deployed Resource, External System | path or name |
 | `observedBy` | Service Instance, Environment, Pipeline, Declared Resource, Deployed Resource | Service Instance, Declared Resource, Deployed Resource, External System | the tool's identifiers |
-| `copiedTo` | Runtime | Runtime, External System | copy kind, configuring resource, copy regions |
+| `copiedTo` | Runtime | Runtime, External System | copy kind, configuring resource or job, copy regions |
 | `restoresFrom` | Pipeline, Runtime | Runtime, External System | job, sources restored |
 | `accessedAs` | Environment | Identity | declared credential name, account used in |
 | `runsAs` | Service Instance, Pipeline | Identity | job |
@@ -465,9 +465,10 @@ is a Service Instance and is `copiedTo` like any other source. Every `copiedTo` 
 
 The kind is read from the declaration that makes the copy, and one relation and one walk serve
 both, because the question "where else does this data exist" needs both and the question "what
-survives a bad delete" needs them told apart. A Copy also carries `configuredBy`, the Declared
-Resource that configures it where that is neither end, such as a backup plan apart from the vault
-it writes to or a transfer job between two buckets. A schedule, a retention, a lag, and whether a
+survives a bad delete" needs them told apart. A Copy also carries `configuredBy`, what configures
+it where that is neither end: the Declared Resource of a backup plan apart from the vault it writes
+to or of a transfer job between two buckets, or the Pipeline whose scheduled job makes the copy,
+such as a nightly export, with the job on the Copy. A schedule, a retention, a lag, and whether a
 replication is synchronous are reads of the cited declaration.
 
 **A resource that keeps its own copies is `copiedTo` itself.** Where a resource's own declaration
@@ -705,9 +706,9 @@ Core Infrastructure.
 target's key, and, where one relation can have several details, by what tells them apart: the job
 for a `triggers`, `deploys`, `builds`, `deliversTo`, `runsAs`, or `restoresFrom`, the secret path
 for a `readsSecretsFrom`, the Cloud Account an `accessedAs` is `usedIn`, where it has one, and the
-copy kind and the configuring resource, where it has one, for a `copiedTo`. An `observedBy` or
-`pullsFrom` has at most one detail. A detail is named by an identifier derived from its key, never a
-blank node, so two graphs that say the same thing about one relation merge into one detail.
+copy kind and what configures it, with its job, where it has one, for a `copiedTo`. An `observedBy`
+or `pullsFrom` has at most one detail. A detail is named by an identifier derived from its key,
+never a blank node, so two graphs that say the same thing about one relation merge into one detail.
 
 **An individual's identifier is relative: its kind and key, resolved under a base.** For example
 `service_instance/shop/prod/user-svc`. A serialization sets `@base`, and how an implementation
@@ -731,7 +732,8 @@ SPARQL 1.2 queries, until SHACL 1.2 is published:
 - A detail is named by an identifier derived from its key, never a blank node.
 - A detail reifies exactly one relation, that relation carries data, and it is asserted.
 - A relation's data is on a detail of that relation: a `job` is on a `triggers`, `deploys`,
-  `builds`, `deliversTo`, `runsAs`, or `restoresFrom`, never on a `readsSecretsFrom`.
+  `builds`, `deliversTo`, `runsAs`, or `restoresFrom`, or on a `copiedTo` a Pipeline configures,
+  never on a `readsSecretsFrom`.
 - Every `copiedTo` has a Copy, and every Copy carries its `copyKind`.
 - A source a Restore `restoresCopyOf` is `copiedTo` the holder its `restoresFrom` ends at.
 - A Service Instance has at most one `instantiatedFrom`, and its target is a Service.

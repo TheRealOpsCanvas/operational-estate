@@ -712,11 +712,11 @@ is reported apart, as keeping none in the repositories the estate read, or not r
 Terms: `copiedTo`, `copyKind`, `copyRegion`, `region`, `within`, `provisionedFor`, `connectsTo`;
 declaration reads (tool).
 
-- **Estate returns.** The Declared Resources `provisionedFor` prod or one of the Instances `inScope`
-  prod, and those prod's Instances `connectsTo`; for each, every holder it is `copiedTo` with
-  `copyKind` `backup`, with the holder's Cloud Account and region, the Copy's `copyRegion` and
-  `configuredBy`, each with its citation; the resources with no backup recorded, each as read or
-  not read.
+- **Estate returns.** Prod's Instances, such as a database deployed from a chart; the Declared
+  Resources `provisionedFor` prod or one of its Instances, and those prod's Instances `connectsTo`;
+  for each, every holder it is `copiedTo` with `copyKind` `backup`, with the holder's Cloud Account
+  and region, the Copy's `copyRegion` and `configuredBy`, each with its citation; the resources with
+  no backup recorded, each as read or not read.
 - **Last mile.** Which of the resources with no backup hold data: one read of each one's cited
   declaration. How long a backup is kept, and whether it outlives the deletion of the resource
   itself, as copies a provider keeps for a resource may not, is one read of the declaration that
@@ -729,12 +729,14 @@ declaration reads (tool).
 
 Terms: `copiedTo`, `copyKind`, `copyRegion`, `region`, `within`; Cloud Account.
 
-- **Estate returns.** Prod's resources `within` the account or in the region, through
-  `declaredAs`; for each, every holder it is `copiedTo` of either kind, with each of the copy's
-  recorded locations, its holder's account and every `copyRegion` or holder `region`, classed one
-  by one as inside the lost account or region or outside it, so a copy with a location on each
-  side is listed on both; each resource's other `region` values; the copies whose location is not
-  recorded.
+- **Estate returns.** Prod's resources `within` the account or in the region, through `declaredAs`,
+  and prod's Instances placed there, through the resource each `runsOn` or is `providedAs`; for
+  each, every holder it is `copiedTo` of either kind, with each of the copy's recorded locations,
+  classed one by one as inside the lost account or region or outside it: its holder's account,
+  located the same way for an Instance, and its Copy's `copyRegion` values, or the holder's own
+  `region` where the holder is not the source, because a holder that keeps its own copies is placed
+  where the source is, not where its copies are, so a copy with a location on each side is listed on
+  both; each resource's other `region` values; the copies whose location is not recorded.
 - **Last mile.** None for which copies have a location outside. Whether a resource placed in
   several regions keeps a complete copy in each, rather than dividing its data between them, is
   one read of its cited declaration; its placements are never read as survival on their own. A
@@ -750,7 +752,8 @@ Terms: `copiedTo`, `copyKind`, `region`, `connectsTo`, `inScope`.
 
 - **Estate returns.** `orders-db` and its Deployed Resources; every holder it is `copiedTo` with
   `copyKind` `replica`, with its region and Cloud Account; every Instance and resource that
-  `connectsTo` `orders-db`, with its Scope and its own region.
+  `connectsTo` `orders-db`, with its Scope and its own region, an Instance's through the resource
+  it `runsOn` or is `providedAs`.
 - **Last mile.** How failover promotes the replica and repoints its clients: one read of the cited
   declarations and of the connection configuration each `connectsTo` cites.
 - **Same for everyone.** The replica is the one the declaration names, and the clients are the
@@ -774,11 +777,11 @@ Terms: `copiedTo`, `restoresFrom`, `restoresCopyOf`, Pipeline, `job`; CI runs (t
 
 Terms: `copiedTo`, `copyKind`, `restoresFrom`, `restoredBy`, `restoresCopyOf`.
 
-- **Estate returns.** Every backup of a resource of prod's, a holder it is `copiedTo` with
-  `copyKind` `backup`, with what `restoresFrom` that holder, each job with its definition pinned to
-  a commit and the sources its Restore `restoresCopyOf`; the backups no job restores, counting a
-  job that names only other sources as not restoring this one; the repositories the estate read,
-  each at its commit.
+- **Estate returns.** Every backup of one of prod's Instances or resources, a holder it is
+  `copiedTo` with `copyKind` `backup`, with what `restoresFrom` that holder, each job with its
+  definition pinned to a commit and the sources its Restore `restoresCopyOf`; the backups no job
+  restores, counting a job that names only other sources as not restoring this one; the repositories
+  the estate read, each at its commit.
 - **Last mile.** None for which backups have no restore job. Whether each job is a scheduled test
   or a recovery run only on demand is one read of its cited definition, because the estate does
   not tell them apart.

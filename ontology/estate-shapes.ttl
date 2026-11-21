@@ -114,7 +114,7 @@ shape:RestoreSourceShape
         sh:prefixes <https://w3id.org/operational-estate/shapes> ;
         sh:select """
             SELECT $this WHERE {
-                FILTER NOT EXISTS { $this (estate:declaredAs|^estate:declaredAs)?/^estate:copiedTo ?source }
+                FILTER NOT EXISTS { $this (estate:declaredAs|^estate:declaredAs)*/^estate:copiedTo ?source }
             }""" ;
     ] .
 

@@ -734,8 +734,8 @@ estate:Copy
     rdfs:subClassOf estate:Detail ;
     rdfs:label "Copy"@en ;
     estate:detailOf estate:copiedTo ;
-    skos:definition "The details of a copiedTo: its copy kind, the Declared Resource that configures it where that is neither end, and the regions its copies are held in where the configuring declaration names them."@en ;
-    estate:keyRule "The relation it reifies, its copy kind, and the resource it is configuredBy, where it has one."@en ;
+    skos:definition "The details of a copiedTo: its copy kind, what configures it where that is neither end, a Declared Resource or a Pipeline and its job, and the regions its copies are held in where the configuring declaration names them."@en ;
+    estate:keyRule "The relation it reifies, its copy kind, and what it is configuredBy, with the job where that is a Pipeline, where it has one."@en ;
     estate:maturity "draft" .
 
 estate:restoresFrom
@@ -893,7 +893,7 @@ estate:systemKind
 estate:job
     a owl:DatatypeProperty, owl:FunctionalProperty ;
     rdfs:label "job"@en ;
-    rdfs:domain [ a owl:Class ; owl:unionOf ( estate:Trigger estate:Deployment estate:Build estate:Delivery estate:Assumption estate:Restore ) ] ;
+    rdfs:domain [ a owl:Class ; owl:unionOf ( estate:Trigger estate:Deployment estate:Build estate:Delivery estate:Assumption estate:Restore estate:Copy ) ] ;
     rdfs:range xsd:string ;
     skos:definition "The job in the source Pipeline a relation comes from."@en ;
     estate:maturity "draft" .
@@ -1020,8 +1020,8 @@ estate:configuredBy
     a owl:ObjectProperty, owl:FunctionalProperty ;
     rdfs:label "configured by"@en ;
     rdfs:domain estate:Copy ;
-    rdfs:range estate:DeclaredResource ;
-    skos:definition "The Declared Resource that configures a copy, where it is neither the source nor the holder: a backup plan apart from the vault it writes to, or a transfer job between two buckets."@en ;
+    rdfs:range [ a owl:Class ; owl:unionOf ( estate:DeclaredResource estate:Pipeline ) ] ;
+    skos:definition "What configures a copy, where it is neither the source nor the holder: the Declared Resource of a backup plan apart from the vault it writes to, or of a transfer job between two buckets; or the Pipeline whose scheduled job makes the copy, with the job on the Copy."@en ;
     skos:scopeNote "Absent where the source's or the holder's own declaration configures the copy."@en ;
     estate:maturity "draft" .
 
