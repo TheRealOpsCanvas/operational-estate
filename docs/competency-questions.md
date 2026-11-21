@@ -584,8 +584,8 @@ Terms: `connectsTo`, `within`, Cloud Account, `provider`, `region`, `zone`, `acc
   values in different accounts are compared by one query per account for the stable identifiers
   of its zone names.
 - **Same for everyone.** Each boundary is a comparison of recorded values: the cloud is the
-  provider of the Cloud Account, and zones are compared only in a form that means the same thing on
-  both sides.
+  provider of the Cloud Account, a region or zone is crossed only where the values on the two sides
+  share none, and zones are compared only in a form that means the same thing on both sides.
 
 ### If the `hub` connector is removed, which Instances lose a connection, and to what?
 
@@ -698,6 +698,80 @@ Terms: Deployed Resource, `networkRole`, `declaredAs`, `within`, Cloud Account; 
   from something no source the estate read reported; whether it is a connector is the row's own
   type, read in the cost store.
 - **Same for everyone.** The set is a query over the graph, never a search of the cloud.
+
+## Backup and recovery
+
+Copy questions walk `copiedTo`, following `declaredAs` both ways, and filter by the Copy's
+`copyKind`. Which of the resources they reach hold data is a read of each one's cited declaration:
+the estate records copies, not which resources are data stores. A resource with no copy recorded
+is reported apart, as looked at and keeping none, or not read (specification, section 8).
+
+### If prod's data is deleted or corrupted, which copies survive it, and where are they?
+
+Terms: `copiedTo`, `copyKind`, `copyRegion`, `region`, `within`, `provisionedFor`, `connectsTo`;
+declaration reads (tool).
+
+- **Estate returns.** The Declared Resources `provisionedFor` prod, and those prod's Instances
+  `connectsTo`; for each, every holder it is `copiedTo` with `copyKind` `backup`, with the holder's
+  Cloud Account and region, the Copy's `copyRegion` and `configuredBy`, each with its citation; the
+  resources with no backup recorded, each as read or not read.
+- **Last mile.** Which of the resources with no backup hold data: one read of each one's cited
+  declaration. How long a backup is kept is one read of the declaration that configures it.
+- **Same for everyone.** A replica is never counted as surviving a deletion, because the kind is
+  read from the declaration that makes the copy and is on the relation, not inferred from a name
+  such as `-backup`.
+
+### If this account or region is lost, where else does prod's data exist?
+
+Terms: `copiedTo`, `copyKind`, `copyRegion`, `region`, `within`; Cloud Account.
+
+- **Estate returns.** Prod's resources `within` the account or in the region, through
+  `declaredAs`; for each, every holder it is `copiedTo` of either kind, split into those outside
+  the account or region and those inside it, which are lost with it; a resource whose `region`
+  values include another region, which survives the loss of one; the copies whose location is not
+  recorded.
+- **Last mile.** None for which data has a copy elsewhere. A copy whose region is not recorded is
+  one read of its configuring declaration, and where that names none, the provider's default
+  location is a question to the provider.
+- **Same for everyone.** Inside and outside are `within` and the region overlap rule over values
+  copied verbatim; a copy the provider keeps for a resource is held by that resource, so it is never
+  read as outside an account it is lost with.
+
+### If `orders-db`'s region fails, where is its replica, and what connects to the primary today?
+
+Terms: `copiedTo`, `copyKind`, `region`, `connectsTo`, `inScope`.
+
+- **Estate returns.** `orders-db` and its Deployed Resources; every holder it is `copiedTo` with
+  `copyKind` `replica`, with its region and Cloud Account; every Instance and resource that
+  `connectsTo` `orders-db`, with its Scope and its own region.
+- **Last mile.** How failover promotes the replica and repoints its clients: one read of the cited
+  declarations and of the connection configuration each `connectsTo` cites.
+- **Same for everyone.** The replica is the one the declaration names, and the clients are the
+  cited connections, never a guess from a hostname that looks regional.
+
+### How is `orders-db` restored, and when did its restore last succeed?
+
+Terms: `copiedTo`, `restoresFrom`, Pipeline, `job`; CI runs (tool).
+
+- **Estate returns.** Every holder `orders-db` is `copiedTo`; every Pipeline, with its job, and
+  every resource or Instance that `restoresFrom` each holder, with its definition path or
+  declaration pinned to a commit.
+- **Last mile.** One query to the CI system, or the provider for a scheduled job declared as a
+  resource, for the latest run of that job and whether it passed.
+- **Same for everyone.** The job is the one whose cited definition restores from the holder, and
+  the run is the CI system's, queried by the pipeline and job, never a recollection.
+
+### Which of prod's backups have no recorded restore test?
+
+Terms: `copiedTo`, `copyKind`, `restoresFrom`, `restoredBy`.
+
+- **Estate returns.** Every holder a resource of prod's is `copiedTo` with `copyKind` `backup`,
+  with what `restoresFrom` it; those restored from by nothing; the repositories the estate read,
+  each at its commit.
+- **Last mile.** None.
+- **Same for everyone.** "No restore test" means none in the repositories the estate read, each
+  pinned to a commit, so two readers draw the same boundary; a job in a repository the estate has
+  not read is outside it, and the answer says so.
 
 ## Retiring infrastructure
 

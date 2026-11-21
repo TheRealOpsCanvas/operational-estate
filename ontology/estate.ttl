@@ -711,6 +711,59 @@ estate:Access
     estate:keyRule "The relation it reifies, and the Cloud Account it is used in, where it has one."@en ;
     estate:maturity "draft" .
 
+estate:copiedTo
+    a owl:ObjectProperty ;
+    rdfs:label "copied to"@en ;
+    skos:altLabel "backed up to"@en, "replicated to"@en, "backup target"@en ;
+    rdfs:domain [ a owl:Class ; owl:unionOf ( estate:DeclaredResource estate:DeployedResource ) ] ;
+    rdfs:range [ a owl:Class ; owl:unionOf ( estate:DeclaredResource estate:DeployedResource estate:ExternalSystem ) ] ;
+    owl:inverseOf estate:holdsCopyOf ;
+    skos:definition "What holds a copy of a resource's data, as a declaration names it: a bucket a database is exported to, a vault or backup plan that holds a volume's or cluster's backups, a replica in another region, a hosted backup service. Where a resource's own declaration turns on copies the provider keeps for it, with no other holder named, the resource is copiedTo itself. Every copiedTo has a Copy that says whether it is a backup or a replica."@en ;
+    skos:scopeNote "Not connectsTo: copying data is not what a workload reaches at runtime, and an outage walk does not follow it. Not a schedule, a retention, or a lag, which are reads of the cited declaration. Not a copy within one resource that its declaration places in several regions, which is that resource's region. Not a one-off restore or copy someone ran, which is an event and the provider's."@en ;
+    estate:maturity "draft" .
+
+estate:holdsCopyOf
+    a owl:ObjectProperty ;
+    rdfs:label "holds copy of"@en ;
+    skos:altLabel "replica of"@en ;
+    skos:definition "The inverse of copiedTo."@en ;
+    estate:maturity "draft" .
+
+estate:Copy
+    a owl:Class ;
+    rdfs:subClassOf estate:Detail ;
+    rdfs:label "Copy"@en ;
+    estate:detailOf estate:copiedTo ;
+    skos:definition "The details of a copiedTo: its copy kind, the Declared Resource that configures it where that is neither end, and the regions its copies are held in where the configuring declaration names them."@en ;
+    estate:keyRule "The relation it reifies, and its copy kind."@en ;
+    estate:maturity "draft" .
+
+estate:restoresFrom
+    a owl:ObjectProperty ;
+    rdfs:label "restores from"@en ;
+    skos:altLabel "restore test"@en, "restore drill"@en, "recovery job"@en ;
+    rdfs:domain [ a owl:Class ; owl:unionOf ( estate:Pipeline estate:Runtime ) ] ;
+    rdfs:range [ a owl:Class ; owl:unionOf ( estate:DeclaredResource estate:DeployedResource estate:ExternalSystem ) ] ;
+    owl:inverseOf estate:restoredBy ;
+    skos:definition "What a declared job restores data from: a holder of copies, the target of a copiedTo. A Pipeline's restore job, with the job on the relation, or a scheduled job declared as a resource or deployed as a Service Instance. It is how the restore tests and the recovery path for a copy are found."@en ;
+    skos:scopeNote "Not a restore someone ran by hand, and not a drill run from a runbook that nothing declares. Not the schedule, the scratch target restored into, or whether the last run passed: the schedule is a read of the cited file, and runs are the CI system's or the provider's, queried by the pipeline and job. Not a distinction between a test and a recovery: one job is commonly both, and which it is reads from the file."@en ;
+    estate:maturity "draft" .
+
+estate:restoredBy
+    a owl:ObjectProperty ;
+    rdfs:label "restored by"@en ;
+    skos:definition "The inverse of restoresFrom."@en ;
+    estate:maturity "draft" .
+
+estate:Restore
+    a owl:Class ;
+    rdfs:subClassOf estate:Detail ;
+    rdfs:label "Restore"@en ;
+    estate:detailOf estate:restoresFrom ;
+    skos:definition "The details of a restoresFrom: the job in the source Pipeline that restores."@en ;
+    estate:keyRule "The relation it reifies, and its job."@en ;
+    estate:maturity "draft" .
+
 #################################################################
 # Data properties
 #################################################################
@@ -840,7 +893,7 @@ estate:systemKind
 estate:job
     a owl:DatatypeProperty, owl:FunctionalProperty ;
     rdfs:label "job"@en ;
-    rdfs:domain [ a owl:Class ; owl:unionOf ( estate:Trigger estate:Deployment estate:Build estate:Delivery estate:Assumption ) ] ;
+    rdfs:domain [ a owl:Class ; owl:unionOf ( estate:Trigger estate:Deployment estate:Build estate:Delivery estate:Assumption estate:Restore ) ] ;
     rdfs:range xsd:string ;
     skos:definition "The job in the source Pipeline a relation comes from."@en ;
     estate:maturity "draft" .
@@ -945,6 +998,33 @@ estate:usedIn
     skos:scopeNote "Not the Cloud Account its Identity is within, which the Identity states, and not an account the Environment is in. Never what the credential grants there."@en ;
     estate:maturity "draft" .
 
+estate:copyKind
+    a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:label "copy kind"@en ;
+    rdfs:domain estate:Copy ;
+    rdfs:range [ a rdfs:Datatype ; owl:oneOf ( "backup" "replica" ) ] ;
+    skos:definition "What a copy keeps, read from the declaration that makes it: \"backup\", point-in-time copies kept apart from the source, which a deletion or corruption of the source does not reach; \"replica\", a continuous copy that follows the source, which a change to the source, a deletion included, reaches."@en ;
+    skos:scopeNote "Not whether a replication is synchronous, how often a backup runs, or how long it is kept, which are reads of the cited declaration."@en ;
+    estate:maturity "draft" .
+
+estate:configuredBy
+    a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:label "configured by"@en ;
+    rdfs:domain estate:Copy ;
+    rdfs:range estate:DeclaredResource ;
+    skos:definition "The Declared Resource that configures a copy, where it is neither the source nor the holder: a backup plan apart from the vault it writes to, or a transfer job between two buckets."@en ;
+    skos:scopeNote "Absent where the source's or the holder's own declaration configures the copy."@en ;
+    estate:maturity "draft" .
+
+estate:copyRegion
+    a owl:DatatypeProperty ;
+    rdfs:label "copy region"@en ;
+    rdfs:domain estate:Copy ;
+    rdfs:range xsd:string ;
+    skos:definition "A region a copy is held in, copied verbatim from the declaration that configures the copy, where it names one. Compared with a resource's region by the same rule as two regions are."@en ;
+    skos:scopeNote "Absent where the declaration names no region, and never the source's region assumed. Not a provider's group of locations, such as a multi-region name, which is not a region. Recorded where the holder's own region does not say where the copies are, as for copies the provider keeps for the resource itself."@en ;
+    estate:maturity "draft" .
+
 estate:identifier
     a owl:ObjectProperty ;
     rdfs:label "identifier"@en ;
@@ -979,29 +1059,29 @@ estate:networkRole
     estate:maturity "draft" .
 
 estate:region
-    a owl:DatatypeProperty, owl:FunctionalProperty ;
+    a owl:DatatypeProperty ;
     rdfs:label "region"@en ;
     rdfs:domain [ a owl:Class ; owl:unionOf ( estate:DeclaredResource estate:DeployedResource ) ] ;
     rdfs:range xsd:string ;
-    skos:definition "The provider's region for a resource, copied verbatim from the declaration, the provider's report, or its billing export."@en ;
-    skos:scopeNote "Not part of any key, and never read from a name or a provider id. Absent on a Declared Resource whose declaration places it in several regions."@en ;
+    skos:definition "A provider's region a resource is placed in, copied verbatim from the declaration, the provider's report, or its billing export: one value for each region a source names, so a resource whose declaration places it in several regions carries each. Two resources share a region when their values overlap."@en ;
+    skos:scopeNote "Not part of any key, and never read from a name or a provider id. Not a provider's group of locations, such as a multi-region name, which is not a region and is not expanded into the regions it covers. A Deployed Resource carries the regions it is reported in, each one its Declared Resource carries where that carries any."@en ;
     estate:maturity "draft" .
 
 estate:zone
-    a owl:DatatypeProperty, owl:FunctionalProperty ;
+    a owl:DatatypeProperty ;
     rdfs:label "zone"@en ;
     rdfs:domain [ a owl:Class ; owl:unionOf ( estate:DeclaredResource estate:DeployedResource ) ] ;
     rdfs:range xsd:string ;
-    skos:definition "The provider's stable identifier for the zone a resource is placed in, the same in every account, copied verbatim from whichever source states it. Where a provider's zone names are the same in every account, the name is this identifier."@en ;
+    skos:definition "The provider's stable identifier for a zone a resource is placed in, the same in every account, copied verbatim from whichever source states it: one value for each zone a source names. Where a provider's zone names are the same in every account, the name is this identifier."@en ;
     skos:scopeNote "Not the zone's name in one account, which is accountZone. Not part of any key."@en ;
     estate:maturity "draft" .
 
 estate:accountZone
-    a owl:DatatypeProperty, owl:FunctionalProperty ;
+    a owl:DatatypeProperty ;
     rdfs:label "account zone"@en ;
     rdfs:domain [ a owl:Class ; owl:unionOf ( estate:DeclaredResource estate:DeployedResource ) ] ;
     rdfs:range xsd:string ;
-    skos:definition "The name of the zone a resource is placed in, as it reads in the Cloud Account the resource is within, for a provider that names zones differently in each account, copied verbatim from whichever source states it."@en ;
+    skos:definition "The name of a zone a resource is placed in, as it reads in the Cloud Account the resource is within, for a provider that names zones differently in each account, copied verbatim from whichever source states it: one value for each zone a source names."@en ;
     skos:scopeNote "Comparable only with another resource within the same Cloud Account; across accounts, comparing is one query per account for the stable identifiers of its zone names. Not part of any key."@en ;
     estate:maturity "draft" .
 

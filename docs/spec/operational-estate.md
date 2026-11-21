@@ -72,8 +72,9 @@ the Core Infrastructure a platform declares. Every other class sits directly und
 role. What a workload reads secrets from may be a Service Instance (a self-hosted Vault), a Declared
 Resource (a cloud secrets manager), or an External System (a hosted secrets service), so there is no
 Secret Store class: the secret stores in an estate are the targets of `readsSecretsFrom`. An
-observability tool is the same, through `observedBy`. The part a resource plays in a network is
-not a class either: it is the resource's `networkRole` (section 5, Networks).
+observability tool is the same, through `observedBy`, and so is a backup store: the holders of
+copies in an estate are the targets of `copiedTo`. The part a resource plays in a network is not a
+class either: it is the resource's `networkRole` (section 5, Networks).
 
 ## 4. Classes
 
@@ -304,6 +305,8 @@ asserted too; the annotation syntax does this, and section 7 requires it of ever
 | `connectsTo` | Runtime | Runtime, External System | |
 | `readsSecretsFrom` | Service Instance, Pipeline | Service Instance, Declared Resource, Deployed Resource, External System | path or name |
 | `observedBy` | Service Instance, Environment, Pipeline, Declared Resource, Deployed Resource | Service Instance, Declared Resource, Deployed Resource, External System | the tool's identifiers |
+| `copiedTo` | Declared Resource, Deployed Resource | Declared Resource, Deployed Resource, External System | copy kind, configuring resource, copy regions |
+| `restoresFrom` | Pipeline, Runtime | Declared Resource, Deployed Resource, External System | job |
 | `accessedAs` | Environment | Identity | declared credential name, account used in |
 | `runsAs` | Service Instance, Pipeline | Identity | job |
 | `trusts` | Identity | Pipeline, Repository, Identity, Declared Resource, Deployed Resource | |
@@ -445,6 +448,64 @@ describe, so `connectsTo` never runs from one.
 declared, the relation targets that Declared Resource; otherwise it targets the store, with the path
 on the relation. What a self-hosted store's outage reaches is a walk back along these relations.
 
+### Copies and restores
+
+`copiedTo` runs from a resource to what holds a copy of its data, as a declaration names it: the
+bucket a database is exported to, the vault or backup plan that holds a volume's or a cluster's
+backups, a replica in another region, or a hosted backup service, an External System. Every
+`copiedTo` has a Copy whose `copyKind` says what the copy keeps:
+
+- `backup`: point-in-time copies kept apart from the source, which a deletion or corruption of the
+  source does not reach.
+- `replica`: a continuous copy that follows the source, which a change to the source, a deletion
+  included, reaches.
+
+The kind is read from the declaration that makes the copy, and one relation and one walk serve
+both, because the question "where else does this data exist" needs both and the question "what
+survives a bad delete" needs them told apart. A Copy also carries `configuredBy`, the Declared
+Resource that configures it where that is neither end, such as a backup plan apart from the vault
+it writes to or a transfer job between two buckets. A schedule, a retention, a lag, and whether a
+replication is synchronous are reads of the cited declaration.
+
+**A resource that keeps its own copies is `copiedTo` itself.** Where a resource's own declaration
+turns on copies the provider keeps for it, such as a managed database's automated backups or a
+disk's snapshot schedule, and names no other holder, the resource is the holder: it is `copiedTo`
+itself, with the kind its declaration states. It is not an External System, because nothing outside
+the estate is referenced, nothing names it, and the copies are commonly lost with the account the
+resource is `within`; an External System would read as a copy held beyond it. The regions its
+copies are held in are the Copy's `copyRegion`, where the declaration names them, because the
+holder's own `region` says where the resource is, not where its copies are. A copy within one
+resource that its declaration places in several regions is not a `copiedTo` at all: it is that
+resource's several `region` values.
+
+**A missing copy is "not recorded" or "looked and not found", never assumed.** A scan records what
+it read (section 8). A resource whose cited declaration was read, with no `copiedTo` from it, was
+looked at and keeps no copy anything declares; one whose declaration was not read has no copy
+recorded. An answer about copies says which.
+
+`restoresFrom` runs from what restores data to the holder it restores from: a Pipeline's restore
+job, with the job on the relation, or a scheduled job declared as a resource or deployed as a
+Service Instance. It is how the restore tests and the recovery path of a copy are found: one job is
+commonly both, and which it is reads from the file. The schedule, the scratch target restored into,
+and whether the last run passed are not recorded: the schedule is in the cited file, and runs are
+the CI system's or the provider's, queried by the pipeline and job. A restore someone ran by hand,
+or a drill run from a runbook nothing declares, is not in the estate.
+
+```turtle
+:orders-db estate:copiedTo :orders-db
+    ~ :orders-db.copiedTo.orders-db.backup
+    {| estate:copyKind "backup" ; estate:copyRegion "region-a" |} .
+:orders-db estate:copiedTo :orders-exports
+    ~ :orders-db.copiedTo.orders-exports.backup
+    {| estate:copyKind "backup" ; estate:configuredBy :orders-export-job |} .
+:orders-db estate:copiedTo :orders-db-replica
+    ~ :orders-db.copiedTo.orders-db-replica.replica
+    {| estate:copyKind "replica" |} .
+:restore-drill-yml estate:restoresFrom :orders-exports
+    ~ :restore-drill-yml.restoresFrom.orders-exports.restore-orders
+    {| estate:job "restore-orders" |} .
+```
+
 ### Networks
 
 A network is not a class. A Declared or Deployed Resource that plays a part in how networks are laid
@@ -489,18 +550,27 @@ routes and rules let traffic take a connection is effective reachability, which 
 not hold: it is a read of the cited routes and rules, or one query to the provider for routes it
 propagates.
 
-**Region and zone.** `region` is the provider's region for a resource. `zone` is the provider's
-stable identifier for the zone a resource is placed in, the same in every account. `accountZone`
-is the zone's name as it reads in the Cloud Account the resource is `within`, for a provider that
-names zones differently in each account. Each is copied verbatim from whichever source states it,
-a declaration, the provider's report, or its billing export read by provider id, and any of them may
-be absent. Where a provider's zone names are the same in every account, the name is the stable
-identifier and is recorded as `zone`. Two resources are in the same zone when their `zone` values
-match, or their `accountZone` values match and they are `within` the same Cloud Account; any other
-comparison is one query per account for the stable identifiers of its zone names. A Declared
-Resource whose declaration places it in several regions or zones carries none of them, and its
-Deployed Resources carry their own. None of the three is part of a key. The cloud a resource is in
-is the `provider` of the Cloud Account it is `within`, never a value of its own.
+**Region and zone.** `region` is a provider's region a resource is placed in. `zone` is the
+provider's stable identifier for a zone a resource is placed in, the same in every account.
+`accountZone` is a zone's name as it reads in the Cloud Account the resource is `within`, for a
+provider that names zones differently in each account. Each is copied verbatim from whichever
+source states it, a declaration, the provider's report, or its billing export read by provider id,
+and any of them may be absent. Where a provider's zone names are the same in every account, the
+name is the stable identifier and is recorded as `zone`. A resource carries one value for each
+region or zone a source names, so a Declared Resource whose declaration places it in several
+regions, such as a database or bucket configured for two, carries each, and each of its Deployed
+Resources carries the ones it is reported in. A provider's group of locations, such as a
+multi-region name, is not a region: it is not recorded as one and is not expanded into the regions
+it covers, because which regions a group covers is the provider's to say.
+
+Two resources **share a region** when their `region` values overlap, and a connection or a copy
+**crosses a region** when the values on its two sides share none; where either side has none, the
+comparison has no answer, never "the same". A Copy's `copyRegion` is compared with a resource's
+`region` by the same rule. Two resources share a zone when their `zone` values overlap, or their
+`accountZone` values overlap and they are `within` the same Cloud Account; any other comparison is
+one query per account for the stable identifiers of its zone names. None of the three is part of a
+key. The cloud a resource is in is the `provider` of the Cloud Account it is `within`, never a value
+of its own.
 
 ### Observation
 
@@ -620,9 +690,9 @@ Core Infrastructure.
 
 **A detail is keyed by the relation it reifies**, meaning its source's key, the relation, and its
 target's key, and, where one relation can have several details, by what tells them apart: the job
-for a `triggers`, `deploys`, `builds`, `deliversTo`, or `runsAs`, the secret path for a
-`readsSecretsFrom`, the Cloud Account an `accessedAs` is `usedIn`, where it has one. An `observedBy`
-or `pullsFrom` has at most one detail. A detail
+for a `triggers`, `deploys`, `builds`, `deliversTo`, `runsAs`, or `restoresFrom`, the secret path
+for a `readsSecretsFrom`, the Cloud Account an `accessedAs` is `usedIn`, where it has one, and the
+copy kind for a `copiedTo`. An `observedBy` or `pullsFrom` has at most one detail. A detail
 is named by an identifier derived from its key, never a blank node, so two graphs that say the same
 thing about one relation merge into one detail.
 
@@ -648,7 +718,8 @@ SPARQL 1.2 queries, until SHACL 1.2 is published:
 - A detail is named by an identifier derived from its key, never a blank node.
 - A detail reifies exactly one relation, that relation carries data, and it is asserted.
 - A relation's data is on a detail of that relation: a `job` is on a `triggers`, `deploys`,
-  `builds`, `deliversTo`, or `runsAs`, never on a `readsSecretsFrom`.
+  `builds`, `deliversTo`, `runsAs`, or `restoresFrom`, never on a `readsSecretsFrom`.
+- Every `copiedTo` has a Copy that carries its `copyKind`.
 - A Service Instance has at most one `instantiatedFrom`, and its target is a Service.
 - An Environment has exactly one asserted Application.
 - A Pipeline that `deploys` an Environment or Instance is in the Repository it is `deployedFrom`.
@@ -657,12 +728,14 @@ SPARQL 1.2 queries, until SHACL 1.2 is published:
 - A Deployed Resource has at most one `declaredAs` with no `prov:invalidatedAtTime`.
 - No individual `prov:Person` appears in an estate graph.
 - Only a Declared or Deployed Resource carries `networkRole`, `region`, `zone`, or `accountZone`,
-  and at most one of each.
-- A Deployed Resource and the Declared Resource it is `declaredAs` agree on each of those four they
-  both carry.
+  and at most one `networkRole`.
+- A Deployed Resource carries only values of those four that the Declared Resource it is
+  `declaredAs` carries, where that carries any.
 - A resource whose role is `subnet` is `within` at most one resource whose role is `network`.
 - A resource that carries an `accountZone` is `within` a Cloud Account, directly or through
   `declaredAs`; one that is not is a warning, because its zone cannot be compared.
+- What a `restoresFrom` ends at holds a copy: it is the target of a `copiedTo`, directly or through
+  `declaredAs`. One that is not is a warning, because the copy it restores is not recorded.
 - Only an Environment carries `environmentTier`, at most one, from its listed values.
 - Only a Repository carries `monorepo` or `hasIaC`, at most one boolean value of each.
 - Only Application, Service, Environment, Service Instance, or Team carries `alternateName`.
@@ -672,8 +745,8 @@ SPARQL 1.2 queries, until SHACL 1.2 is published:
 - A Core Infrastructure carries at most one descriptive `name`, a nonblank string when known.
   An unknown name is absent, not an empty string or a literal null.
 
-The constraints on networks, environment tiers, repository properties, and names are stated in
-[`ontology/estate-shapes.ttl`](../../ontology/estate-shapes.ttl).
+The constraints on networks, copies, environment tiers, repository properties, and names are
+stated in [`ontology/estate-shapes.ttl`](../../ontology/estate-shapes.ttl).
 
 ## 8. Provenance
 
@@ -888,6 +961,15 @@ others do not, so reading it from the id gives two readers two answers. A Region
 entity with a name and nothing else. A resource does not change region without being replaced, so
 a copied value does not go stale.
 
+**A resource in several regions carries each, not none.** An earlier draft gave a resource at most
+one region, and none where its declaration placed it in several. A database or bucket configured
+for two regions then had no region at all, and a question about losing a region read it as having
+no copy anywhere, an answer that is wrong and looks right. Each region a source names is copied
+verbatim, so the set is no reading, and comparing sets by overlap keeps one rule for one value and
+for several. Rejected: expanding a provider's multi-region name into its regions, because which
+regions it covers is the provider's documentation, read differently by two readers and changed by
+the provider; and a separate value for such a name, until a question needs it.
+
 **Two zone values, not one.** At least one provider names zones differently in each account, so a
 zone name compared across accounts can match two different zones. One value would leave a reader
 guessing which form it holds. A Zone class is rejected for the reason a Region class is, and a
@@ -901,6 +983,37 @@ system no cloud provides would otherwise leave empty, and it already says who ru
 separate value for who runs it would repeat the key. A subclass for on-premises systems would
 repeat it as a class. Where the system has an address, its provider is a value rather than part of
 its key, and `on-premises` is that value.
+
+**Backups and replicas are one relation with a kind, not two relations or none.** Both answer
+"where else does this data exist", so two relations would make every such walk name both; and they
+differ on "what survives a bad delete", a backup does and a replica does not, so one relation with
+no kind could not answer it. A listed kind is what `networkRole` and `environmentTier` already are.
+
+**The copy kind is stored, though one file shows it.** For the reason the network role is: a walk
+that follows only backups, or only replicas, has to filter before it reads anything, and telling
+them apart from the cited declarations along every path is a search.
+
+**Copies a provider keeps for a resource are held by the resource itself.** Where a declaration
+turns on automated backups and names nothing else, the copy still has to be a relation, or a
+question about which data has no backup cannot be answered from the graph. Rejected: an External
+System for the provider's backup storage, because nothing outside the estate is referenced, it has
+no address and no name a reader could agree on, and it would read as a copy held outside the
+account when such copies are commonly lost with it; and a value that copies the provider's backup
+setting verbatim, which is spelled differently by every provider.
+
+**Where a copy is held is on the Copy, not a `region` of the Copy.** A property's domain holds
+details or entities, never both, and `region` says where a resource is, which is not where copies
+the provider keeps for it are. `copyRegion` is compared with `region` by the same rule, so the
+question of whether a copy crosses a region is one comparison.
+
+**Restore tests are a relation, not a repository property.** A flag on a repository that it holds
+restore tests says where to search, and a last mile that is a search fails; it also cannot say
+which copy is tested. What runs a restore is already a Pipeline, a Declared Resource, or a Service
+Instance, and the restore job and the copy it restores are commonly declared in different
+repositories, so the link between them is a connection no one file holds. Its runs are the CI
+system's, as a deployment's are, so the estate holds the pipeline and job they are queried by and
+never a result. Rejected: a restore as an entity or an event in the graph, which is the provider's
+or the CI system's history.
 
 **An External System with an address is keyed by the address, not by who runs it.** A key is what
 independent readings agree on. Every reader of a reference to a host agrees on the host; they do
