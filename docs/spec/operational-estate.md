@@ -307,7 +307,7 @@ asserted too; the annotation syntax does this, and section 7 requires it of ever
 | `triggers` | Pipeline | Pipeline | job, variables sent |
 | `deploys` | Pipeline | Environment, Core Infrastructure, Application, Instance | job, pinned write location |
 | `deliversTo` | Pipeline | Instance, Declared Resource, Deployed Resource, External System | job, reference, code path, tag scheme |
-| `pullsFrom` | Instance | Instance, Declared Resource, Deployed Resource, External System, Repository | reference, code path, pull secret name |
+| `pullsFrom` | Instance | Instance, Declared Resource, Deployed Resource, External System, Repository | reference, code paths, pull secret name |
 | `provisionedFor` | Declared Resource, Identity | Environment, Core Infrastructure, Application, Instance | |
 | `runsOn` | Instance | Declared Resource, Deployed Resource | |
 | `providedAs` | Instance | Declared Resource | |
@@ -376,9 +376,10 @@ relation. The store is an image or chart repository, a Declared Resource `within
 bucket a package or a site's files sit in, read for a site from the declaration of what serves it;
 the Instance that serves a self-hosted registry; or a store a deploy tool or platform keeps, an
 External System. Where an Instance fetches its code straight from a Repository, such as a sync
-that reads a path of it, the code is the artifact and the Repository is the store. As with secret
-stores, a store is a role: the artifact stores in an estate are the targets of these two relations.
-Tags, digests, and what was pushed or pulled when are live and the store's.
+that reads one or more paths of it, the code is the artifact, the Repository is the store, and the
+Pull carries each path the Instance reads. As with secret stores, a store is a role: the artifact
+stores in an estate are the targets of these two relations. Tags, digests, and what was pushed or
+pulled when are live and the store's.
 
 A Delivery carries what links what is built to the code and the commit it came from: the job, the
 reference it writes, the code path in the Pipeline's Repository the artifact is built from, such as
@@ -392,7 +393,7 @@ The artifact is a value read from the reference by that rule, not an entity, and
 or pulled under it is live.
 
 `implementedIn` is read through `pullsFrom`, and only there. An Instance that pulls from a
-Repository is `implementedIn` it, at the code path the Pull states. An Instance whose Pull has the
+Repository is `implementedIn` it, at each code path the Pull states. An Instance whose Pull has the
 artifact of a Delivery is `implementedIn` that Delivery's Pipeline's Repository, at the Delivery's
 code path. An Instance whose artifacts no Pipeline in the estate delivers runs software no
 Repository in the estate holds. It is read by address, never by a name. A job that both builds and
@@ -783,6 +784,7 @@ SPARQL 1.2 queries, until SHACL 1.2 is published:
   configured in a repository not read. No check states this warning yet.
 - An `implementedIn` is read through a `pullsFrom` that ends at a Repository or at a store a
   `deliversTo` ends at, never by a name.
+- A Delivery and an Implementation carry at most one code path; a Pull may carry several.
 - An Environment has exactly one asserted Application.
 - A Pipeline that `deploys` an Environment or Instance is in the Repository it is `deployedFrom`.
 - `ownedBy` targets only a Team.
@@ -933,6 +935,13 @@ what links a tag to a commit is on the Delivery; a component of a repository tha
 a code path; and what several Applications use is an Instance they `connectsTo`, since code is not
 shared at runtime. Rejected: an Artifact class, the built image or package, because a build is a
 version, and versions are live; the image repository already joins push to pull.
+
+**A Pull carries every path it reads.** A Pull is keyed by its artifact, and where an Instance
+fetches its code from a Repository the Repository is the artifact, so an Instance that reads `dags/`
+and `plugins/` of one Repository has one Pull. It carries both paths, and each is an Implementation
+of the one `implementedIn`. Rejected: the code path in the Pull's key, which would make a moved
+folder a new Pull beside the old one and split one directory written two ways, such as `dags` and
+`./dags/`; and one path per Pull, which leaves every other directory the Instance runs unrecorded.
 
 **Instance, despite the name's other meanings.** An earlier draft proposed Deployed Instance, since
 "Instance" also names a virtual machine instance and OpenTelemetry's one replica. It was rejected
