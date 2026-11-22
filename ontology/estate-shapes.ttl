@@ -135,6 +135,20 @@ shape:EnvironmentTierShape
     ] .
 
 #################################################################
+# Code paths
+#################################################################
+
+shape:SingleCodePathShape
+    a sh:NodeShape ;
+    rdfs:comment "A Delivery and an Implementation carry at most one codePath; a Pull may carry several."@en ;
+    sh:targetClass estate:Delivery, estate:Implementation ;
+    sh:property [
+        sh:path estate:codePath ;
+        sh:maxCount 1 ;
+        sh:datatype xsd:string ;
+    ] .
+
+#################################################################
 # Repository properties and names
 #################################################################
 

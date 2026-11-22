@@ -566,8 +566,8 @@ estate:Pull
     rdfs:subClassOf estate:Detail ;
     rdfs:label "Pull"@en ;
     estate:detailOf estate:pullsFrom ;
-    skos:definition "The details of a pullsFrom: the reference as declared, the code path where it pulls from a Repository, and the name of the pull secret, if one is declared."@en ;
-    skos:scopeNote "Never carries the pull secret's value."@en ;
+    skos:definition "The details of a pullsFrom: the reference as declared, each code path the Instance reads where it pulls from a Repository, and the name of the pull secret, if one is declared."@en ;
+    skos:scopeNote "Never carries the pull secret's value. One Pull for each artifact: an Instance that reads several paths of one Repository, such as a sync of its dags/ and plugins/, has one Pull carrying both paths, not one Pull per path."@en ;
     estate:keyRule "The relation it reifies, and its artifact: its reference without a tag, a digest, or an object path."@en ;
     estate:maturity "draft" .
 
@@ -885,12 +885,12 @@ estate:tagScheme
     estate:maturity "draft" .
 
 estate:codePath
-    a owl:DatatypeProperty, owl:FunctionalProperty ;
+    a owl:DatatypeProperty ;
     rdfs:label "code path"@en ;
     rdfs:domain [ a owl:Class ; owl:unionOf ( estate:Delivery estate:Implementation estate:Pull ) ] ;
     rdfs:range xsd:string ;
     skos:definition "The path in a Repository whose code an artifact is built from, an Instance fetches, or an Instance runs, such as the build context services/worker/, or the Repository's root where the whole Repository is one."@en ;
-    skos:scopeNote "Read from the job that builds, its build context, its working directory, or the path it packages, or from the configuration that fetches, such as the path a sync reads. Never read from a name."@en ;
+    skos:scopeNote "Read from the job that builds, its build context, its working directory, or the path it packages, or from the configuration that fetches, such as the path a sync reads. Never read from a name. A Delivery and an Implementation have at most one; a Pull has one for each path its Instance reads."@en ;
     estate:maturity "draft" .
 
 estate:reference
