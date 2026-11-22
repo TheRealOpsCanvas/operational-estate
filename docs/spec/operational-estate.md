@@ -744,7 +744,8 @@ SPARQL 1.2 queries, until SHACL 1.2 is published:
   configured in a repository not read. No check states this warning yet.
 - A Service Instance has at most one `instantiatedFrom`, and its target is a Service.
 - An Environment has exactly one asserted Application.
-- A Pipeline that `deploys` an Environment or Instance is in the Repository it is `deployedFrom`.
+- A Pipeline that `deploys` an Environment or Instance is in one of the Repositories it is
+  `deployedFrom`.
 - `ownedBy` targets only a Team.
 - A `readsSecretsFrom` carries no secret value.
 - A Deployed Resource has at most one `declaredAs` with no `prov:invalidatedAtTime`.

@@ -45,8 +45,8 @@ live half that belongs to a tool or git.
 
 Terms: `deployedFrom`; Pipeline, `deploys`.
 
-- **Estate returns.** Every Environment's `deployedFrom` Repository; with pipelines, the Pipeline in
-  that Repository and its `deploys` edge per job.
+- **Estate returns.** Every Environment's `deployedFrom` Repositories; with pipelines, the Pipelines
+  in those Repositories and their `deploys` edges per job.
 - **Last mile.** None.
 - **Same for everyone.** Committed facts on stable keys with the citation that established each.
 
