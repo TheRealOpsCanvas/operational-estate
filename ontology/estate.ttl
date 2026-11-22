@@ -292,7 +292,7 @@ estate:deployedFrom
     rdfs:domain [ a owl:Class ; owl:unionOf ( estate:Environment estate:ServiceInstance ) ] ;
     rdfs:range estate:Repository ;
     owl:inverseOf estate:deploymentSourceOf ;
-    skos:definition "The Repository an Environment or Service Instance is deployed from."@en ;
+    skos:definition "A Repository an Environment or Service Instance is deployed from. One may be deployed from several, such as a Repository whose Pipeline applies an Environment's infrastructure and another whose Pipeline deploys its workloads."@en ;
     estate:maturity "draft" .
 
 estate:deploymentSourceOf
