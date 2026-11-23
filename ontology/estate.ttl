@@ -317,6 +317,22 @@ estate:hasProvisioned
     skos:definition "A Declared Resource or Identity whose declaration an owner holds."@en ;
     estate:maturity "draft" .
 
+estate:declaredBy
+    a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:label "declared by"@en ;
+    rdfs:domain estate:Identity ;
+    rdfs:range estate:Repository ;
+    owl:inverseOf estate:declaresIdentity ;
+    skos:definition "The Repository whose files declare an Identity, where one does. An Identity has at most one."@en ;
+    skos:scopeNote "Not part of the Identity's key, which is its provider's identifier, and not declaredIn, which is containment in a key. Not who uses or assumes the Identity: that is runsAs, accessedAs and trusts."@en ;
+    estate:maturity "draft" .
+
+estate:declaresIdentity
+    a owl:ObjectProperty ;
+    rdfs:label "declares identity"@en ;
+    skos:definition "An Identity a Repository's files declare."@en ;
+    estate:maturity "draft" .
+
 estate:runsOn
     a owl:ObjectProperty ;
     rdfs:label "runs on"@en ;

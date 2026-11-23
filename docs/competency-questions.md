@@ -401,6 +401,18 @@ Terms: Pipeline, Identity, `runsAs`, `within`, Cloud Account; policy reads (tool
   names a variable no cited file sets is not in the answer, and the answer does not claim it acts
   nowhere: it says that role is unread.
 
+### Where is this identity declared, and what applies its declaration?
+
+Terms: Identity, `declaredBy`, `provisionedFor`, Pipeline, `deploys`.
+
+- **Estate returns.** The Repository the Identity is `declaredBy`, with the line that declares it,
+  pinned to a commit; the owner it is `provisionedFor`; and the Pipeline and job that `deploys`
+  that owner. For an Identity no repository declares, no Repository, and the answer says so.
+- **Last mile.** None for where. One read of the cited declaration for how it is configured.
+- **Same for everyone.** The Repository is read from the declaration, never inferred from the
+  owner: an Identity provisioned for an Environment would otherwise lead to every Repository the
+  Environment is `deployedFrom`, and two readers would pick different ones.
+
 ## Network placement
 
 Network questions use the walks the specification defines under Networks: placement, from an

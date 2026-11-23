@@ -135,6 +135,21 @@ shape:EnvironmentTierShape
     ] .
 
 #################################################################
+# Identity declarations
+#################################################################
+
+shape:IdentityDeclarationShape
+    a sh:NodeShape ;
+    rdfs:comment "Only an Identity is declaredBy a Repository, and it is declaredBy at most one."@en ;
+    sh:targetSubjectsOf estate:declaredBy ;
+    sh:class estate:Identity ;
+    sh:property [
+        sh:path estate:declaredBy ;
+        sh:maxCount 1 ;
+        sh:class estate:Repository ;
+    ] .
+
+#################################################################
 # Repository properties and names
 #################################################################
 
