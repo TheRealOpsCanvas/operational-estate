@@ -206,15 +206,20 @@ A version-controlled store of files. Where things are declared; neither software
 
 `monorepo` records whether it contains multiple software projects or deployable units. `hasIaC`
 records whether it contains infrastructure as code, independently of its software organization.
-Both are optional, single boolean values on Repository, confirmed and attributed like other facts.
-An absent value is unknown, not `false`; incomplete discovery supplies no default. Both may be
-`false`, as for one software project with no infrastructure as code. Neither is part of the key.
-They are data properties from Repository to boolean values, with no aliases or inverse.
+`hasPipelines` records whether it contains Pipelines, independently of both. Each is an optional,
+single boolean value on Repository, confirmed and attributed like other facts. An absent value is
+unknown, not `false`; incomplete discovery supplies no default. Any of them may be `false`, as for
+one software project with no infrastructure as code and no CI/CD definitions. None is part of the
+key. They are data properties from Repository to boolean values, with no aliases or inverse.
 
 These are repository-wide facts, not interpretations of one cited file. `monorepo` says nothing
 about whether software is monolithic or independently deployed. Repository `implements`
 Application or Service (inverse `implementedIn`) identifies recorded software. Missing edges
 mean software is not recorded, not that none exists; their count does not establish `monorepo`.
+In the same way, the Pipelines recorded as `declaredIn` a Repository do not establish
+`hasPipelines`, and a Repository with none recorded may hold definition files no scan read. A
+repository of shared CI/CD definitions that other Repositories' Pipelines `triggers` is one with
+`hasPipelines` `true`, `hasIaC` `false`, and no software recorded.
 `contains` retains its infrastructure meaning as the inverse of `within`.
 
 *Aliases:* "repo".
@@ -774,7 +779,8 @@ SPARQL 1.2 queries, until SHACL 1.2 is published:
 - What a `restoresFrom` ends at holds a copy: it is the target of a `copiedTo`, directly or through
   `declaredAs`. One that is not is a warning, because the copy it restores is not recorded.
 - Only an Environment carries `environmentTier`, at most one, from its listed values.
-- Only a Repository carries `monorepo` or `hasIaC`, at most one boolean value of each.
+- Only a Repository carries `monorepo`, `hasIaC`, or `hasPipelines`, at most one boolean value of
+  each.
 - Only Application, Service, Environment, Service Instance, or Team carries `alternateName`.
   Alternate names are strings; on Application, Service, Environment, and Service Instance they
   are nonblank.
@@ -1094,7 +1100,11 @@ anything itself.
 
 An exclusive monolith, monorepo, service, or none classification mixes software architecture with
 repository organization. Multiple projects can include monolithic software and independent
-Services. Independent boolean properties express repository organization and infrastructure content;
+Services. Independent boolean properties express repository organization, infrastructure content,
+and CI/CD content;
 `implements` supplies software relationships without a second classification that can disagree with
 them. A structured property named `contains` would also collide with infrastructure containment.
 The draft `repositoryRole` property is replaced rather than retained as a competing classification.
+`hasPipelines` is a third boolean rather than a value of a classification for the same reason: a
+repository can hold software, infrastructure as code, and CI/CD definitions in any combination,
+and one holding only shared CI/CD definitions had no role to take.

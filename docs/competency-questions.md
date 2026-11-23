@@ -119,6 +119,21 @@ Terms: Repository, `monorepo`, `hasIaC`, `implements`.
   recorded relationships is not a substitute for that confirmation, and no single pointed file
   necessarily inventories all projects and infrastructure declarations.
 
+### Which repositories hold CI/CD definitions, and which hold none?
+
+Terms: Repository, `hasPipelines`, `hasIaC`, Pipeline, `declaredIn`, `implements`.
+
+- **Estate returns.** Confirmed `hasPipelines` values with their attribution, and the Pipelines
+  `declaredIn` each Repository. Missing values are listed as unknown. A Repository confirmed to
+  hold Pipelines, with `hasIaC` `false` and no software recorded, is reported as holding CI/CD
+  definitions and no infrastructure as code, with its software not recorded, never as holding
+  nothing else.
+- **Last mile.** None.
+- **Same for everyone.** Each value is confirmed once against the repository's contents. A
+  Repository with no Pipelines recorded may hold definition files a scan did not read, so the
+  recorded Pipelines are not a substitute for the confirmation, and a Repository confirmed to hold
+  none is told apart from one nobody looked at.
+
 ### What does this software's former name refer to after a rename?
 
 Terms: `key`, `name`, `alternateName`, `memberOf`, `placedUnder`, `inScope`, `instantiatedFrom`.

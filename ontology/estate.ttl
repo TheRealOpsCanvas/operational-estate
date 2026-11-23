@@ -167,7 +167,7 @@ estate:Repository
     rdfs:subClassOf estate:Entity ;
     rdfs:label "Repository"@en ;
     skos:altLabel "repo"@en ;
-    skos:definition "A version-controlled store of files. Where things are declared; monorepo records whether it holds multiple software projects or deployable units, and hasIaC records whether it holds infrastructure as code."@en ;
+    skos:definition "A version-controlled store of files. Where things are declared; monorepo records whether it holds multiple software projects or deployable units, hasIaC whether it holds infrastructure as code, and hasPipelines whether it holds Pipelines."@en ;
     skos:scopeNote "Neither software nor runtime."@en ;
     estate:keyRule "Its canonical remote."@en ;
     estate:maturity "draft" .
@@ -848,6 +848,15 @@ estate:hasIaC
     rdfs:range xsd:boolean ;
     skos:definition "Whether a Repository contains infrastructure as code, where confirmed, independently of its software organization."@en ;
     skos:scopeNote "Not a software classification and not inferred from missing relationships. Absent means unknown, not false. Not part of its key; no aliases or inverse."@en ;
+    estate:maturity "draft" .
+
+estate:hasPipelines
+    a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:label "has pipelines"@en ;
+    rdfs:domain estate:Repository ;
+    rdfs:range xsd:boolean ;
+    skos:definition "Whether a Repository contains Pipelines, CI/CD definition files, where confirmed, independently of its software organization and its infrastructure as code."@en ;
+    skos:scopeNote "Not inferred from the Pipelines recorded as declaredIn it, or from their absence: a definition file not read is not recorded, not absent. Absent means unknown, not false. Not part of its key; no aliases or inverse."@en ;
     estate:maturity "draft" .
 
 estate:definitionPath
