@@ -155,8 +155,8 @@ shape:IdentityDeclarationShape
 
 shape:RepositoryPropertiesShape
     a sh:NodeShape ;
-    rdfs:comment "Only a Repository carries monorepo or hasIaC, at most one boolean value of each."@en ;
-    sh:targetSubjectsOf estate:monorepo, estate:hasIaC ;
+    rdfs:comment "Only a Repository carries monorepo, hasIaC, or hasPipelines, at most one boolean value of each."@en ;
+    sh:targetSubjectsOf estate:monorepo, estate:hasIaC, estate:hasPipelines ;
     sh:class estate:Repository ;
     sh:property [
         sh:path estate:monorepo ;
@@ -164,6 +164,10 @@ shape:RepositoryPropertiesShape
         sh:datatype xsd:boolean ;
     ] , [
         sh:path estate:hasIaC ;
+        sh:maxCount 1 ;
+        sh:datatype xsd:boolean ;
+    ] , [
+        sh:path estate:hasPipelines ;
         sh:maxCount 1 ;
         sh:datatype xsd:boolean ;
     ] .
