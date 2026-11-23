@@ -187,7 +187,8 @@ pipeline `runsAs` it; a practitioner reaches an Environment through one the Envi
 `accessedAs`. Not a Declared or Deployed Resource: many identities have no owner in the estate and
 no declaration, such as a permission set created in a console, and that is normal rather than a
 gap; and some live in no cloud account, such as an identity provider's group or the OIDC subject a
-role trusts. Never a human principal: a user account named after a person stays out.
+role trusts. One a repository's files do declare is `declaredBy` that Repository. Never a human
+principal: a user account named after a person stays out.
 
 ### Cloud Account
 
@@ -286,6 +287,7 @@ asserted too; the annotation syntax does this, and section 7 requires it of ever
 | Relation | From | To | Carries |
 |---|---|---|---|
 | `declaredIn` | Service, Pipeline, Core Infrastructure, Declared Resource | Repository | |
+| `declaredBy` | Identity | Repository | |
 | `declaredAs` | Deployed Resource | Declared Resource | |
 | `inScope` | Service Instance | Scope | |
 | `memberOf` | Service | Application | |
@@ -320,6 +322,17 @@ Infrastructure, or Declared Resource; it is not `implementedIn`, the Repository 
 implements software, and an upstream Service has the first and never the second. `inScope` is the
 one Scope a Service Instance is deployed into: an Environment, or the Core Infrastructure whose
 declaration installs it.
+
+### Identity declarations
+
+`declaredBy` runs from an Identity to the Repository whose files declare it, where one does. An
+Identity has at most one, and many have none. It is not `declaredIn`: an Identity is keyed by its
+provider's identifier, so the Repository is not part of its key, and an Identity whose declaration
+moves to another Repository is the same Identity. It sits beside `provisionedFor`, which names the
+owner the declaration sits inside: `provisionedFor` says what an Identity belongs to, `declaredBy`
+says where it is written. An Identity provisioned for an Environment reaches the Repository that
+declares it only through `declaredBy`, because an Environment has no `declaredIn` and may be
+`deployedFrom` several Repositories.
 
 ### Declaration and deployment
 
@@ -749,6 +762,7 @@ SPARQL 1.2 queries, until SHACL 1.2 is published:
 - `ownedBy` targets only a Team.
 - A `readsSecretsFrom` carries no secret value.
 - A Deployed Resource has at most one `declaredAs` with no `prov:invalidatedAtTime`.
+- Only an Identity is `declaredBy` a Repository, and it is `declaredBy` at most one.
 - No individual `prov:Person` appears in an estate graph.
 - Only a Declared or Deployed Resource carries `networkRole`, `region`, `zone`, or `accountZone`,
   and at most one `networkRole`.
@@ -768,8 +782,9 @@ SPARQL 1.2 queries, until SHACL 1.2 is published:
 - A Core Infrastructure carries at most one descriptive `name`, a nonblank string when known.
   An unknown name is absent, not an empty string or a literal null.
 
-The constraints on networks, copies, environment tiers, repository properties, and names are
-stated in [`ontology/estate-shapes.ttl`](../../ontology/estate-shapes.ttl).
+The constraints on networks, copies, environment tiers, identity declarations, repository
+properties, and names are stated in
+[`ontology/estate-shapes.ttl`](../../ontology/estate-shapes.ttl).
 
 ## 8. Provenance
 
@@ -887,6 +902,14 @@ would move its existing Instance from Application to Service.
 **Identity is not a resource, declared or deployed.** As a subclass it would need exceptions to both
 the one-owner rule and the undeclared-is-a-gap rule on the day it landed, and it could not hold
 identities that live in no cloud account.
+
+**An Identity's Repository is `declaredBy`, not `declaredIn`.** `declaredIn` is containment: the
+Repository is part of the child's key, so it has exactly one. An Identity is keyed by its provider's
+identifier, independent of where it is declared, and many Identities have no declaration at all.
+Widening `declaredIn` to Identity would give it two meanings, part of the key for some classes and
+optional provenance for one, and every reader that derives a key from it would need an exception.
+Reaching the Repository through `provisionedFor` alone answers only when the owner is declared in a
+Repository; an Environment owner leads to every Repository it is `deployedFrom`.
 
 **A link's far side is an External System, not a class of its own.** What a dedicated link lands
 on, or a hosted API a workload calls, is referenced and provisioned by nothing in the estate, which
