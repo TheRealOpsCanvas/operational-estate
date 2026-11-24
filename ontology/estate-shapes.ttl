@@ -149,13 +149,28 @@ shape:SingleCodePathShape
     ] .
 
 #################################################################
+# Identity declarations
+#################################################################
+
+shape:IdentityDeclarationShape
+    a sh:NodeShape ;
+    rdfs:comment "Only an Identity is declaredBy a Repository, and it is declaredBy at most one."@en ;
+    sh:targetSubjectsOf estate:declaredBy ;
+    sh:class estate:Identity ;
+    sh:property [
+        sh:path estate:declaredBy ;
+        sh:maxCount 1 ;
+        sh:class estate:Repository ;
+    ] .
+
+#################################################################
 # Repository properties and names
 #################################################################
 
 shape:RepositoryPropertiesShape
     a sh:NodeShape ;
-    rdfs:comment "Only a Repository carries monorepo or hasIaC, at most one boolean value of each."@en ;
-    sh:targetSubjectsOf estate:monorepo, estate:hasIaC ;
+    rdfs:comment "Only a Repository carries monorepo, hasIaC, or hasPipelines, at most one boolean value of each."@en ;
+    sh:targetSubjectsOf estate:monorepo, estate:hasIaC, estate:hasPipelines ;
     sh:class estate:Repository ;
     sh:property [
         sh:path estate:monorepo ;
@@ -163,6 +178,10 @@ shape:RepositoryPropertiesShape
         sh:datatype xsd:boolean ;
     ] , [
         sh:path estate:hasIaC ;
+        sh:maxCount 1 ;
+        sh:datatype xsd:boolean ;
+    ] , [
+        sh:path estate:hasPipelines ;
         sh:maxCount 1 ;
         sh:datatype xsd:boolean ;
     ] .

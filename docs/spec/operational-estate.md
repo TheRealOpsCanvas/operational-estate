@@ -190,7 +190,8 @@ pipeline `runsAs` it; a practitioner reaches an Environment through one the Envi
 `accessedAs`. Not a Declared or Deployed Resource: many identities have no owner in the estate and
 no declaration, such as a permission set created in a console, and that is normal rather than a
 gap; and some live in no cloud account, such as an identity provider's group or the OIDC subject a
-role trusts. Never a human principal: a user account named after a person stays out.
+role trusts. One a repository's files do declare is `declaredBy` that Repository. Never a human
+principal: a user account named after a person stays out.
 
 ### Cloud Account
 
@@ -210,15 +211,20 @@ where it holds several.
 
 `monorepo` records whether it contains multiple software projects or deployable units. `hasIaC`
 records whether it contains infrastructure as code, independently of its software organization.
-Both are optional, single boolean values on Repository, confirmed and attributed like other facts.
-An absent value is unknown, not `false`; incomplete discovery supplies no default. Both may be
-`false`, as for one software project with no infrastructure as code. Neither is part of the key.
-They are data properties from Repository to boolean values, with no aliases or inverse.
+`hasPipelines` records whether it contains Pipelines, independently of both. Each is an optional,
+single boolean value on Repository, confirmed and attributed like other facts. An absent value is
+unknown, not `false`; incomplete discovery supplies no default. Any of them may be `false`, as for
+one software project with no infrastructure as code and no CI/CD definitions. None is part of the
+key. They are data properties from Repository to boolean values, with no aliases or inverse.
 
 These are repository-wide facts, not interpretations of one cited file. `monorepo` says nothing
 about whether software is monolithic or independently deployed. Repository `implements` an
 Instance (inverse `implementedIn`) identifies the code an Instance runs. Missing edges
 mean software is not recorded, not that none exists; their count does not establish `monorepo`.
+In the same way, the Pipelines recorded as `declaredIn` a Repository do not establish
+`hasPipelines`, and a Repository with none recorded may hold definition files no scan read. A
+repository of shared CI/CD definitions that other Repositories' Pipelines `triggers` is one with
+`hasPipelines` `true`, `hasIaC` `false`, and no software recorded.
 `contains` retains its infrastructure meaning as the inverse of `within`.
 
 *Aliases:* "repo".
@@ -299,6 +305,7 @@ asserted too; the annotation syntax does this, and section 7 requires it of ever
 | Relation | From | To | Carries |
 |---|---|---|---|
 | `declaredIn` | Pipeline, Core Infrastructure, Declared Resource | Repository | |
+| `declaredBy` | Identity | Repository | |
 | `realizes` | Deployed Resource | Declared Resource, Instance | |
 | `inScope` | Instance | Scope | |
 | `implementedIn` | Instance | Repository | code path |
@@ -330,6 +337,17 @@ Declared Resource. `inScope` is the one Scope an Instance is deployed into: an E
 Core Infrastructure whose declaration installs it. Neither is `implementedIn`, the Repository whose
 code an Instance runs, nor `deployedFrom`, the one whose files deploy it; those are one Repository
 where a repository deploys its own code.
+
+### Identity declarations
+
+`declaredBy` runs from an Identity to the Repository whose files declare it, where one does. An
+Identity has at most one, and many have none. It is not `declaredIn`: an Identity is keyed by its
+provider's identifier, so the Repository is not part of its key, and an Identity whose declaration
+moves to another Repository is the same Identity. It sits beside `provisionedFor`, which names the
+owner the declaration sits inside: `provisionedFor` says what an Identity belongs to, `declaredBy`
+says where it is written. An Identity provisioned for an Environment reaches the Repository that
+declares it only through `declaredBy`, because an Environment has no `declaredIn` and may be
+`deployedFrom` several Repositories.
 
 ### Declaration and deployment
 
@@ -789,11 +807,13 @@ SPARQL 1.2 queries, until SHACL 1.2 is published:
   wire mapping's migration rule and records that it was.
 - A Delivery and an Implementation carry at most one code path; a Pull may carry several.
 - An Environment has exactly one asserted Application.
-- A Pipeline that `deploys` an Environment or Instance is in the Repository it is `deployedFrom`.
+- A Pipeline that `deploys` an Environment or Instance is in one of the Repositories it is
+  `deployedFrom`.
 - `ownedBy` targets only a Team.
 - A `readsSecretsFrom` carries no secret value.
 - A Deployed Resource has at most one `realizes` with no `prov:invalidatedAtTime`, and it ends at
   an Instance only where no Declared Resource declares it.
+- Only an Identity is `declaredBy` a Repository, and it is `declaredBy` at most one.
 - No individual `prov:Person` appears in an estate graph.
 - Only a Declared or Deployed Resource carries `networkRole`, `region`, `zone`, or `accountZone`,
   and at most one `networkRole`.
@@ -805,7 +825,8 @@ SPARQL 1.2 queries, until SHACL 1.2 is published:
 - What a `restoresFrom` ends at holds a copy: it is the target of a `copiedTo`, directly or through
   `realizes`. One that is not is a warning, because the copy it restores is not recorded.
 - Only an Environment carries `environmentTier`, at most one, from its listed values.
-- Only a Repository carries `monorepo` or `hasIaC`, at most one boolean value of each.
+- Only a Repository carries `monorepo`, `hasIaC`, or `hasPipelines`, at most one boolean value of
+  each.
 - Only Application, Environment, Instance, or Team carries `alternateName`.
   Alternate names are strings; on Application, Environment, and Instance they
   are nonblank.
@@ -813,8 +834,9 @@ SPARQL 1.2 queries, until SHACL 1.2 is published:
 - A Core Infrastructure carries at most one descriptive `name`, a nonblank string when known.
   An unknown name is absent, not an empty string or a literal null.
 
-The constraints on networks, copies, environment tiers, repository properties, and names are
-stated in [`ontology/estate-shapes.ttl`](../../ontology/estate-shapes.ttl).
+The constraints on networks, copies, environment tiers, identity declarations, repository
+properties, and names are stated in
+[`ontology/estate-shapes.ttl`](../../ontology/estate-shapes.ttl).
 
 ## 8. Provenance
 
@@ -954,6 +976,14 @@ would put it on the reported side. The class's definition and its aliases carry 
 **Identity is not a resource, declared or deployed.** As a subclass it would need exceptions to both
 the one-owner rule and the undeclared-is-a-gap rule on the day it landed, and it could not hold
 identities that live in no cloud account.
+
+**An Identity's Repository is `declaredBy`, not `declaredIn`.** `declaredIn` is containment: the
+Repository is part of the child's key, so it has exactly one. An Identity is keyed by its provider's
+identifier, independent of where it is declared, and many Identities have no declaration at all.
+Widening `declaredIn` to Identity would give it two meanings, part of the key for some classes and
+optional provenance for one, and every reader that derives a key from it would need an exception.
+Reaching the Repository through `provisionedFor` alone answers only when the owner is declared in a
+Repository; an Environment owner leads to every Repository it is `deployedFrom`.
 
 **A link's far side is an External System, not a class of its own.** What a dedicated link lands
 on, or a hosted API a workload calls, is referenced and provisioned by nothing in the estate, which
@@ -1140,8 +1170,11 @@ anything itself.
 
 An exclusive monolith, monorepo, service, or none classification mixes software architecture with
 repository organization. Multiple projects can include monolithic software and independently
-deployed software. Independent boolean properties express repository organization and infrastructure
-content; `implements` supplies software relationships without a second classification that can
-disagree with them. A structured property named `contains` would also collide with infrastructure
-containment. The draft `repositoryRole` property is replaced rather than retained as a competing
-classification.
+deployed software. Independent boolean properties express repository organization, infrastructure
+content, and CI/CD content; `implements` supplies software relationships without a second
+classification that can disagree with them. A structured property named `contains` would also
+collide with infrastructure containment. The draft `repositoryRole` property is replaced rather than
+retained as a competing classification. `hasPipelines` is a third boolean rather than a value of a
+classification for the same reason: a repository can hold software, infrastructure as code, and
+CI/CD definitions in any combination, and one holding only shared CI/CD definitions had no role to
+take.

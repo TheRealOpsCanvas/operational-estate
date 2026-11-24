@@ -26,11 +26,11 @@ and key, even when an installation uses different local identifiers or serializa
 
 ## Repository properties and compatibility
 
-`estate:monorepo` and `estate:hasIaC` are independent boolean properties. The ontology permits
-either to be absent when unknown, and permits every combination of confirmed boolean values. In
-particular, `false, false` can mean a single software project without infrastructure as code.
-Recorded software is expressed through `implements` / `implementedIn`; missing edges do not prove
-absence.
+`estate:monorepo`, `estate:hasIaC`, and `estate:hasPipelines` are independent boolean properties.
+The ontology permits any of them to be absent when unknown, and permits every combination of
+confirmed boolean values. In particular, `monorepo` and `hasIaC` both `false` can mean a single
+software project without infrastructure as code. Recorded software
+is expressed through `implements` / `implementedIn`; missing edges do not prove absence.
 
 The removed draft `repositoryRole` and the proposed nested `contains.software` enum are not this
 mapping. No general lossless conversion exists: an application role does not tell how many projects
@@ -43,8 +43,8 @@ shared vectors, and adapters must agree on:
 - Migration of confirmed legacy facts, with insufficient evidence left unknown or explicitly
   refused if the profile cannot represent it.
 - Version negotiation or explicit rejection between old classification profiles and this mapping.
-- Positive and negative examples covering unknowns, all four boolean combinations, and software
-  relationships independently of either boolean.
+- Positive and negative examples covering unknowns, every combination of the booleans, and
+  software relationships independently of any of them.
 
 Those coordinated downstream changes are separate from the ontology amendment. Retaining local
 legacy role storage does not itself conflict with the ontology; exporting it as the removed

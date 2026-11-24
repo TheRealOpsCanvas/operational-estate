@@ -45,8 +45,8 @@ live half that belongs to a tool or git.
 
 Terms: `deployedFrom`; Pipeline, `deploys`.
 
-- **Estate returns.** Every Environment's `deployedFrom` Repository; with pipelines, the Pipeline in
-  that Repository and its `deploys` edge per job.
+- **Estate returns.** Every Environment's `deployedFrom` Repositories; with pipelines, the Pipelines
+  in those Repositories and their `deploys` edges per job.
 - **Last mile.** None.
 - **Same for everyone.** Committed facts on stable keys with the citation that established each.
 
@@ -120,6 +120,21 @@ Terms: Repository, `monorepo`, `hasIaC`, `implements`.
 - **Same for everyone.** Each value is confirmed once against the repository's contents. Counting
   recorded relationships is not a substitute for that confirmation, and no single pointed file
   necessarily inventories all projects and infrastructure declarations.
+
+### Which repositories hold CI/CD definitions, and which hold none?
+
+Terms: Repository, `hasPipelines`, `hasIaC`, Pipeline, `declaredIn`, `implements`.
+
+- **Estate returns.** Confirmed `hasPipelines` values with their attribution, and the Pipelines
+  `declaredIn` each Repository. Missing values are listed as unknown. A Repository confirmed to
+  hold Pipelines, with `hasIaC` `false` and no software recorded, is reported as holding CI/CD
+  definitions and no infrastructure as code, with its software not recorded, never as holding
+  nothing else.
+- **Last mile.** None.
+- **Same for everyone.** Each value is confirmed once against the repository's contents. A
+  Repository with no Pipelines recorded may hold definition files a scan did not read, so the
+  recorded Pipelines are not a substitute for the confirmation, and a Repository confirmed to hold
+  none is told apart from one nobody looked at.
 
 ### What does this software's former name refer to after a rename?
 
@@ -420,6 +435,18 @@ Terms: Pipeline, Identity, `runsAs`, `within`, Cloud Account; policy reads (tool
   never from a run log or an audit trail, which are live and the provider's. A job whose role
   names a variable no cited file sets is not in the answer, and the answer does not claim it acts
   nowhere: it says that role is unread.
+
+### Where is this identity declared, and what applies its declaration?
+
+Terms: Identity, `declaredBy`, `provisionedFor`, Pipeline, `deploys`.
+
+- **Estate returns.** The Repository the Identity is `declaredBy`, with the line that declares it,
+  pinned to a commit; the owner it is `provisionedFor`; and the Pipeline and job that `deploys`
+  that owner. For an Identity no repository declares, no Repository, and the answer says so.
+- **Last mile.** None for where. One read of the cited declaration for how it is configured.
+- **Same for everyone.** The Repository is read from the declaration, never inferred from the
+  owner: an Identity provisioned for an Environment would otherwise lead to every Repository the
+  Environment is `deployedFrom`, and two readers would pick different ones.
 
 ## Network placement
 
