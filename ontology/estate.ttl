@@ -527,7 +527,7 @@ estate:implementedIn
     rdfs:range estate:Repository ;
     owl:inverseOf estate:implements ;
     skos:definition "A Repository whose code an Instance runs, read through what the Instance pullsFrom: that Repository itself, where the Instance fetches its code from it, or the Repository of a Pipeline that deliversTo the place it pulls from. An Instance has one for each Repository whose code it runs, such as an application and a sidecar."@en ;
-    skos:scopeNote "Never inferred from a name, and never from a Repository deploying and building in one job: only where a pull meets a Repository or a delivery. Not the Repository whose files deploy the Instance, which is deployedFrom; the two are often one. Absent for software no Repository in the estate holds, whose pullsFrom no Pipeline in the estate delivers to, such as a published chart and its images; that is not a gap."@en ;
+    skos:scopeNote "Never inferred from a name, and never from a Repository deploying and building in one job: only where a pull meets a Repository or a delivery, or where a consuming profile migrates confirmed facts from an earlier mapping by the shared-class wire mapping's migration rule. Not the Repository whose files deploy the Instance, which is deployedFrom; the two are often one. Absent for software no Repository in the estate holds, whose pullsFrom no Pipeline in the estate delivers to, such as a published chart and its images; that is not a gap."@en ;
     estate:maturity "draft" .
 
 estate:implements
