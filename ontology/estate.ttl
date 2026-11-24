@@ -149,7 +149,7 @@ estate:Repository
     rdfs:subClassOf estate:Entity ;
     rdfs:label "Repository"@en ;
     skos:altLabel "repo"@en ;
-    skos:definition "A version-controlled store of files. Where things are declared; monorepo records whether it holds multiple software projects or deployable units, and hasIaC records whether it holds infrastructure as code."@en ;
+    skos:definition "A version-controlled store of files. Where things are declared; monorepo records whether it holds multiple software projects or deployable units, hasIaC whether it holds infrastructure as code, and hasPipelines whether it holds Pipelines."@en ;
     skos:scopeNote "Neither software nor runtime."@en ;
     estate:keyRule "Its canonical remote."@en ;
     estate:maturity "draft" .
@@ -242,7 +242,7 @@ estate:deployedFrom
     rdfs:domain [ a owl:Class ; owl:unionOf ( estate:Environment estate:Instance ) ] ;
     rdfs:range estate:Repository ;
     owl:inverseOf estate:deploymentSourceOf ;
-    skos:definition "The Repository an Environment or Instance is deployed from."@en ;
+    skos:definition "A Repository an Environment or Instance is deployed from. One may be deployed from several, such as a Repository whose Pipeline applies an Environment's infrastructure and another whose Pipeline deploys its workloads."@en ;
     estate:maturity "draft" .
 
 estate:deploymentSourceOf
@@ -265,6 +265,22 @@ estate:hasProvisioned
     a owl:ObjectProperty ;
     rdfs:label "has provisioned"@en ;
     skos:definition "A Declared Resource or Identity whose declaration an owner holds."@en ;
+    estate:maturity "draft" .
+
+estate:declaredBy
+    a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:label "declared by"@en ;
+    rdfs:domain estate:Identity ;
+    rdfs:range estate:Repository ;
+    owl:inverseOf estate:declaresIdentity ;
+    skos:definition "The Repository whose files declare an Identity, where one does. An Identity has at most one."@en ;
+    skos:scopeNote "Not part of the Identity's key, which is its provider's identifier, and not declaredIn, which is containment in a key. Not who uses or assumes the Identity: that is runsAs, accessedAs and trusts."@en ;
+    estate:maturity "draft" .
+
+estate:declaresIdentity
+    a owl:ObjectProperty ;
+    rdfs:label "declares identity"@en ;
+    skos:definition "An Identity a Repository's files declare."@en ;
     estate:maturity "draft" .
 
 estate:runsOn
@@ -760,6 +776,15 @@ estate:hasIaC
     rdfs:range xsd:boolean ;
     skos:definition "Whether a Repository contains infrastructure as code, where confirmed, independently of its software organization."@en ;
     skos:scopeNote "Not a software classification and not inferred from missing relationships. Absent means unknown, not false. Not part of its key; no aliases or inverse."@en ;
+    estate:maturity "draft" .
+
+estate:hasPipelines
+    a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:label "has pipelines"@en ;
+    rdfs:domain estate:Repository ;
+    rdfs:range xsd:boolean ;
+    skos:definition "Whether a Repository contains Pipelines, CI/CD definition files, where confirmed, independently of its software organization and its infrastructure as code."@en ;
+    skos:scopeNote "Not inferred from the Pipelines recorded as declaredIn it, or from their absence: a definition file not read is not recorded, not absent. Absent means unknown, not false. Not part of its key; no aliases or inverse."@en ;
     estate:maturity "draft" .
 
 estate:definitionPath
