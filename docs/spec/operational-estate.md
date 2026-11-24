@@ -392,12 +392,14 @@ holding several images. A Delivery and a Pull with one artifact are a push and a
 The artifact is a value read from the reference by that rule, not an entity, and what was pushed
 or pulled under it is live.
 
-`implementedIn` is read through `pullsFrom`, and only there. An Instance that pulls from a
-Repository is `implementedIn` it, at each code path the Pull states. An Instance whose Pull has the
-artifact of a Delivery is `implementedIn` that Delivery's Pipeline's Repository, at the Delivery's
-code path. An Instance whose artifacts no Pipeline in the estate delivers runs software no
-Repository in the estate holds. It is read by address, never by a name. A job that both builds and
-deploys is no exception: it `deliversTo` the store its tool keeps, and the Instance it deploys
+`implementedIn` is read through `pullsFrom`, and only there, except where a consuming profile
+migrates confirmed facts from an earlier mapping by the rule in the [shared-class wire
+mapping](shared-class-wire-mapping.md#migrating-from-a-six-class-profile). An Instance that pulls
+from a Repository is `implementedIn` it, at each code path the Pull states. An Instance whose Pull
+has the artifact of a Delivery is `implementedIn` that Delivery's Pipeline's Repository, at the
+Delivery's code path. An Instance whose artifacts no Pipeline in the estate delivers runs software
+no Repository in the estate holds. It is read by address, never by a name. A job that both builds
+and deploys is no exception: it `deliversTo` the store its tool keeps, and the Instance it deploys
 `pullsFrom` that store. An Instance whose reference names a variable no cited file sets has no
 `implementedIn` until the reference is read. Which commit an Instance runs is then the declared
 value its `deploys` writes, read through the tag scheme of the Delivery it pulls from.
@@ -783,7 +785,8 @@ SPARQL 1.2 queries, until SHACL 1.2 is published:
   is not is a warning, because the job's definition is evidence of its own and the copy may be
   configured in a repository not read. No check states this warning yet.
 - An `implementedIn` is read through a `pullsFrom` that ends at a Repository or at a store a
-  `deliversTo` ends at, never by a name.
+  `deliversTo` ends at, never by a name, or is migrated from confirmed facts by the shared-class
+  wire mapping's migration rule and records that it was.
 - A Delivery and an Implementation carry at most one code path; a Pull may carry several.
 - An Environment has exactly one asserted Application.
 - A Pipeline that `deploys` an Environment or Instance is in the Repository it is `deployedFrom`.

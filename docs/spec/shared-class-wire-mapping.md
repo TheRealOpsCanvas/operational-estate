@@ -49,3 +49,32 @@ shared vectors, and adapters must agree on:
 Those coordinated downstream changes are separate from the ontology amendment. Retaining local
 legacy role storage does not itself conflict with the ontology; exporting it as the removed
 predicate does. The existing `estate:contains` remains the inverse of infrastructure `within`.
+
+## Migrating from a six-class profile
+
+A consuming profile that moves to this mapping from one built on the earlier six-class mapping
+converts the facts it already holds by these rules. Every way it converts one graph, such as on
+first import and on each later read of a graph still held in the earlier profile, gives the same
+result, and its shared vectors cover each rule.
+
+- A Service, a `memberOf`, an `instantiatedFrom`, and an `implementedIn` whose source is a Service
+  or an Application have no class or relation in this mapping and are not carried. Neither is a
+  record of any other class or relation this mapping does not cover, or a record that depends on
+  one not carried: an edge with an endpoint not carried, a detail of a relation not carried, and a
+  record whose key names a record not carried.
+- An Instance keeps its class and key. A Service name it carries is not carried.
+- An Instance is `implementedIn` a Repository where a practitioner placed it under a Service, by
+  that practitioner's own choice, and that Service was `implementedIn` the Repository. It has one
+  such edge for each Repository the Service was `implementedIn`. The edge carries no
+  Implementation, because the earlier mapping records no code path.
+- An Instance placed under a Service by matching their names gets no `implementedIn` from that
+  placement: the placement was inferred from a name, and an `implementedIn` never is. Neither does
+  an Instance whose code was recorded only against its Application, since nothing says which of
+  the Application's Instances runs it.
+- A migrated `implementedIn` records that it was migrated and the facts it was migrated from, as
+  the consuming profile records provenance, so it is never mistaken for one read through
+  `pullsFrom`.
+
+A migrated `implementedIn` is read from two facts a practitioner confirmed, not from the estate's
+files, and is the only `implementedIn` not read through `pullsFrom`. An Instance with none after
+migration has its `implementedIn` read when its estate is next read through `pullsFrom`.
